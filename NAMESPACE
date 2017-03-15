@@ -1,4 +1,4 @@
 exportPattern("^[[:alpha:]]+")
-useDynLib(mypackage, .registration = TRUE)
+useDynLib(compMS, .registration = TRUE)
 import(Rcpp)
 import(methods)
