@@ -1,0 +1,12 @@
+Package: compMS
+Type: Package
+Title: Nothing
+Version: 0.0.0.9000
+Date: 2017-03-15
+Author: Jonathon O'Brien
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: Really, nothing
+License: What license is it under?
+Depends: R (>= 3.0.2), Rcpp (>= 0.12.9), methods (>= 3.3.2)
+Imports: rstan (>= 2.14.1), rstantools (>= 1.1.0)
+LinkingTo: StanHeaders (>= 2.14.0.1), rstan (>= 2.14.1), BH (>= 1.62.0.1), Rcpp (>= 0.12.9), RcppEigen (>= 0.3.2.9.0)
