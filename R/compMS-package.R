@@ -5,7 +5,7 @@
 #' @docType package
 #' @name compMS-package
 #' @aliases compMS
-#' @useDynLib rstanarm, .registration = TRUE
+#' @useDynLib compMS, .registration = TRUE
 #'
 #'  @import methods
 #'  @importFrom rstan optimizing sampling vb constrain_pars extract
@@ -32,3 +32,4 @@
 #'  @template reference-stan-manual
 #'
 NULL
+
