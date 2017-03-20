@@ -6,5 +6,18 @@
 \alias{compMS}
 \title{Bayesian Compositional Proteomics Modeling via Stan}
 \description{
-Bayesian Compositional Proteomics Modeling via Stan
+The \pkg{compMS} package enables users to fit compostional proteomics
+models for isobaric tag mass spectrometry experiments.  The package is
+designed to make these models accesible to people without a background
+in Bayesian statistics or compositional data analysis.  This is done by
+requiring users to follow a very specific format for data entry.  Once
+the data if formatted properly everything else is handled internally.
 }
+\section{Model Details}{
+
+This is where I will explain the model and the options for use:
+\describe{
+Here is a detailed description.
+}
+}
+
