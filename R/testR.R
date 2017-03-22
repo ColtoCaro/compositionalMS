@@ -19,9 +19,5 @@ test_function <- function(y_){
   tempMod <- sampling(stanmodels$testModel)
   tempMod
 }
-library(rstan)
-y_ <- rnorm(100,5,5)
-N <- length(y_)
-sFit <- sampling(stanmodels$testModel)
-summary(sFit)
+
 
