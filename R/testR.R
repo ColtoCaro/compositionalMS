@@ -2,12 +2,26 @@
 
 #' Testing this stuff out
 #'
-#' This code is just a way for me to learn roxygen.
+#' This code is just a way for me to learn roxygen and to test out
+#' access to Stqn objects
 #'
 #' @export
-#' @return Some random text
-test_function <- function(text){
-  print(paste("You printed:", text))
+#' @param y_ an input vector
+#'
+#' @return The posterior mean of beta
+#'
+#' @details We fit the model y = beta + epsilon.  Hopefully we will return
+#'   the correct mean.
+#' @example
+#' test_function(rnorm(100, 5, 3))
+test_function <- function(y_){
+  N <- length(y_)
+  tempMod <- sampling(stanmodels$testModel)
+  tempMod
 }
-
+library(rstan)
+y_ <- rnorm(100,5,5)
+N <- length(y_)
+sFit <- sampling(stanmodels$testModel)
+summary(sFit)
 

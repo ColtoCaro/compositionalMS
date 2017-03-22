@@ -4,11 +4,19 @@
 \alias{test_function}
 \title{Testing this stuff out}
 \usage{
-test_function(text)
+test_function(y_)
+}
+\arguments{
+\item{y_}{an input vector}
 }
 \value{
-Some random text
+The posterior mean of beta
 }
 \description{
-This code is just a way for me to learn roxygen.
+This code is just a way for me to learn roxygen and to test out
+access to Stqn objects
+}
+\details{
+We fit the model y = beta + epsilon.  Hopefully we will return
+  the correct mean.
 }
