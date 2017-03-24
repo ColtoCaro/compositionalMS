@@ -7,16 +7,21 @@
 #'
 #' @export
 #' @param dat The data to be analyzed.  This data must be formatted as shown in
-#'   the included sample data.  If multiple plexes are to be analyzed at once then
-#'   the dat object must be a list of dataframes.  For a single run, the data
-#'   should be formatted as a dataframe.  In each dataframe the first
+#'   the included sample data.  Both the reference channel and the reference
+#'   conditions will be defined from the first column of data. If multiple runs
+#'   are to be analyzed at once then the dat object must be a list of
+#'   dataframes.  This is only recommended if biological or technical
+#'   replicates exist across multiple runs.  Otherwise, for computational
+#'   simplicity, each run should be analyzed separately.  For a single run, the
+#'   data should be formatted as a dataframe.  In each dataframe the first
 #'   two rows are used to determine which columns are technical replicates and
 #'   which are biological replicates.  For example, if two columns, possibly
 #'   from different plexes, both have the number '3' in the first row, then
 #'   they will be treated as technical replicates.  Likewise, columns that
-#'   share a number in the second row are treated as biological replicates.  If
-#'   technical replicates are not also labeled as biological replicates an
-#'   error will be generated.
+#'   share a number in the second row are treated as biological replicates. If
+#'   there are no biological replicates in the experiment then the second row
+#'   should be all zeroes.  If technical replicates are not also labeled as
+#'   biological replicates an error will be generated.
 #' @param approx A boolean variable which specifies whether or not a full
 #'   Bayesian
 #'   or an approximate Bayesian model should be fit.  The default value of TRUE
@@ -39,9 +44,28 @@ compFit <- function(dat, approx = TRUE){
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(multiRun == FALSE){dat <- list(dat)}
 
-  #Check for biological replicates
+  #Check for biological replicates and multiple conditions
+  testBioreps <- lapply(dat, function(x) sum(x[2, 4:length(x)],
+                                                  na.rm = T))
+  if(testBioreps != 0){
+    bioReps == TRUE
+    }else{bioReps == FALSE}
 
+  testConditions <- lapply(testList, function(x) sum(x[3, 4:length(x)],
+                                                  na.rm = T))
+  if(testConditions != 0){
+    multiCond == TRUE
+  }else{multiCond == FALSE}
 
+  #Call the model fitting function determined by multiCond and bioReps
+  if(multiCond + bioReps == 0){modelFit <- fitSimple(dat)}
+  if(multiCond + bioReps == 2){modelFit <- fitFull(dat)}
+  if(multiCond + bioReps == 1){
+    if(multiCond == TRUE){modelFit <- fitCondition(dat)}
+    if(bioReps == TRUE){modelFit <- fitBioreps(dat)}
+    }
+
+  modelFit
 
 } #end of compFit function
 
