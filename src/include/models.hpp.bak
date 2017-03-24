@@ -26,6 +26,8 @@ static int current_statement_begin__;
 
 class model_testModel : public prob_grad {
 private:
+    int N;
+    vector<double> y_;
 public:
     model_testModel(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -59,8 +61,23 @@ public:
         (void) DUMMY_VAR__;  // suppress unused var warning
 
         // initialize member variables
+        context__.validate_dims("data initialization", "N", "int", context__.to_vec());
+        N = int(0);
+        vals_i__ = context__.vals_i("N");
+        pos__ = 0;
+        N = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "y_", "double", context__.to_vec(N));
+        validate_non_negative_index("y_", "N", N);
+        y_ = std::vector<double>(N,double(0));
+        vals_r__ = context__.vals_r("y_");
+        pos__ = 0;
+        size_t y__limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < y__limit_0__; ++i_0__) {
+            y_[i_0__] = vals_r__[pos__++];
+        }
 
         // validate, data variables
+        check_greater_or_equal(function__,"N",N,0);
         // initialize data variables
 
         try {
@@ -161,8 +178,14 @@ public:
         // model body
         try {
 
-            current_statement_begin__ = 6;
-            lp_accum__.add(normal_log<propto__>(beta, 0, 3));
+            current_statement_begin__ = 12;
+            lp_accum__.add(normal_log<propto__>(beta, 0, 10));
+            current_statement_begin__ = 13;
+            for (int i = 1; i <= N; ++i) {
+
+                current_statement_begin__ = 14;
+                lp_accum__.add(normal_log<propto__>(get_base1(y_,i,"y_",1), beta, 1));
+            }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
