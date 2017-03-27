@@ -26,10 +26,17 @@
 #'   Bayesian
 #'   or an approximate Bayesian model should be fit.  The default value of TRUE
 #'   fits a Variational Bayes approximation.
+#' @param resultsOnly A boolean variable that determines what information will
+#'   be returned after model fitting.  If resultsOnly is TRUE, then the
+#'   function will return a list containing two tables, one table for posterior
+#'   means and another with posterior standard deviations.  If resultsOnly is
+#'   FALSE then the results list will also contain an object of class Stanfit.
+#'   The Stanfit object contains all of the sampling and some measures for
+#'   quality control.
 #' @details There are many details.  This will be filled out later.
 #'
 #'
-compFit <- function(dat, approx = TRUE){
+compFit <- function(dat, approx = TRUE, resultsOnly = TRUE){
   #Determine if there are multiple runs. Make sure data is formatted correctly
   if(is.data.frame(dat) == TRUE){multiRun <- False}
   if(is.list == TRUE){
@@ -58,15 +65,26 @@ compFit <- function(dat, approx = TRUE){
   }else{multiCond == FALSE}
 
   #Call the model fitting function determined by multiCond and bioReps
-  if(multiCond + bioReps == 0){modelFit <- fitSimple(dat)}
-  if(multiCond + bioReps == 2){modelFit <- fitFull(dat)}
+  if(multiCond + bioReps == 0){modelFit <- fitSimple(dat, approx, resultsOnly)}
+  if(multiCond + bioReps == 2){modelFit <- fitFull(dat, approx, resultsOnly)}
   if(multiCond + bioReps == 1){
-    if(multiCond == TRUE){modelFit <- fitCondition(dat)}
-    if(bioReps == TRUE){modelFit <- fitBioreps(dat)}
+    if(multiCond == TRUE){modelFit <- fitCondition(dat, approx, resultsOnly)}
+    if(bioReps == TRUE){modelFit <- fitBioreps(dat, approx, resultsOnly)}
     }
 
   modelFit
 
 } #end of compFit function
 
-testList <- list(sampleDat, sampleDat)
+#' Fitting the simple model
+#'
+#' Function for specifically calling a model with no biological
+#' replicates or condition groups.
+fitSimple <- function(dat, approx, resultsOnly){
+  #create unique protein id's.
+  dat <- lapply(dat, addIds)
+}
+
+
+
+
