@@ -27,7 +27,7 @@ static int current_statement_begin__;
 class model_stoich : public prob_grad {
 private:
     int N;
-    vector_d y_;
+    vector_d theta;
 public:
     model_stoich(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -66,18 +66,20 @@ public:
         vals_i__ = context__.vals_i("N");
         pos__ = 0;
         N = vals_i__[pos__++];
-        validate_non_negative_index("y_", "N", N);
-        y_ = vector_d(static_cast<Eigen::VectorXd::Index>(N));
-        context__.validate_dims("data initialization", "y_", "vector_d", context__.to_vec(N));
-        vals_r__ = context__.vals_r("y_");
+        validate_non_negative_index("theta", "N", N);
+        theta = vector_d(static_cast<Eigen::VectorXd::Index>(N));
+        context__.validate_dims("data initialization", "theta", "vector_d", context__.to_vec(N));
+        vals_r__ = context__.vals_r("theta");
         pos__ = 0;
-        size_t y__i_vec_lim__ = N;
-        for (size_t i_vec__ = 0; i_vec__ < y__i_vec_lim__; ++i_vec__) {
-            y_[i_vec__] = vals_r__[pos__++];
+        size_t theta_i_vec_lim__ = N;
+        for (size_t i_vec__ = 0; i_vec__ < theta_i_vec_lim__; ++i_vec__) {
+            theta[i_vec__] = vals_r__[pos__++];
         }
 
         // validate, data variables
         check_greater_or_equal(function__,"N",N,0);
+        check_greater_or_equal(function__,"theta",theta,0);
+        check_less_or_equal(function__,"theta",theta,1);
         // initialize data variables
 
         try {
@@ -92,6 +94,7 @@ public:
         // set parameter ranges
         num_params_r__ = 0U;
         param_ranges_i__.clear();
+        ++num_params_r__;
         ++num_params_r__;
     }
 
@@ -108,18 +111,32 @@ public:
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
 
-        if (!(context__.contains_r("theta")))
-            throw std::runtime_error("variable theta missing");
-        vals_r__ = context__.vals_r("theta");
+        if (!(context__.contains_r("phi")))
+            throw std::runtime_error("variable phi missing");
+        vals_r__ = context__.vals_r("phi");
         pos__ = 0U;
-        context__.validate_dims("initialization", "theta", "double", context__.to_vec());
-        // generate_declaration theta
-        double theta(0);
-        theta = vals_r__[pos__++];
+        context__.validate_dims("initialization", "phi", "double", context__.to_vec());
+        // generate_declaration phi
+        double phi(0);
+        phi = vals_r__[pos__++];
         try {
-            writer__.scalar_lub_unconstrain(0,1,theta);
+            writer__.scalar_lub_unconstrain(0,0.5,phi);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable theta: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable phi: ") + e.what());
+        }
+
+        if (!(context__.contains_r("lambda")))
+            throw std::runtime_error("variable lambda missing");
+        vals_r__ = context__.vals_r("lambda");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "lambda", "double", context__.to_vec());
+        // generate_declaration lambda
+        double lambda(0);
+        lambda = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0.10000000000000001,lambda);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable lambda: ") + e.what());
         }
 
         params_r__ = writer__.data_r();
@@ -152,23 +169,25 @@ public:
         // model parameters
         stan::io::reader<T__> in__(params_r__,params_i__);
 
-        T__ theta;
-        (void) theta;  // dummy to suppress unused var warning
+        T__ phi;
+        (void) phi;  // dummy to suppress unused var warning
         if (jacobian__)
-            theta = in__.scalar_lub_constrain(0,1,lp__);
+            phi = in__.scalar_lub_constrain(0,0.5,lp__);
         else
-            theta = in__.scalar_lub_constrain(0,1);
+            phi = in__.scalar_lub_constrain(0,0.5);
+
+        T__ lambda;
+        (void) lambda;  // dummy to suppress unused var warning
+        if (jacobian__)
+            lambda = in__.scalar_lb_constrain(0.10000000000000001,lp__);
+        else
+            lambda = in__.scalar_lb_constrain(0.10000000000000001);
 
 
         // transformed parameters
-        T__ omega;
-        (void) omega;  // dummy to suppress unused var warning
-        stan::math::initialize(omega, DUMMY_VAR__);
-        stan::math::fill(omega,DUMMY_VAR__);
 
 
         try {
-            stan::math::assign(omega, log(theta));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -176,21 +195,15 @@ public:
         }
 
         // validate transformed parameters
-        if (stan::math::is_uninitialized(omega)) {
-            std::stringstream msg__;
-            msg__ << "Undefined transformed parameter: omega";
-            throw std::runtime_error(msg__.str());
-        }
 
         const char* function__ = "validate transformed params";
         (void) function__;  // dummy to suppress unused var warning
-        check_less_or_equal(function__,"omega",omega,0);
 
         // model body
         try {
 
-            lp_accum__.add(-(log(theta)));
-            lp_accum__.add(normal_log<propto__>(y_, omega, 5));
+            lp_accum__.add(pareto_log<propto__>(lambda, 0.10000000000000001, 1.5));
+            lp_accum__.add(beta_log<propto__>(theta, (lambda * phi), (lambda * (1 - phi))));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -216,8 +229,8 @@ public:
 
     void get_param_names(std::vector<std::string>& names__) const {
         names__.resize(0);
-        names__.push_back("theta");
-        names__.push_back("omega");
+        names__.push_back("phi");
+        names__.push_back("lambda");
     }
 
 
@@ -243,8 +256,10 @@ public:
         static const char* function__ = "model_stoich_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
-        double theta = in__.scalar_lub_constrain(0,1);
-        vars__.push_back(theta);
+        double phi = in__.scalar_lub_constrain(0,0.5);
+        double lambda = in__.scalar_lb_constrain(0.10000000000000001);
+        vars__.push_back(phi);
+        vars__.push_back(lambda);
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -255,14 +270,9 @@ public:
         double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
         (void) DUMMY_VAR__;  // suppress unused var warning
 
-        double omega(0.0);
-        (void) omega;  // dummy to suppress unused var warning
-        stan::math::initialize(omega, std::numeric_limits<double>::quiet_NaN());
-        stan::math::fill(omega,DUMMY_VAR__);
 
 
         try {
-            stan::math::assign(omega, log(theta));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -270,10 +280,8 @@ public:
         }
 
         // validate transformed parameters
-        check_less_or_equal(function__,"omega",omega,0);
 
         // write transformed parameters
-        vars__.push_back(omega);
 
         if (!include_gqs__) return;
         // declare and define generated quantities
@@ -319,13 +327,13 @@ public:
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "theta";
+        param_name_stream__ << "phi";
+        param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "lambda";
         param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "omega";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__) return;
     }
@@ -336,13 +344,13 @@ public:
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "theta";
+        param_name_stream__ << "phi";
+        param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "lambda";
         param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "omega";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__) return;
     }

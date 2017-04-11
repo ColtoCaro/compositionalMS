@@ -2,7 +2,8 @@
 
 #' Fitting a compositional Stan model
 #'
-#' This function fits an appropriate compositonal proteomics model based on the
+#' This function runs the main code for fitting an appropriate compositonal
+#' proteomics model based on the
 #' input data file.  It returns a Stan modelfit object.
 #'
 #' @export
@@ -36,55 +37,111 @@
 #' @details There are many details.  This will be filled out later.
 #'
 #'
-compFit <- function(dat, approx = TRUE, resultsOnly = TRUE){
-  #Determine if there are multiple runs. Make sure data is formatted correctly
-  if(is.data.frame(dat) == TRUE){multiRun <- False}
-  if(is.list == TRUE){
-    #test to make sure each list component is a dataframe
-    testDf <- lapply(dat, is.data.frame)
-    if(sum(unlist(testDf)) != length(dat)){
-      print("Error: at least one list component is not a dataframe")
-      return("Error")
-    }
-  }else{multiRun <- TRUE}
+compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
-  if(multiRun == FALSE){dat <- list(dat)}
+  if(is.data.frame(dat)){dat <- list(dat)}
 
-  #Check for biological replicates and multiple conditions
-  testBioreps <- lapply(dat, function(x) sum(x[2, 4:length(x)],
-                                                  na.rm = T))
-  if(testBioreps != 0){
-    bioReps == TRUE
-    }else{bioReps == FALSE}
-
-  testConditions <- lapply(testList, function(x) sum(x[3, 4:length(x)],
-                                                  na.rm = T))
-  if(testConditions != 0){
-    multiCond == TRUE
-  }else{multiCond == FALSE}
-
-  #Call the model fitting function determined by multiCond and bioReps
-  if(multiCond + bioReps == 0){modelFit <- fitSimple(dat, approx, resultsOnly)}
-  if(multiCond + bioReps == 2){modelFit <- fitFull(dat, approx, resultsOnly)}
-  if(multiCond + bioReps == 1){
-    if(multiCond == TRUE){modelFit <- fitCondition(dat, approx, resultsOnly)}
-    if(bioReps == TRUE){modelFit <- fitBioreps(dat, approx, resultsOnly)}
+  #test to make sure each list component is a dataframe
+  testDf <- lapply(dat, is.data.frame)
+  if(sum(unlist(testDf)) != length(dat)){
+    stop("Error: at least one list component is not a dataframe")
     }
 
-  modelFit
+  #make sure column names are valid
+  if(checkQs(dat) > 0){stop("Column names cannot contain qqqq")}
+  if(checkNames(dat) > 0){stop("Column names must be unique")}
+
+  #Check for biological replicates, multiple conditions and covariates
+  sumBioreps <- sum(unlist(lapply(dat, function(x) sum(x[2, 4:length(x)],
+                                                  na.rm = T))))
+  if(sumBioreps != 0){
+    bioReps <- TRUE
+    }else{bioReps <- FALSE}
+
+  sumConditions <- sum(unlist(lapply(dat, function(x) sum(x[3, 4:length(x)],
+                                                  na.rm = T))))
+  if(sumConditions != 0){
+    multiCond <- TRUE
+  }else{multiCond <- FALSE}
+
+  testCovariate <- sum(unlist(lapply(dat, function(x) x[1, 3])))
+  if(testCovariate == 0){covariate <- FALSE}
+  if(testCovariate == length(dat)){covariate <- TRUE}
+  if(!(testCovariate == 0 | testCovariate == length(dat))){
+    stop("error: inconsistent covariate use")}
+
+  #Call the model fitting function determined by multiCond, and bioReps
+  if(multiCond + bioReps == 0){
+    if(covariate == TRUE){modelFit <- "simpleSlope"}
+    if(covariate == FALSE){modelFit <- "simpleInt"}
+  }
+  if(multiCond + bioReps == 2){
+    if(covariate == TRUE){modelFit <- "fullSlope"}
+    if(covariate == FALSE){modelFit <- "fullInt"}
+  }
+  if(multiCond + bioReps == 1){
+    if(multiCond == TRUE){
+      if(covariate == TRUE){modelFit <- "condSlope"}
+      if(covariate == FALSE){modelFit <- "condInt"}
+    }
+    if(bioReps == TRUE){
+      if(covariate == TRUE){modelFit <- "biorepSlope"}
+      if(covariate == FALSE){modelFit <- "biorepInt"}
+    }
+    }
+
+  readyDat <- transformDat(dat, modelFit)
+  model <- fitModel(readyDat, modelFit, approx, resultsOnly)
+  model
 
 } #end of compFit function
 
-#' Fitting the simple model
-#'
-#' Function for specifically calling a model with no biological
-#' replicates or condition groups.
-fitSimple <- function(dat, approx, resultsOnly){
+#' Fitting the model
+fitModel <- function(dat, modelFit, approx, resultsOnly){
   #create unique protein id's.
   dat <- lapply(dat, addIds)
 }
 
 
+gProt <- unique(global$ProteinId)
+phosInt <- phos[phos$ProteinId %in% gProt, ]
+ubiqInt <- ubiq[ubiq$ProteinId %in% gProt, ]
 
+globalSSN <- rowSums(global[ , grep("rq", colnames(global))])
+phosSSN <- rowSums(phosInt[ , grep("rq", colnames(phosInt))])
+ubiqSSN <- rowSums(ubiqInt[ , grep("rq", colnames(ubiqInt))])
+
+protDat <- data.frame(Protein = global$ProteinId, Peptide = global$PeptideSequence,
+                      bioID = global$Class, Covariate = globalSSN,
+                      global[ , grep("rq", colnames(global))])
+phosDat <- data.frame(Protein = phosInt$ProteinId, Peptide = phosInt$PeptideSequence,
+                      bioID = phosInt$Class, Covariate = phosSSN,
+                      phosInt[ , grep("rq", colnames(phosInt))])
+ubiqDat <- data.frame(Protein = ubiqInt$ProteinId, Peptide = ubiqInt$PeptideSequence,
+                      bioID = ubiqInt$Class, Covariate = ubiqSSN,
+                      ubiqInt[ , grep("rq", colnames(ubiqInt))])
+
+protHead <- matrix(0, ncol = 14, nrow= 4)
+rownames(protHead) <- c("techReps", "bioReps", "Condition", "PTM")
+protHead[1, ] <- c(1, 0,1, 1, 1:10)
+
+phosHead <- protHead
+ubiqHead <- protHead
+
+phosHead[4, ] <- c(1, 0, 0, 0, rep(1,10))
+ubiqHead[4, ] <- c(1, 0, 0, 0, rep(2,10))
+
+protHead <- as.data.frame(protHead)
+phosHead <- as.data.frame(phosHead)
+ubiqHead <- as.data.frame(ubiqHead)
+
+names(protHead) <- names(phosHead) <- names(ubiqHead) <- names(protDat)
+ptmDat1 <- rbind(protHead, protDat)
+ptmDat2 <- rbind(phosHead, phosDat)
+ptmDat3 <- rbind(ubiqHead, ubiqDat)
+
+save(ptmDat1, file="/Users/darkapple/Documents/compMS/data/ptmDat1.Rdata")
+save(ptmDat2, file="/Users/darkapple/Documents/compMS/data/ptmDat2.Rdata")
+save(ptmDat3, file="/Users/darkapple/Documents/compMS/data/ptmDat3.Rdata")
 
