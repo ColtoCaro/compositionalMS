@@ -48,13 +48,8 @@ compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
     stop("Error: at least one list component is not a dataframe")
     }
 
-  #make sure column names are valid
-  if(checkQs(dat) > 0){stop("Column names cannot contain qqqq")}
-  if(checkNames(dat) > 0){stop("Column names must be unique")}
-
   #Check for biological replicates, multiple conditions and covariates
-  sumBioreps <- sum(unlist(lapply(dat, function(x) sum(x[2, 4:length(x)],
-                                                  na.rm = T))))
+
   if(sumBioreps != 0){
     bioReps <- TRUE
     }else{bioReps <- FALSE}
@@ -91,8 +86,10 @@ compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
     }
     }
 
-  readyDat <- transformDat(dat, modelFit)
-  model <- fitModel(readyDat, modelFit, approx, resultsOnly)
+  readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit, x))
+  oneDat <- do.call(rbind, readyDat)
+
+  model <- fitModel(oneDat, modelFit, approx, resultsOnly)
   model
 
 } #end of compFit function
@@ -104,44 +101,6 @@ fitModel <- function(dat, modelFit, approx, resultsOnly){
 }
 
 
-gProt <- unique(global$ProteinId)
-phosInt <- phos[phos$ProteinId %in% gProt, ]
-ubiqInt <- ubiq[ubiq$ProteinId %in% gProt, ]
 
-globalSSN <- rowSums(global[ , grep("rq", colnames(global))])
-phosSSN <- rowSums(phosInt[ , grep("rq", colnames(phosInt))])
-ubiqSSN <- rowSums(ubiqInt[ , grep("rq", colnames(ubiqInt))])
 
-protDat <- data.frame(Protein = global$ProteinId, Peptide = global$PeptideSequence,
-                      bioID = global$Class, Covariate = globalSSN,
-                      global[ , grep("rq", colnames(global))])
-phosDat <- data.frame(Protein = phosInt$ProteinId, Peptide = phosInt$PeptideSequence,
-                      bioID = phosInt$Class, Covariate = phosSSN,
-                      phosInt[ , grep("rq", colnames(phosInt))])
-ubiqDat <- data.frame(Protein = ubiqInt$ProteinId, Peptide = ubiqInt$PeptideSequence,
-                      bioID = ubiqInt$Class, Covariate = ubiqSSN,
-                      ubiqInt[ , grep("rq", colnames(ubiqInt))])
-
-protHead <- matrix(0, ncol = 14, nrow= 4)
-rownames(protHead) <- c("techReps", "bioReps", "Condition", "PTM")
-protHead[1, ] <- c(1, 0,1, 1, 1:10)
-
-phosHead <- protHead
-ubiqHead <- protHead
-
-phosHead[4, ] <- c(1, 0, 0, 0, rep(1,10))
-ubiqHead[4, ] <- c(1, 0, 0, 0, rep(2,10))
-
-protHead <- as.data.frame(protHead)
-phosHead <- as.data.frame(phosHead)
-ubiqHead <- as.data.frame(ubiqHead)
-
-names(protHead) <- names(phosHead) <- names(ubiqHead) <- names(protDat)
-ptmDat1 <- rbind(protHead, protDat)
-ptmDat2 <- rbind(phosHead, phosDat)
-ptmDat3 <- rbind(ubiqHead, ubiqDat)
-
-save(ptmDat1, file="/Users/darkapple/Documents/compMS/data/ptmDat1.Rdata")
-save(ptmDat2, file="/Users/darkapple/Documents/compMS/data/ptmDat2.Rdata")
-save(ptmDat3, file="/Users/darkapple/Documents/compMS/data/ptmDat3.Rdata")
 
