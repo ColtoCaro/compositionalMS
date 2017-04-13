@@ -89,6 +89,11 @@ compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
   readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit, x))
   oneDat <- do.call(rbind, readyDat)
 
+  #set variable that determines covariate use
+  if(covariate == T){
+  useCov <- n_c
+  }else{useCov <- 0}
+
   model <- fitModel(oneDat, modelFit, approx, resultsOnly)
   model
 
