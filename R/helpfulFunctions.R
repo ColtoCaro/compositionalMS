@@ -51,12 +51,14 @@ transformDat <- function(df, modelFit, plexNumber){
     bioID <- paste(melted$Protein, melted$bioID, sep = "_")
   }else{bioID <- paste(melted$Protein, separated[, 4])}
 
-  finalDat <- data.frame(techID = paste(melted$Protein, separated[, 3], sep = "_"),
-                         tag_plex, bioID,
-                         ptmID = paste(melted$Peptide, separated[ , 6], sep = "_"),
+  finalDat <- data.frame(techID = paste(melted$Protein, separated[, 3],
+                                        sep = "_"), tag_plex, bioID,
+                         ptmID = paste(melted$Peptide, separated[ , 6],
+                                       sep = "_"),
                   condID = paste(melted$Protein, separated[, 5], sep = "_"),
-                  ptm = separated[ , 6], covariate = melted$Covariate, lr = melted$lr
-                         )
+                  ptm = separated[ , 6], covariate = melted$Covariate,
+                  lr = melted$lr, stringsAsFactors = F)
+
   finalDat
 }#end function transformDat
 

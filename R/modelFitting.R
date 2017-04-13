@@ -37,7 +37,7 @@
 #' @details There are many details.  This will be filled out later.
 #'
 #'
-compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
+compCall <- function(dat, approx = TRUE, resultsOnly = TRUE, pp=.95){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(is.data.frame(dat)){dat <- list(dat)}
@@ -48,53 +48,61 @@ compCall <- function(dat, approx = TRUE, resultsOnly = TRUE){
     stop("Error: at least one list component is not a dataframe")
     }
 
-  #Check for biological replicates, multiple conditions and covariates
-
-  if(sumBioreps != 0){
-    bioReps <- TRUE
-    }else{bioReps <- FALSE}
-
-  sumConditions <- sum(unlist(lapply(dat, function(x) sum(x[3, 4:length(x)],
-                                                  na.rm = T))))
-  if(sumConditions != 0){
-    multiCond <- TRUE
-  }else{multiCond <- FALSE}
-
-  testCovariate <- sum(unlist(lapply(dat, function(x) x[1, 3])))
-  if(testCovariate == 0){covariate <- FALSE}
-  if(testCovariate == length(dat)){covariate <- TRUE}
-  if(!(testCovariate == 0 | testCovariate == length(dat))){
-    stop("error: inconsistent covariate use")}
-
-  #Call the model fitting function determined by multiCond, and bioReps
-  if(multiCond + bioReps == 0){
-    if(covariate == TRUE){modelFit <- "simpleSlope"}
-    if(covariate == FALSE){modelFit <- "simpleInt"}
-  }
-  if(multiCond + bioReps == 2){
-    if(covariate == TRUE){modelFit <- "fullSlope"}
-    if(covariate == FALSE){modelFit <- "fullInt"}
-  }
-  if(multiCond + bioReps == 1){
-    if(multiCond == TRUE){
-      if(covariate == TRUE){modelFit <- "condSlope"}
-      if(covariate == FALSE){modelFit <- "condInt"}
-    }
-    if(bioReps == TRUE){
-      if(covariate == TRUE){modelFit <- "biorepSlope"}
-      if(covariate == FALSE){modelFit <- "biorepInt"}
-    }
-    }
-
-  readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit, x))
+  readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit,
+                                                             x))
   oneDat <- do.call(rbind, readyDat)
+  oneDat <- oneDat[order(oneDat$techID, oneDat$ptm, oneDat$ptmID, oneDat$bioID,
+                         oneDat$condID, oneDat$tag_plex), ]
 
-  #set variable that determines covariate use
-  if(covariate == T){
-  useCov <- n_c
-  }else{useCov <- 0}
+  #set data variables
+  N_ <- nrow(oneDat)
+  n_c <- length(unique(oneDat$techID))
 
-  model <- fitModel(oneDat, modelFit, approx, resultsOnly)
+  sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
+  if(sumBio == 0){
+    n_b <- 0
+    bioID <- rep(0,N_)
+  }else{
+    n_b <- length(unique(oneDat$bioID))
+    bioID <- as.integer(factor(oneDat$bioID))
+    }
+
+  sumCond <- sum(unlist(lapply(dat, function(x) (x[3, 1] ==1 ))))
+  if(sumCond == 0){
+    n_gc <- 0
+    condID <- rep(0, N_)
+  }else{
+    n_gc <- length(unique(oneDat$condID))
+    condID <- as.integer(factor(oneDat$condID))
+    }
+
+  n_t <- length(unique(oneDat$tag_plex))
+
+  sumPtm <- sum(unlist(lapply(dat, function(x) (x[4, 1] == 1))))
+  if(sumPtm == 0){
+    n_p <- 0
+    n_ptm <- 0
+    ptm <- rep(0,N_)
+    ptmPep <- rep(0,N_)
+  }else{
+  nonPtms <- which(oneDat$ptm == 0)
+  n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
+  n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
+  ptm <- as.integer(oneDat$ptm)
+  ptmPep <- rep(0,N_)
+  ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
+  }
+
+  techID <- as.integer(factor(oneDat$techID))
+  tag <- as.integer(factor(oneDat$tag_plex))
+
+  sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
+  useCov <- 1*(sumCov > 0)
+
+  covariate <- oneDat$covariate
+  lr <- oneDat$lr
+
+  model <- rstan::sampling(compMS:::stanmodels$allModels)
   model
 
 } #end of compFit function
