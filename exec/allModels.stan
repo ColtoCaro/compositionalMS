@@ -17,7 +17,7 @@ data{
   int<lower=0, upper=n_p> ptmPep[N_] ; //ID for ptm peptides
 
   int<lower=0> useCov ;  //Indicator for use of covariate (either 0 or 1)
-  real covariate[N_] ; // covariate
+  real<lower=0, upper=1> covariate[N_] ; // covariate
   real pp ; // prediction percentile for the covariate
 
   real lr[N_] ; // log-ratio observations
@@ -50,14 +50,15 @@ parameters{
 
 transformed parameters{
   real beta_t[n_t] ;  // always have tag effects
-  real slope[n_c] ;
+  real slope[useCov*n_c] ;
   real beta_b[n_b] ;  //sometimes have biological replicates
   real beta_gc[n_gc] ;  //sometimes have grouped conditions
-
+  real betaP[useCov*n_c] ;  //predicted protein level at pp*covariate
 
   if(useCov > 0){
   for (i in 1:n_c){
     slope[i] = beta[i] + deviate[i] ;
+    betaP[i] = beta[i] + pp*slope[i] ;
   }
   }
 
@@ -189,7 +190,7 @@ model{
       lr[i] ~ normal(beta[techID[i]] + beta_t[tag[i]] + covariate[i]*slope[techID[i]], sigma[1]) ;
     }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]],
+        lr[i] ~ normal(betaP[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]],
         sigma[1 + ptm[i]]) ;
       }
   }
@@ -208,7 +209,7 @@ model{
       + covariate[i]*slope[techID[i]], sigma[1]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(beta[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(betaP[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
       }
     }
 
@@ -228,7 +229,7 @@ model{
     }
 
     if(ptm[i] > 0){
-        lr[i] ~ normal(beta[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(betaP[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
     }
       }
   } // end Condition model
@@ -250,7 +251,7 @@ model{
         beta_t[tag[i]] + covariate[i]*slope[techID[i]], sigma[1]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(betaP[techID[i]] + beta_t[tag[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
       }
 
     }

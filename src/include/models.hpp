@@ -229,6 +229,10 @@ public:
             check_less_or_equal(function__,"ptmPep[k0__]",ptmPep[k0__],n_p);
         }
         check_greater_or_equal(function__,"useCov",useCov,0);
+        for (int k0__ = 0; k0__ < N_; ++k0__) {
+            check_greater_or_equal(function__,"covariate[k0__]",covariate[k0__],0);
+            check_less_or_equal(function__,"covariate[k0__]",covariate[k0__],1);
+        }
         // initialize data variables
         n_bRaw = int(0);
         stan::math::fill(n_bRaw, std::numeric_limits<int>::min());
@@ -503,7 +507,7 @@ public:
         vector<T__> beta_t(n_t);
         stan::math::initialize(beta_t, DUMMY_VAR__);
         stan::math::fill(beta_t,DUMMY_VAR__);
-        vector<T__> slope(n_c);
+        vector<T__> slope((useCov * n_c));
         stan::math::initialize(slope, DUMMY_VAR__);
         stan::math::fill(slope,DUMMY_VAR__);
         vector<T__> beta_b(n_b);
@@ -512,6 +516,9 @@ public:
         vector<T__> beta_gc(n_gc);
         stan::math::initialize(beta_gc, DUMMY_VAR__);
         stan::math::fill(beta_gc,DUMMY_VAR__);
+        vector<T__> betaP((useCov * n_c));
+        stan::math::initialize(betaP, DUMMY_VAR__);
+        stan::math::fill(betaP,DUMMY_VAR__);
 
 
         try {
@@ -520,6 +527,7 @@ public:
                 for (int i = 1; i <= n_c; ++i) {
 
                     stan::math::assign(get_base1_lhs(slope,i,"slope",1), (get_base1(beta,i,"beta",1) + get_base1(deviate,i,"deviate",1)));
+                    stan::math::assign(get_base1_lhs(betaP,i,"betaP",1), (get_base1(beta,i,"beta",1) + (pp * get_base1(slope,i,"slope",1))));
                 }
             }
             if (as_bool(logical_gt(n_b,0))) {
@@ -557,7 +565,7 @@ public:
                 throw std::runtime_error(msg__.str());
             }
         }
-        for (int i0__ = 0; i0__ < n_c; ++i0__) {
+        for (int i0__ = 0; i0__ < (useCov * n_c); ++i0__) {
             if (stan::math::is_uninitialized(slope[i0__])) {
                 std::stringstream msg__;
                 msg__ << "Undefined transformed parameter: slope" << '[' << i0__ << ']';
@@ -575,6 +583,13 @@ public:
             if (stan::math::is_uninitialized(beta_gc[i0__])) {
                 std::stringstream msg__;
                 msg__ << "Undefined transformed parameter: beta_gc" << '[' << i0__ << ']';
+                throw std::runtime_error(msg__.str());
+            }
+        }
+        for (int i0__ = 0; i0__ < (useCov * n_c); ++i0__) {
+            if (stan::math::is_uninitialized(betaP[i0__])) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: betaP" << '[' << i0__ << ']';
                 throw std::runtime_error(msg__.str());
             }
         }
@@ -696,7 +711,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(beta,get_base1(techID,i,"techID",1),"beta",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(betaP,get_base1(techID,i,"techID",1),"betaP",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -714,7 +729,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(beta,get_base1(techID,i,"techID",1),"beta",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(betaP,get_base1(techID,i,"techID",1),"betaP",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -732,7 +747,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(beta,get_base1(techID,i,"techID",1),"beta",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(betaP,get_base1(techID,i,"techID",1),"betaP",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -754,7 +769,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(beta,get_base1(techID,i,"techID",1),"beta",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), ((get_base1(betaP,get_base1(techID,i,"techID",1),"betaP",1) + get_base1(beta_t,get_base1(tag,i,"tag",1),"beta_t",1)) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -796,6 +811,7 @@ public:
         names__.push_back("slope");
         names__.push_back("beta_b");
         names__.push_back("beta_gc");
+        names__.push_back("betaP");
     }
 
 
@@ -830,13 +846,16 @@ public:
         dims__.push_back(n_t);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(n_c);
+        dims__.push_back((useCov * n_c));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(n_b);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(n_gc);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back((useCov * n_c));
         dimss__.push_back(dims__);
     }
 
@@ -918,7 +937,7 @@ public:
         vector<double> beta_t(n_t, 0.0);
         stan::math::initialize(beta_t, std::numeric_limits<double>::quiet_NaN());
         stan::math::fill(beta_t,DUMMY_VAR__);
-        vector<double> slope(n_c, 0.0);
+        vector<double> slope((useCov * n_c), 0.0);
         stan::math::initialize(slope, std::numeric_limits<double>::quiet_NaN());
         stan::math::fill(slope,DUMMY_VAR__);
         vector<double> beta_b(n_b, 0.0);
@@ -927,6 +946,9 @@ public:
         vector<double> beta_gc(n_gc, 0.0);
         stan::math::initialize(beta_gc, std::numeric_limits<double>::quiet_NaN());
         stan::math::fill(beta_gc,DUMMY_VAR__);
+        vector<double> betaP((useCov * n_c), 0.0);
+        stan::math::initialize(betaP, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(betaP,DUMMY_VAR__);
 
 
         try {
@@ -935,6 +957,7 @@ public:
                 for (int i = 1; i <= n_c; ++i) {
 
                     stan::math::assign(get_base1_lhs(slope,i,"slope",1), (get_base1(beta,i,"beta",1) + get_base1(deviate,i,"deviate",1)));
+                    stan::math::assign(get_base1_lhs(betaP,i,"betaP",1), (get_base1(beta,i,"beta",1) + (pp * get_base1(slope,i,"slope",1))));
                 }
             }
             if (as_bool(logical_gt(n_b,0))) {
@@ -970,7 +993,7 @@ public:
         for (int k_0__ = 0; k_0__ < n_t; ++k_0__) {
             vars__.push_back(beta_t[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < n_c; ++k_0__) {
+        for (int k_0__ = 0; k_0__ < (useCov * n_c); ++k_0__) {
             vars__.push_back(slope[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < n_b; ++k_0__) {
@@ -978,6 +1001,9 @@ public:
         }
         for (int k_0__ = 0; k_0__ < n_gc; ++k_0__) {
             vars__.push_back(beta_gc[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < (useCov * n_c); ++k_0__) {
+            vars__.push_back(betaP[k_0__]);
         }
 
         if (!include_gqs__) return;
@@ -1070,7 +1096,7 @@ public:
             param_name_stream__ << "beta_t" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (useCov * n_c); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "slope" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1083,6 +1109,11 @@ public:
         for (int k_0__ = 1; k_0__ <= n_gc; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "beta_gc" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= (useCov * n_c); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "betaP" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
 
@@ -1141,7 +1172,7 @@ public:
             param_name_stream__ << "beta_t" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (useCov * n_c); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "slope" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1154,6 +1185,11 @@ public:
         for (int k_0__ = 1; k_0__ <= n_gc; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "beta_gc" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= (useCov * n_c); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "betaP" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
 
