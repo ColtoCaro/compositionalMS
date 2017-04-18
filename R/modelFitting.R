@@ -25,19 +25,27 @@
 #'   biological replicates an error will be generated.
 #' @param approx A boolean variable which specifies whether or not a full
 #'   Bayesian
-#'   or an approximate Bayesian model should be fit.  The default value of TRUE
+#'   or an approximate Bayesian model should be fit.  A value of TRUE
 #'   fits a Variational Bayes approximation.
 #' @param resultsOnly A boolean variable that determines what information will
 #'   be returned after model fitting.  If resultsOnly is TRUE, then the
 #'   function will return a list containing two tables, one table for posterior
 #'   means and another with posterior standard deviations.  If resultsOnly is
 #'   FALSE then the results list will also contain an object of class Stanfit.
-#'   The Stanfit object contains all of the sampling and some measures for
-#'   quality control.
+#'   @param pp The percentage covariate level to be used for predicting relative
+#'   protein abundance.  By default this value is .95, so that sum signal to
+#'   noise will be adjusted towards the 95th percentile of observed values.
+#'   @param multiCore Indicates whether or not parallel processing should be used
+#'   .  For large datasets it is highly recommended that the package be used on a
+#'   computer capable of parallel processing.
 #' @details There are many details.  This will be filled out later.
 #'
 #'
-compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
+compCall <- function(dat,
+                     approx = FALSE,
+                     resultsOnly = FALSE,
+                     pp=.95,
+                     multiCore = FALSE){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(is.data.frame(dat)){dat <- list(dat)}
@@ -49,25 +57,25 @@ compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
     stop("Error: at least one list component is not a dataframe")
   }
   }
-  
+
   #make sure that each dataframe has the same reference condition
-  refList <- lapply(dat, function(x) paste(x[1, "tag1"], 
+  refList <- lapply(dat, function(x) paste(x[1, "tag1"],
                                            x[2, "tag1"]))
   if(!do.call(all.equal,refList)){
     stop("Error: Plexes have different reference channels")
   }
-  
+
   readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit,
                                                              x))
   oneDat <- do.call(rbind, readyDat)
   oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, oneDat$ptmID),]
-  
+
   #set data variables
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   condKey <- data.frame(number = 1:n_c, name = unique(oneDat$condID))
   condID <- as.integer(factor(oneDat$condID))
-  
+
   sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
   if(sumBio == 0){
     n_b <- 0
@@ -84,9 +92,9 @@ compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
     bioKey <- data.frame(number = 1:n_b, bioID = unique(oneDat$bioID),
                          condID = bioMap, conditionNumber)
     bioToCond <- bioKey$conditionNumber
-    
+
     #make an array giving bio positions for each condition
-    
+
     n_nc <- unlist(lapply(1:n_c, function(x) sum(bioToCond == x)))
     max_nc <- max(n_nc)
     ncMap <- lapply(1:n_c, function(x) which(bioToCond == x))
@@ -95,8 +103,8 @@ compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
       condToBio[i, 1:n_nc[i]] <- ncMap[[i]]
     }
   }
-  
-  
+
+
   sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
   if(sumPtm == 0){
     n_p <- 0
@@ -110,10 +118,10 @@ compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
     ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0,N_)
     ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
-    
+
     #find and remove ptm data with no corresponding protein data
-    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])  
-    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])  
+    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])
+    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])
     orphanProts <- setdiff(ptmProts, globalProts)
     if(length(orphanProts > 0)){
       orphanIndex <- which(oneDat$condID %in% orphanProts)
@@ -122,21 +130,29 @@ compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
       warning(wText)
     }
   } # end actions for ptm experiments
-  
+
   condID <- as.integer(factor(oneDat$condID))
-  
+
   sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
   useCov <- 1*(sumCov > 0)
-  
+
   covariate <- oneDat$covariate/max(oneDat$covariate)
   lr <- oneDat$lr
-  
+
+
+  #If multiCore was selected check for the number of available cores and
+  #use them
 
   sMod <- compMS:::stanmodels$allModels
   if(approx){
     model <- rstan::vb(sMod)
   }else{
-    model <- rstan::sampling(sMod)
+
+    if(multiCore){
+      model <- rstan::sampling(sMod, cores = parallel::detectCores())
+    }else{
+      model <- rstan::sampling(sMod)
+    }
   }
   model
 

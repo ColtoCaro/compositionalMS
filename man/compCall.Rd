@@ -4,7 +4,8 @@
 \alias{compCall}
 \title{Fitting a compositional Stan model}
 \usage{
-compCall(dat, approx = TRUE, resultsOnly = TRUE, pp = 0.95)
+compCall(dat, approx = FALSE, resultsOnly = FALSE, pp = 0.95,
+  multiCore = FALSE)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -26,7 +27,7 @@ biological replicates an error will be generated.}
 
 \item{approx}{A boolean variable which specifies whether or not a full
 Bayesian
-or an approximate Bayesian model should be fit.  The default value of TRUE
+or an approximate Bayesian model should be fit.  A value of TRUE
 fits a Variational Bayes approximation.}
 
 \item{resultsOnly}{A boolean variable that determines what information will
@@ -34,8 +35,12 @@ be returned after model fitting.  If resultsOnly is TRUE, then the
 function will return a list containing two tables, one table for posterior
 means and another with posterior standard deviations.  If resultsOnly is
 FALSE then the results list will also contain an object of class Stanfit.
-The Stanfit object contains all of the sampling and some measures for
-quality control.}
+@param pp The percentage covariate level to be used for predicting relative
+protein abundance.  By default this value is .95, so that sum signal to
+noise will be adjusted towards the 95th percentile of observed values.
+@param multiCore Indicates whether or not parallel processing should be used
+.  For large datasets it is highly recommended that the package be used on a
+computer capable of parallel processing.}
 }
 \description{
 This function runs the main code for fitting an appropriate compositonal

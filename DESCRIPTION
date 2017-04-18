@@ -12,7 +12,9 @@ Description: Fits pre-compiled Bayesian models for isobaric tag mass
     the data file.
 License: GPL (>=3)
 Depends: R (>= 3.0.2), Rcpp (>= 0.12.9), methods (>= 3.3.2), reshape2 (>= 1.4.2)
-Imports: rstan (>= 2.14.1), rstantools (>= 1.1.0), bayesplot (>= 1.1.0)
+Imports: rstan (>= 2.14.1), rstantools (>= 1.1.0), bayesplot (>= 1.1.0), 
+    parallel (>= 3.3.2)
 LinkingTo: StanHeaders (>= 2.14.0.1), rstan (>= 2.14.1), BH (>= 1.62.0.1), 
     Rcpp (>= 0.12.9), RcppEigen (>= 0.3.2.9.0)
+LazyData: true
 RoxygenNote: 6.0.1
