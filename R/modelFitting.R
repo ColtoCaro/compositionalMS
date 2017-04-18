@@ -37,82 +37,110 @@
 #' @details There are many details.  This will be filled out later.
 #'
 #'
-compCall <- function(dat, approx = TRUE, resultsOnly = TRUE, pp=.95){
+compCall <- function(dat, approx = FALSE, resultsOnly = FALSE, pp=.95){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(is.data.frame(dat)){dat <- list(dat)}
 
   #test to make sure each list component is a dataframe
+  if (length(dat) > 1){
   testDf <- lapply(dat, is.data.frame)
   if(sum(unlist(testDf)) != length(dat)){
     stop("Error: at least one list component is not a dataframe")
-    }
-
+  }
+  }
+  
+  #make sure that each dataframe has the same reference condition
+  refList <- lapply(dat, function(x) paste(x[1, "tag1"], 
+                                           x[2, "tag1"]))
+  if(!do.call(all.equal,refList)){
+    stop("Error: Plexes have different reference channels")
+  }
+  
   readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit,
                                                              x))
   oneDat <- do.call(rbind, readyDat)
-  oneDat <- oneDat[order(oneDat$techID, oneDat$ptm, oneDat$ptmID, oneDat$bioID,
-                         oneDat$condID, oneDat$tag_plex), ]
-
+  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, oneDat$ptmID),]
+  
   #set data variables
   N_ <- nrow(oneDat)
-  n_c <- length(unique(oneDat$techID))
-
+  n_c <- length(unique(oneDat$condID))
+  condKey <- data.frame(number = 1:n_c, name = unique(oneDat$condID))
+  condID <- as.integer(factor(oneDat$condID))
+  
   sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
   if(sumBio == 0){
     n_b <- 0
     bioID <- rep(0,N_)
+    condToBio <- rep(0, n_b)
+    n_nc <- rep(0, n_c)
+    max_nc <- 0
   }else{
     n_b <- length(unique(oneDat$bioID))
     bioID <- as.integer(factor(oneDat$bioID))
+    #make a mapping for use in a heierarchical model (not implemented)
+    bioMap <- oneDat$condID[match(unique(oneDat$bioID), oneDat$bioID)]
+    conditionNumber <- condKey$number[match(bioMap, condKey$name)]
+    bioKey <- data.frame(number = 1:n_b, bioID = unique(oneDat$bioID),
+                         condID = bioMap, conditionNumber)
+    bioToCond <- bioKey$conditionNumber
+    
+    #make an array giving bio positions for each condition
+    
+    n_nc <- unlist(lapply(1:n_c, function(x) sum(bioToCond == x)))
+    max_nc <- max(n_nc)
+    ncMap <- lapply(1:n_c, function(x) which(bioToCond == x))
+    condToBio <- matrix(0, nrow = n_c, ncol = max_nc)
+    for (i in 1:n_c){
+      condToBio[i, 1:n_nc[i]] <- ncMap[[i]]
     }
-
-  sumCond <- sum(unlist(lapply(dat, function(x) (x[3, 1] ==1 ))))
-  if(sumCond == 0){
-    n_gc <- 0
-    condID <- rep(0, N_)
-  }else{
-    n_gc <- length(unique(oneDat$condID))
-    condID <- as.integer(factor(oneDat$condID))
-    }
-
-  n_t <- length(unique(oneDat$tag_plex))
-
-  sumPtm <- sum(unlist(lapply(dat, function(x) (x[4, 1] == 1))))
+  }
+  
+  
+  sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
   if(sumPtm == 0){
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
     ptmPep <- rep(0,N_)
   }else{
-  nonPtms <- which(oneDat$ptm == 0)
-  n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
-  n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
-  ptm <- as.integer(oneDat$ptm)
-  ptmPep <- rep(0,N_)
-  ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
-  }
-
-  techID <- as.integer(factor(oneDat$techID))
-  tag <- as.integer(factor(oneDat$tag_plex))
-
+    nonPtms <- which(oneDat$ptm == 0)
+    n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
+    n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
+    ptm <- as.integer(oneDat$ptm)
+    ptmPep <- rep(0,N_)
+    ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
+    
+    #find and remove ptm data with no corresponding protein data
+    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])  
+    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])  
+    orphanProts <- setdiff(ptmProts, globalProts)
+    if(length(orphanProts > 0)){
+      orphanIndex <- which(oneDat$condID %in% orphanProts)
+      oneDat <- oneDat[-orphanIndex, ]
+      wText <- paste(length(orphanIndex), "PTM data points were removed because they had no corresponding protein level measurements")
+      warning(wText)
+    }
+  } # end actions for ptm experiments
+  
+  condID <- as.integer(factor(oneDat$condID))
+  
   sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
   useCov <- 1*(sumCov > 0)
-
-  covariate <- oneDat$covariate
+  
+  covariate <- oneDat$covariate/max(oneDat$covariate)
   lr <- oneDat$lr
+  
 
-  model <- rstan::sampling(compMS:::stanmodels$allModels)
+  sMod <- compMS:::stanmodels$allModels
+  if(approx){
+    model <- rstan::vb(sMod)
+  }else{
+    model <- rstan::sampling(sMod)
+  }
   model
 
 } #end of compFit function
-
-#' Fitting the model
-fitModel <- function(dat, modelFit, approx, resultsOnly){
-  #create unique protein id's.
-  dat <- lapply(dat, addIds)
-}
-
 
 
 
