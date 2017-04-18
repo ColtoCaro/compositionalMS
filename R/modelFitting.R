@@ -8,7 +8,8 @@
 #'
 #' @export
 #' @param dat The data to be analyzed.  This data must be formatted as shown in
-#'   the included sample data.  Both the reference channel and the reference
+#'   the included sample data \code{\link{ptmDat}}.  Both the reference channel
+#'    and the reference
 #'   conditions will be defined from the first column of data. If multiple runs
 #'   are to be analyzed at once then the dat object must be a list of
 #'   dataframes.  This is only recommended if biological or technical
@@ -39,6 +40,7 @@
 #'   .  For large datasets it is highly recommended that the package be used on a
 #'   computer capable of parallel processing.
 #' @details There are many details.  This will be filled out later.
+#'
 #'
 #'
 compCall <- function(dat,
@@ -145,7 +147,11 @@ compCall <- function(dat,
 
   sMod <- compMS:::stanmodels$allModels
   if(approx){
-    model <- rstan::vb(sMod)
+    if(multiCore){
+      model <- rstan::vb(sMod, cores = parallel::detectCores())
+    }else{
+      model <- rstan::vb(sMod)
+    }
   }else{
 
     if(multiCore){
