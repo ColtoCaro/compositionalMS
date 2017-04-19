@@ -74,6 +74,7 @@ compCall <- function(dat,
 
   #set data variables
   #Do ptms first since it might change the dimensions of the data
+  N_ <- nrow(oneDat)
   sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
   if(sumPtm == 0){
     n_p <- 0
