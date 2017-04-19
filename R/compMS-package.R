@@ -20,7 +20,8 @@
 #' designed to make these models accesible to people without a background
 #' in Bayesian statistics or compositional data analysis.  This is done by
 #' requiring users to follow a very specific format for data entry.  Once
-#' the data if formatted properly everything else is handled internally.
+#' the data is formatted properly everything else is handled internally.
+#' The required fields and headers are explained here \code{\link{ptmDat}}.
 #'
 #' @section Model Details:
 #' This is where I will explain the model and the options for use:
