@@ -73,6 +73,35 @@ compCall <- function(dat,
   oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, oneDat$ptmID),]
 
   #set data variables
+  #Do ptms first since it might change the dimensions of the data
+  sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
+  if(sumPtm == 0){
+    n_p <- 0
+    n_ptm <- 0
+    ptm <- rep(0,N_)
+    ptmPep <- rep(0,N_)
+  }else{
+    #find and remove ptm data with no corresponding protein data
+    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])
+    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])
+    orphanProts <- setdiff(ptmProts, globalProts)
+    if(length(orphanProts > 0)){
+      orphanIndex <- which(oneDat$condID %in% orphanProts)
+      oneDat <- oneDat[-orphanIndex, ]
+      wText <- paste(length(orphanIndex), "PTM data points were removed because they had no corresponding protein level measurements")
+      warning(wText)
+    }
+
+    nonPtms <- which(oneDat$ptm == 0)
+    n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
+    n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
+    ptm <- as.integer(oneDat$ptm)
+    ptmPep <- rep(0,N_)
+    ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
+
+  } # end actions for ptm experiments
+
+
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   condKey <- data.frame(number = 1:n_c, name = unique(oneDat$condID))
@@ -107,31 +136,6 @@ compCall <- function(dat,
   }
 
 
-  sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
-  if(sumPtm == 0){
-    n_p <- 0
-    n_ptm <- 0
-    ptm <- rep(0,N_)
-    ptmPep <- rep(0,N_)
-  }else{
-    nonPtms <- which(oneDat$ptm == 0)
-    n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
-    n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
-    ptm <- as.integer(oneDat$ptm)
-    ptmPep <- rep(0,N_)
-    ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
-
-    #find and remove ptm data with no corresponding protein data
-    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])
-    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])
-    orphanProts <- setdiff(ptmProts, globalProts)
-    if(length(orphanProts > 0)){
-      orphanIndex <- which(oneDat$condID %in% orphanProts)
-      oneDat <- oneDat[-orphanIndex, ]
-      wText <- paste(length(orphanIndex), "PTM data points were removed because they had no corresponding protein level measurements")
-      warning(wText)
-    }
-  } # end actions for ptm experiments
 
   condID <- as.integer(factor(oneDat$condID))
 
