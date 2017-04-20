@@ -54,18 +54,19 @@ compCall <- function(dat,
 
   #test to make sure each list component is a dataframe
   if (length(dat) > 1){
-  testDf <- lapply(dat, is.data.frame)
-  if(sum(unlist(testDf)) != length(dat)){
-    stop("Error: at least one list component is not a dataframe")
-  }
+    testDf <- lapply(dat, is.data.frame)
+    if(sum(unlist(testDf)) != length(dat)){
+      stop("Error: at least one list component is not a dataframe")
+    }
+    #make sure that each dataframe has the same reference condition
+    refList <- lapply(dat, function(x) paste(x[1, "tag1"],
+                                             x[2, "tag1"]))
+    if(!do.call(all.equal,refList)){
+      stop("Error: Plexes have different reference channels")
+    }
   }
 
-  #make sure that each dataframe has the same reference condition
-  refList <- lapply(dat, function(x) paste(x[1, "tag1"],
-                                           x[2, "tag1"]))
-  if(!do.call(all.equal,refList)){
-    stop("Error: Plexes have different reference channels")
-  }
+
 
   readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit,
                                                              x))
