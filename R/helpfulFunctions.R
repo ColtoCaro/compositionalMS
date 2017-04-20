@@ -7,7 +7,7 @@
 logRatio <- function(mat, ref_index){
   mat[is.na(mat)] <- 1
   mat[mat < 1] <- 1
-  lMat <- log(mat)
+  lMat <- log2(mat)
   lrMat <- lMat[ , -ref_index, drop = F] - rowMeans(lMat[ , ref_index, drop = F])
   lrMat
 }
@@ -54,20 +54,22 @@ transformDat <- function(df, modelFit, plexNumber){
 
   finalDat <- data.frame(condID = paste(melted$Protein, separated[, 3],
                                         sep = "_"), bioID,
-                         ptmID = paste(melted$Protein, separated[, 3], 
-                                       melted$Peptide, separated[ , 5], 
+                         ptmID = paste(melted$Protein, separated[, 3],
+                                       melted$Peptide, separated[ , 5],
                                        sep = "_"),
                   ptm = separated[ , 5], tag_plex, covariate = melted$Covariate,
                   lr = melted$lr, stringsAsFactors = F)
   finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
-  
+
   #normalize the non-ptm data by tag
-  normed <- unlist(by(melted[finalDat$ptm == 0, ]$lr, 
-                 finalDat[finalDat$ptm == 0, ]$tag_plex, function(x) 
+  normed <- unlist(by(melted[finalDat$ptm == 0, ]$lr,
+                 finalDat[finalDat$ptm == 0, ]$tag_plex, function(x)
                    x - mean(x)))
   melted$lr[finalDat$ptm == 0] <- normed
   finalDat$lr <- melted$lr
-  
+
   finalDat
 }#end function transformDat
+
+
 

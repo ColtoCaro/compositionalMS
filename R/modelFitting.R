@@ -4,7 +4,9 @@
 #'
 #' This function runs the main code for fitting an appropriate compositonal
 #' proteomics model based on the
-#' input data file.  It returns a Stan modelfit object.
+#' input data file.  It returns a list of size 3.  The first component of the
+#' contains summary data on relative protein abundance.  The second component
+#' summarizes PTM peptides and the third component contains the Stanfit object.
 #'
 #' @export
 #' @param dat The data to be analyzed.  This data must be formatted as shown in
@@ -39,6 +41,11 @@
 #'   @param multiCore Indicates whether or not parallel processing should be used
 #'   .  For large datasets it is highly recommended that the package be used on a
 #'   computer capable of parallel processing.
+#'   @param iter Number of iterations for each chain
+#'   @param nullSet An interval representing unimportant changes.  This is
+#'    used to create the posterior probability that changes fall within the
+#'    unimportant interval.
+#'
 #' @details There are many details.  This will be filled out later.
 #'
 #'
@@ -47,7 +54,10 @@ compCall <- function(dat,
                      approx = FALSE,
                      resultsOnly = FALSE,
                      pp=.95,
-                     multiCore = FALSE){
+                     multiCore = FALSE,
+                     iter = 2000,
+                     nullSet = c(-.1, .1)
+                     ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(is.data.frame(dat)){dat <- list(dat)}
@@ -147,7 +157,8 @@ compCall <- function(dat,
   covariate <- oneDat$covariate/max(oneDat$covariate)
   lr <- oneDat$lr
 
-
+  summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
+  print(summaryStr)
   #If multiCore was selected check for the number of available cores and
   #use them
 
@@ -161,13 +172,49 @@ compCall <- function(dat,
   }else{
 
     if(multiCore){
-      model <- rstan::sampling(sMod, cores = parallel::detectCores())
+      model <- rstan::sampling(sMod, cores = parallel::detectCores(),
+                               iter = iter)
     }else{
-      model <- rstan::sampling(sMod)
+      model <- rstan::sampling(sMod, iter = iter)
     }
   }
-  model
 
+  #create summary table
+  if(n_b > 0){
+    targetChain <- rstan::extract(model, pars="avgCond")$avgCond
+    postMeans <- colMeans(targetChain)
+    postVar <- apply(targetChain, 2, var)
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
+      pnorm(nullSet[1], postMeans, sqrt(postStd))
+  }else{
+    targetChain <- rstan::extract(model, pars="beta")$beta
+    postMeans <- colMeans(targetChain)
+    postVar <- apply(targetChain, 2, var)
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
+      pnorm(nullSet[1], postMeans, sqrt(postStd))
+  }
+
+  resDf <- data.frame(name = unique(oneDat$condID), mean = postMeans,
+                      var = postVar, P_null = pvals)
+
+  if(n_p > 0){
+    targetChain <- rstan::extract(model, pars="alpha")$alpha
+    postMeans <- colMeans(targetChain)
+    postVar <- apply(targetChain, 2, var)
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
+      pnorm(nullSet[1], postMeans, sqrt(postStd))
+    ptmDf <- data.frame(name = unique(oneDat$ptmID), mean = postMeans,
+                        var = postVar, P_null = pvals)
+  }else{
+    ptmDf <- NULL
+  }
+
+  RES <- list(3)
+  RES[[1]] <- resDf
+  RES[[2]] <- ptmDf
+  RES[[3]] <- model
+
+  RES
 } #end of compFit function
 
 
