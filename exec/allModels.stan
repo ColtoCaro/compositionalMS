@@ -14,7 +14,7 @@ data{
                                       //within condID)
   int<lower=0, upper=n_ptm> ptm[N_] ; //ID for ptms (determines variance parameter)
   int<lower=0, upper=n_p> ptmPep[N_] ; //ID for ptm peptides
-  int<lower=0, upper=n_b> condToBio[n_c, max_nc] ; //Mapping from bio to cond
+  int<lower=0, upper=n_b> condToBio[n_c, max(max_nc, 1)] ; //Mapping from bio to cond
 
   int<lower=0> useCov ;  //Indicator for use of covariate (either 0 or 1)
   real<lower=0, upper=1> covariate[N_] ; // covariate
@@ -32,7 +32,7 @@ transformed data{
 parameters{
   real beta[n_c * (1-bioInd)] ;
   real beta_b[n_b] ;
-  
+
   real deviate_c[useCov * n_c * (1-bioInd)] ; // The correlated slope
   real deviate_b[useCov * n_b] ; // The correlated slope per bioRep
 
@@ -45,7 +45,7 @@ parameters{
 
 transformed parameters{
   real slope_c[useCov*n_c* (1-bioInd)] ;
-  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level 
+  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
   real slope_b[useCov*n_b] ;
   real betaP_b[useCov*n_b] ;  //predicted protein level at pp*covariate
 
@@ -54,7 +54,7 @@ transformed parameters{
         slope_b[i] = beta_b[i] + deviate_b[i] ;
         betaP_b[i] = beta_b[i] + pp*slope_b[i] ;
       }
-      
+
   }
   if(n_b == 0 && useCov > 0){
       for (i in 1:n_c){
@@ -68,11 +68,11 @@ transformed parameters{
 
 model{
   //first set parameters that apply to all models
-  
+
   for(i in 1:(n_ptm + 1)){
   sigma[i] ~ normal(0, 5) ;
   }
-  
+
   //set ptm distributions
   if(n_ptm > 0){
     for(i in 1:n_p){
@@ -84,7 +84,7 @@ model{
   if(useCov == 0){
   // base model
   if(n_b == 0){
-    
+
    for(i in 1:n_c){
       beta[i] ~ normal(0, 10) ;
     }
@@ -112,7 +112,7 @@ model{
       }
     }
   } // end bioRep model
-    
+
   } //end no covariate
 
   //Now repeat with covariate use
@@ -121,14 +121,14 @@ model{
 
   // base model
   if(n_b == 0){
-      
+
    for(i in 1:n_c){
       deviate_c[i] ~ normal(0, 5) ;
       beta[i] ~ normal(0, 10) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]]  + 
+      lr[i] ~ normal(beta[condID[i]]  +
       covariate[i]*slope_c[condID[i]], sigma[1]) ;
     }
       if(ptm[i] > 0){
@@ -148,7 +148,7 @@ model{
 
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] 
+      lr[i] ~ normal(beta_b[bioID[i]]
       + covariate[i]*slope_b[bioID[i]], sigma[1]) ;
     }
   if(ptm[i] > 0){
@@ -158,7 +158,7 @@ model{
 
   } // end bioRep model
 
- 
+
   } //end with covariate
 
 
@@ -168,7 +168,7 @@ model{
 
 generated quantities{
   real avgCond[n_c*bioInd] ;
-  
+
   if(useCov == 0 && bioInd ==1){
     for(i in 1:n_c){
       avgCond[i] = 0;
@@ -177,7 +177,7 @@ generated quantities{
       }
     }
   }
-  
+
   if(useCov == 1 && bioInd ==1){
     for(i in 1:n_c){
       avgCond[i] = 0;
@@ -186,8 +186,8 @@ generated quantities{
       }
     }
   }
-  
-  
+
+
 } // end stan program
 
 

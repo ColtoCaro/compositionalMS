@@ -123,7 +123,7 @@ compCall <- function(dat,
   if(sumBio == 0){
     n_b <- 0
     bioID <- rep(0,N_)
-    condToBio <- rep(0, n_b)
+    condToBio <- matrix(0, nrow = n_c, ncol = 1)
     n_nc <- rep(0, n_c)
     max_nc <- 0
   }else{
@@ -212,7 +212,11 @@ compCall <- function(dat,
   RES <- list(3)
   RES[[1]] <- resDf
   RES[[2]] <- ptmDf
-  RES[[3]] <- model
+  if(resultsOnly){
+    RES[[3]] <- NULL
+  }else{
+    RES[[3]] <- model
+  }
 
   RES
 } #end of compFit function

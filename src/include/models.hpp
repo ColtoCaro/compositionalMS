@@ -151,13 +151,13 @@ public:
         for (size_t i_0__ = 0; i_0__ < ptmPep_limit_0__; ++i_0__) {
             ptmPep[i_0__] = vals_i__[pos__++];
         }
-        context__.validate_dims("data initialization", "condToBio", "int", context__.to_vec(n_c,max_nc));
+        context__.validate_dims("data initialization", "condToBio", "int", context__.to_vec(n_c,std::max(max_nc,1)));
         validate_non_negative_index("condToBio", "n_c", n_c);
-        validate_non_negative_index("condToBio", "max_nc", max_nc);
-        condToBio = std::vector<std::vector<int> >(n_c,std::vector<int>(max_nc,int(0)));
+        validate_non_negative_index("condToBio", "std::max(max_nc,1)", std::max(max_nc,1));
+        condToBio = std::vector<std::vector<int> >(n_c,std::vector<int>(std::max(max_nc,1),int(0)));
         vals_i__ = context__.vals_i("condToBio");
         pos__ = 0;
-        size_t condToBio_limit_1__ = max_nc;
+        size_t condToBio_limit_1__ = std::max(max_nc,1);
         for (size_t i_1__ = 0; i_1__ < condToBio_limit_1__; ++i_1__) {
             size_t condToBio_limit_0__ = n_c;
             for (size_t i_0__ = 0; i_0__ < condToBio_limit_0__; ++i_0__) {
@@ -220,7 +220,7 @@ public:
             check_less_or_equal(function__,"ptmPep[k0__]",ptmPep[k0__],n_p);
         }
         for (int k0__ = 0; k0__ < n_c; ++k0__) {
-            for (int k1__ = 0; k1__ < max_nc; ++k1__) {
+            for (int k1__ = 0; k1__ < std::max(max_nc,1); ++k1__) {
                 check_greater_or_equal(function__,"condToBio[k0__][k1__]",condToBio[k0__][k1__],0);
                 check_less_or_equal(function__,"condToBio[k0__][k1__]",condToBio[k0__][k1__],n_b);
             }
