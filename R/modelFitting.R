@@ -184,14 +184,14 @@ compCall <- function(dat,
     targetChain <- rstan::extract(model, pars="avgCond")$avgCond
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
-      pnorm(nullSet[1], postMeans, sqrt(postStd))
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
+      pnorm(nullSet[1], postMeans, sqrt(postVar))
   }else{
     targetChain <- rstan::extract(model, pars="beta")$beta
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
-      pnorm(nullSet[1], postMeans, sqrt(postStd))
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
+      pnorm(nullSet[1], postMeans, sqrt(postVar))
   }
 
   resDf <- data.frame(name = unique(oneDat$condID), mean = postMeans,
@@ -201,8 +201,8 @@ compCall <- function(dat,
     targetChain <- rstan::extract(model, pars="alpha")$alpha
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postStd)) -
-      pnorm(nullSet[1], postMeans, sqrt(postStd))
+    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
+      pnorm(nullSet[1], postMeans, sqrt(postVar))
     ptmDf <- data.frame(name = unique(oneDat$ptmID), mean = postMeans,
                         var = postVar, P_null = pvals)
   }else{
