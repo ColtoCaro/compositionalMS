@@ -35,14 +35,14 @@
 #'   function will return a list containing two tables, one table for posterior
 #'   means and another with posterior standard deviations.  If resultsOnly is
 #'   FALSE then the results list will also contain an object of class Stanfit.
-#'   @param pp The percentage covariate level to be used for predicting relative
+#' @param pp The percentage covariate level to be used for predicting relative
 #'   protein abundance.  By default this value is .95, so that sum signal to
 #'   noise will be adjusted towards the 95th percentile of observed values.
-#'   @param multiCore Indicates whether or not parallel processing should be used
+#' @param multiCore Indicates whether or not parallel processing should be used
 #'   .  For large datasets it is highly recommended that the package be used on a
 #'   computer capable of parallel processing.
-#'   @param iter Number of iterations for each chain
-#'   @param nullSet An interval representing unimportant changes.  This is
+#' @param iter Number of iterations for each chain
+#' @param nullSet An interval representing unimportant changes.  This is
 #'    used to create the posterior probability that changes fall within the
 #'    unimportant interval.
 #'
@@ -209,7 +209,7 @@ compCall <- function(dat,
     ptmDf <- NULL
   }
 
-  RES <- list(3)
+  RES <- list()
   RES[[1]] <- resDf
   RES[[2]] <- ptmDf
   if(resultsOnly){
