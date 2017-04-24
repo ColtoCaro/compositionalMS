@@ -60,6 +60,6 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
 #' 
 precisionPlot <- function(summary){
   ggplot2::ggplot(results[[1]], aes(x = mean, y = 1/var)) + 
-    ggplot2::geom_point()
+    ggplot2::geom_point(aes(color = P_null)) + scale_color_gradient(low = "red", high = "black")
 }
 
