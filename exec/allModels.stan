@@ -4,6 +4,7 @@ data{
   int<lower=0> N_ ;  //number of data points
   int<lower=0> n_b ; //number of biologicaly unique proteins
   int<lower=0> n_c ;  //number of protein*condition combinations
+  int<lower=0> n_t ;  //number of tag/plex combinations
   int<lower=0> n_p ; // number of ptm peptides (0 if not a ptm experiment)
   int<lower=0> n_ptm ; // number of ptm's
   int<lower=0> n_nc[n_c] ; //number of bio id's within each condition
@@ -12,6 +13,7 @@ data{
   int<lower=0, upper=n_c> condID[N_] ; //ID for condition*prot
   int<lower=0, upper=n_b> bioID[N_] ; //ID for biological replicates (nested
                                       //within condID)
+  int<lower=0, upper=n_t> tag_plex[N_] ;
   int<lower=0, upper=n_ptm> ptm[N_] ; //ID for ptms (determines variance parameter)
   int<lower=0, upper=n_p> ptmPep[N_] ; //ID for ptm peptides
   int<lower=0, upper=n_b> condToBio[n_c, max(max_nc, 1)] ; //Mapping from bio to cond
@@ -38,7 +40,7 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
-  real<lower = 0> sigma[n_ptm + 1] ; //experimental error
+  real<lower = 0> sigma[n_ptm + n_t] ; //experimental error
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
 }
@@ -69,7 +71,7 @@ transformed parameters{
 model{
   //first set parameters that apply to all models
 
-  for(i in 1:(n_ptm + 1)){
+  for(i in 1:(n_ptm + n_t)){
   sigma[i] ~ normal(0, 5) ;
   }
 
@@ -90,10 +92,10 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigma[1]) ;
+      lr[i] ~ normal(beta[condID[i]] , sigma[tag_plex[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
       }
     }
   } // end base model
@@ -105,10 +107,10 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] , sigma[1]) ;
+      lr[i] ~ normal(beta_b[bioID[i]] , sigma[tag_plex[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
       }
     }
   } // end bioRep model
@@ -129,11 +131,11 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta[condID[i]]  +
-      covariate[i]*slope_c[condID[i]], sigma[1]) ;
+      covariate[i]*slope_c[condID[i]], sigma[tag_plex[i]]) ;
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(betaP_c[condID[i]] + alpha[ptmPep[i]],
-        sigma[1 + ptm[i]]) ;
+        sigma[n_t + ptm[i]]) ;
       }
   }
 
@@ -149,10 +151,10 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta_b[bioID[i]]
-      + covariate[i]*slope_b[bioID[i]], sigma[1]) ;
+      + covariate[i]*slope_b[bioID[i]], sigma[tag_plex[i]]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], sigma[1 + ptm[i]]) ;
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
       }
     }
 

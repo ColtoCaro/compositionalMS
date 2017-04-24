@@ -116,8 +116,10 @@ compCall <- function(dat,
 
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
+  n_t <- length(unique(oneDat$tag_plex))
   condKey <- data.frame(number = 1:n_c, name = unique(oneDat$condID))
   condID <- as.integer(factor(oneDat$condID))
+  tagID <- as.integer(factor(oneDat$tag_plex))
 
   sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
   if(sumBio == 0){
