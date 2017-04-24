@@ -5,7 +5,7 @@
 \title{Fitting a compositional Stan model}
 \usage{
 compCall(dat, approx = FALSE, resultsOnly = FALSE, pp = 0.95,
-  multiCore = FALSE)
+  multiCore = FALSE, iter = 2000, nullSet = c(-0.1, 0.1))
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -35,18 +35,28 @@ fits a Variational Bayes approximation.}
 be returned after model fitting.  If resultsOnly is TRUE, then the
 function will return a list containing two tables, one table for posterior
 means and another with posterior standard deviations.  If resultsOnly is
-FALSE then the results list will also contain an object of class Stanfit.
-@param pp The percentage covariate level to be used for predicting relative
+FALSE then the results list will also contain an object of class Stanfit.}
+
+\item{pp}{The percentage covariate level to be used for predicting relative
 protein abundance.  By default this value is .95, so that sum signal to
-noise will be adjusted towards the 95th percentile of observed values.
-@param multiCore Indicates whether or not parallel processing should be used
+noise will be adjusted towards the 95th percentile of observed values.}
+
+\item{multiCore}{Indicates whether or not parallel processing should be used
 .  For large datasets it is highly recommended that the package be used on a
 computer capable of parallel processing.}
+
+\item{iter}{Number of iterations for each chain}
+
+\item{nullSet}{An interval representing unimportant changes.  This is
+used to create the posterior probability that changes fall within the
+unimportant interval.}
 }
 \description{
 This function runs the main code for fitting an appropriate compositonal
 proteomics model based on the
-input data file.  It returns a Stan modelfit object.
+input data file.  It returns a list of size 3.  The first component of the
+contains summary data on relative protein abundance.  The second component
+summarizes PTM peptides and the third component contains the Stanfit object.
 }
 \details{
 There are many details.  This will be filled out later.
