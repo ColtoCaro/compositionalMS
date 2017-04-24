@@ -39,8 +39,8 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
 
   parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
 
-  rstan::plot(results[[3]], pars = parStr, mapping = theme) +
-    scale_y_discrete(labels = NULL)
+  rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
+    ggplot2::scale_y_discrete(labels = NULL)
 
 }#end caterpillar
 
@@ -59,8 +59,9 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
 #'   object.
 #'
 precisionPlot <- function(summary){
-  ggplot2::ggplot(results[[1]], aes(x = mean, y = 1/var)) +
-    ggplot2::geom_point(aes(color = P_null)) + scale_color_gradient(low = "red", high = "black")
+  ggplot2::ggplot(summary, ggplot2::aes(x = mean, y = 1/var)) +
+    ggplot2::geom_point(ggplot2::aes(color = P_null)) + 
+    ggplot2::scale_color_gradient(low = "red", high = "black")
 }
 
 #'

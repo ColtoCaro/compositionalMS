@@ -13,7 +13,7 @@ data{
   int<lower=0, upper=n_c> condID[N_] ; //ID for condition*prot
   int<lower=0, upper=n_b> bioID[N_] ; //ID for biological replicates (nested
                                       //within condID)
-  int<lower=0, upper=n_t> tag_plex[N_] ;
+  int<lower=0, upper=n_t> tagID[N_] ;
   int<lower=0, upper=n_ptm> ptm[N_] ; //ID for ptms (determines variance parameter)
   int<lower=0, upper=n_p> ptmPep[N_] ; //ID for ptm peptides
   int<lower=0, upper=n_b> condToBio[n_c, max(max_nc, 1)] ; //Mapping from bio to cond
@@ -92,7 +92,7 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigma[tag_plex[i]]) ;
+      lr[i] ~ normal(beta[condID[i]] , sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
@@ -107,7 +107,7 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] , sigma[tag_plex[i]]) ;
+      lr[i] ~ normal(beta_b[bioID[i]] , sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
@@ -131,7 +131,7 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta[condID[i]]  +
-      covariate[i]*slope_c[condID[i]], sigma[tag_plex[i]]) ;
+      covariate[i]*slope_c[condID[i]], sigma[tagID[i]]) ;
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(betaP_c[condID[i]] + alpha[ptmPep[i]],
@@ -151,7 +151,7 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta_b[bioID[i]]
-      + covariate[i]*slope_b[bioID[i]], sigma[tag_plex[i]]) ;
+      + covariate[i]*slope_b[bioID[i]], sigma[tagID[i]]) ;
     }
   if(ptm[i] > 0){
         lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;

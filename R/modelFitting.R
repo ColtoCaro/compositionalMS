@@ -56,7 +56,7 @@ compCall <- function(dat,
                      pp=.95,
                      multiCore = FALSE,
                      iter = 2000,
-                     nullSet = c(-.1, .1)
+                     nullSet = c(-1, 1)
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
