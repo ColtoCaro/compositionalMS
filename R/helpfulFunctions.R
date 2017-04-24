@@ -71,5 +71,11 @@ transformDat <- function(df, modelFit, plexNumber){
   finalDat
 }#end function transformDat
 
+#function for extracting the condition number from labels
+getCond <- function(strVec){
+  reversed <- sapply(lapply(strsplit(strVec, NULL), rev), paste, collapse="")
+  position <- nchar(strVec) + 2 - regexpr("_", reversed)
+  condNumber <- substring(strVec, postion)
+}
 
 

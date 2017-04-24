@@ -17,6 +17,7 @@
 #'   parameters with 95% credible intervals that do not contain zero.
 #'
 caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
+
   if(ptm == T){
     parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
     parName <- "alpha"
@@ -57,11 +58,25 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
 #'   \code{\link{compCall}}, which will be found in either the first (for
 #'   protein summaries) or second (for ptm's) component of the result list
 #'   object.
+#' @param byCond A boolean parameter which determines if separate plots should
+#'   be made for each condition.  The default is FALSE which results in the
+#'   creation of a single plot.
 #'
-precisionPlot <- function(summary){
-  ggplot2::ggplot(summary, ggplot2::aes(x = mean, y = 1/var)) +
-    ggplot2::geom_point(ggplot2::aes(color = P_null)) + 
-    ggplot2::scale_color_gradient(low = "red", high = "black")
+precisionPlot <- function(summaryRes, byCond = FALSE){
+  if(byCond){
+    condition <- getCond(summaryRes$name)
+    newDf <- data.frame(summaryRes, condition)
+    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
+      ggplot2::geom_point(ggplot2::aes(color = P_null)) +
+      ggplot2::scale_color_gradient(low = "red", high = "black") +
+      ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change") +
+      ggplot2::facet_grid(. ~ condition)
+  }else{
+    ggplot2::ggplot(summaryRes, ggplot2::aes(x = mean, y = 1/var)) +
+      ggplot2::geom_point(ggplot2::aes(color = P_null)) +
+      ggplot2::scale_color_gradient(low = "red", high = "black") +
+      ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold-change")
+  }
 }
 
 #'
@@ -74,11 +89,12 @@ precisionPlot <- function(summary){
 #' problems in the experimental workflow.
 #'
 #' @export
-#' @param model A Stanmodel object generated from the function
-#' \code{\link{compCall}}, which can be found in the third component of the
-#' results object.
+#' @param model A results list generated from the function
+#' \code{\link{compCall}}.
 #'
-checkVariance <- function(model){
-  rstan::plot(model, pars ="sigma")
+checkVariance <- function(results){
+  rstan::plot(results[[3]], pars ="sigma") +
+    ggplot2::theme(axis.text.y = results[[4]])
+
 }
 

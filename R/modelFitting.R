@@ -219,6 +219,7 @@ compCall <- function(dat,
   }else{
     RES[[3]] <- model
   }
+  RES[[4]] <- unique(tagID)
 
   RES
 } #end of compFit function
