@@ -204,6 +204,8 @@ compCall <- function(dat,
     ptmDf <- NULL
   }
 
+  varNames <- c(unique(oneDat$tag_plex), paste("ptm", unique(ptm))[-1])
+
   RES <- list()
   RES[[1]] <- resDf
   RES[[2]] <- ptmDf
@@ -212,7 +214,7 @@ compCall <- function(dat,
   }else{
     RES[[3]] <- model
   }
-  RES[[4]] <- unique(tagID)
+  RES[[4]] <- varNames
 
   RES
 } #end of compFit function
