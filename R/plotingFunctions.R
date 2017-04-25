@@ -21,7 +21,7 @@
 #'
 caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
                         byCond = FALSE){
-
+  if(byCond == FALSE){
   if(ptm == T){
     parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
     parName <- "alpha"
@@ -46,8 +46,49 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
 
   rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
     ggplot2::scale_y_discrete(labels = NULL)
-
-
+  }else{ # stratify by condition
+    
+    if(ptm == T){
+      parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
+      parName <- "alpha"
+      condition <- getCond(results[[2]]$ptmName, ptm = TRUE)
+    }else{
+      if(results[[3]]@par_dims$avgCond == 0){
+        parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
+        parName <- "beta"
+        condition <- getCond(results[[1]]$name, ptm = F)
+      }else{
+        parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
+        parName <- "avgCond"
+        condition <- getCond(results[[1]]$name, ptm = F)
+      }
+    }
+    
+    for(i in 1:length(unique(condition))){
+    condIndex <- which(condition == unique(condition)[i])
+      
+    if(allPars == FALSE){
+      sigParIndex <- which(parSumm[ , "2.5%"] > 0 | parSumm[ , "97.5%"] < 0)
+    }else{
+      sigParIndex <- 1:dim(parSumm)[1]
+    }
+    #intersect the indices
+    sigParIndex <- intersect(condIndex, sigParIndex)
+    if(length(sigParIndex) == 0){next}
+    
+    orderedIndex <- sigParIndex[order(parSumm[sigParIndex, "50%"])]
+    
+    parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
+    
+    cPlot <- rstan::plot(results[[3]], pars = parStr, mapping = 
+                           ggplot2::theme) +
+      ggplot2::scale_y_discrete(labels = NULL) + 
+      ggplot2::ggtitle(paste("Condition", unique(condition)[i]))
+    print(cPlot)
+    } # end for loop
+    
+  } # end by condition = T
+  
 }#end caterpillar
 
 #' Precision plot
@@ -98,8 +139,9 @@ precisionPlot <- function(summaryRes, byCond = FALSE){
 #' \code{\link{compCall}}.
 #'
 checkVariance <- function(results){
-  rstan::plot(results[[3]], pars ="sigma") +
-    ggplot2::theme(axis.text.y = results[[4]])
+  npars <- length(results[[4]])
+  rstan::stan_plot(results[[3]], pars ="sigma") +
+    ggplot2::scale_y_continuous(breaks = npars:1, labels = results[[4]])
 
 }
 

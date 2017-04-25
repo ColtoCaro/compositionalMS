@@ -105,7 +105,8 @@ compCall <- function(dat,
     }
 
     nonPtms <- which(oneDat$ptm == 0)
-    n_p <- length(unique(oneDat[-nonPtms , ]$ptmID))
+    ptmName <- unique(smalldat[-nonPtms , ]$ptmID)
+    n_p <- length(ptmName)
     n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
     ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0,N_)
@@ -205,7 +206,7 @@ compCall <- function(dat,
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
-    ptmDf <- data.frame(name = unique(oneDat$ptmID), mean = postMeans,
+    ptmDf <- data.frame(ptmName, mean = postMeans,
                         var = postVar, P_null = pvals)
   }else{
     ptmDf <- NULL
