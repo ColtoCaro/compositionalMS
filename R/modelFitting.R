@@ -169,7 +169,6 @@ compCall <- function(dat,
   sMod <- compMS:::stanmodels$allModels
   if(approx){
       model <- rstan::vb(sMod, cores = nCores)
-    }
   }else{
       model <- rstan::sampling(sMod, cores = nCores,
                                iter = iter)
