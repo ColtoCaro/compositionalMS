@@ -75,7 +75,7 @@ transformDat <- function(df, modelFit, plexNumber){
 getCond <- function(strVec){
   reversed <- sapply(lapply(strsplit(strVec, NULL), rev), paste, collapse="")
   position <- nchar(strVec) + 2 - regexpr("_", reversed)
-  condNumber <- substring(strVec, postion)
+  condNumber <- as.integer(substring(strVec, postion))
 }
 
 

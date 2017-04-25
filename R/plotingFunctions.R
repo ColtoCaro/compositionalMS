@@ -15,8 +15,12 @@
 #' @param allPars A boolean variable indicating whether or not all parameters
 #'   should be plotted.  The default is false, resulting in a plot for only
 #'   parameters with 95% credible intervals that do not contain zero.
+#' @param byCond A boolean parameter which determines if separate plots should
+#'   be made for each condition.  The default is FALSE which results in the
+#'   creation of a single plot.
 #'
-caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
+caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
+                        byCond = FALSE){
 
   if(ptm == T){
     parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
@@ -42,6 +46,7 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE){
 
   rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
     ggplot2::scale_y_discrete(labels = NULL)
+
 
 }#end caterpillar
 
