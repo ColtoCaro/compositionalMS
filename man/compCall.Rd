@@ -5,7 +5,7 @@
 \title{Fitting a compositional Stan model}
 \usage{
 compCall(dat, approx = FALSE, resultsOnly = FALSE, pp = 0.95,
-  multiCore = FALSE, iter = 2000, nullSet = c(-0.1, 0.1))
+  nCores = 1, iter = 2000, nullSet = c(-1, 1))
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -41,8 +41,9 @@ FALSE then the results list will also contain an object of class Stanfit.}
 protein abundance.  By default this value is .95, so that sum signal to
 noise will be adjusted towards the 95th percentile of observed values.}
 
-\item{multiCore}{Indicates whether or not parallel processing should be used
-.  For large datasets it is highly recommended that the package be used on a
+\item{nCores}{determines the number of cores used for parallel processing
+should be used.
+For large datasets it is highly recommended that the package be used on a
 computer capable of parallel processing.}
 
 \item{iter}{Number of iterations for each chain}

@@ -4,12 +4,11 @@
 \alias{checkVariance}
 \title{Variance plot}
 \usage{
-checkVariance(model)
+checkVariance(results)
 }
 \arguments{
-\item{model}{A Stanmodel object generated from the function
-\code{\link{compCall}}, which can be found in the third component of the
-results object.}
+\item{model}{A results list generated from the function
+\code{\link{compCall}}.}
 }
 \description{
 This function shows the distribution of each parameter corresponding to an

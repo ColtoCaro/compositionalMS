@@ -4,9 +4,13 @@
 \alias{precisionPlot}
 \title{Precision plot}
 \usage{
-precisionPlot(summary)
+precisionPlot(summaryRes, byCond = FALSE)
 }
 \arguments{
+\item{byCond}{A boolean parameter which determines if separate plots should
+be made for each condition.  The default is FALSE which results in the
+creation of a single plot.}
+
 \item{summary}{A results table generated from the function
 \code{\link{compCall}}, which will be found in either the first (for
 protein summaries) or second (for ptm's) component of the result list

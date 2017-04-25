@@ -4,7 +4,7 @@
 \alias{caterpillar}
 \title{Caterpillar plot}
 \usage{
-caterpillar(results, ptm = FALSE, allPars = FALSE)
+caterpillar(results, ptm = FALSE, allPars = FALSE, byCond = FALSE)
 }
 \arguments{
 \item{results}{The results list generated from the function
@@ -16,6 +16,10 @@ should be generated.}
 \item{allPars}{A boolean variable indicating whether or not all parameters
 should be plotted.  The default is false, resulting in a plot for only
 parameters with 95% credible intervals that do not contain zero.}
+
+\item{byCond}{A boolean parameter which determines if separate plots should
+be made for each condition.  The default is FALSE which results in the
+creation of a single plot.}
 }
 \description{
 This function takes a list which contains a Stanfit object and summary
