@@ -106,7 +106,7 @@ compCall <- function(dat,
     }
 
     nonPtms <- which(oneDat$ptm == 0)
-    ptmName <- unique(smalldat[-nonPtms , ]$ptmID)
+    ptmName <- unique(oneDat[-nonPtms , ]$ptmID)
     n_p <- length(ptmName)
     n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
     ptm <- as.integer(oneDat$ptm)
