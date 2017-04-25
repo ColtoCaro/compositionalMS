@@ -38,8 +38,9 @@
 #' @param pp The percentage covariate level to be used for predicting relative
 #'   protein abundance.  By default this value is .95, so that sum signal to
 #'   noise will be adjusted towards the 95th percentile of observed values.
-#' @param multiCore Indicates whether or not parallel processing should be used
-#'   .  For large datasets it is highly recommended that the package be used on a
+#' @param nCores determines the number of cores used for parallel processing
+#'   should be used.
+#'   For large datasets it is highly recommended that the package be used on a
 #'   computer capable of parallel processing.
 #' @param iter Number of iterations for each chain
 #' @param nullSet An interval representing unimportant changes.  This is
@@ -54,7 +55,7 @@ compCall <- function(dat,
                      approx = FALSE,
                      resultsOnly = FALSE,
                      pp=.95,
-                     multiCore = FALSE,
+                     nCores = 1,
                      iter = 2000,
                      nullSet = c(-1, 1)
                      ){
@@ -167,19 +168,11 @@ compCall <- function(dat,
 
   sMod <- compMS:::stanmodels$allModels
   if(approx){
-    if(multiCore){
-      model <- rstan::vb(sMod, cores = parallel::detectCores())
-    }else{
-      model <- rstan::vb(sMod)
+      model <- rstan::vb(sMod, cores = nCores)
     }
   }else{
-
-    if(multiCore){
-      model <- rstan::sampling(sMod, cores = parallel::detectCores(),
+      model <- rstan::sampling(sMod, cores = nCores,
                                iter = iter)
-    }else{
-      model <- rstan::sampling(sMod, iter = iter)
-    }
   }
 
   #create summary table
