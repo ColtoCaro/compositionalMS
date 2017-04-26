@@ -126,12 +126,13 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 precisionPlot <- function(summaryRes, byCond = FALSE){
   if(byCond){
     condition <- getCond(summaryRes$name)
-    newDf <- data.frame(summaryRes, condition)
+    ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
+    newDf <- data.frame(summaryRes, condition, ptmType)
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
       ggplot2::geom_point(ggplot2::aes(color = P_null)) +
       ggplot2::scale_color_gradient(high = "black",low = "red") +
       ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change") +
-      ggplot2::facet_grid(. ~ condition)
+      ggplot2::facet_grid(ptmType ~ condition)
   }else{
     ggplot2::ggplot(summaryRes, ggplot2::aes(x = mean, y = 1/var)) +
       ggplot2::geom_point(ggplot2::aes(color = P_null)) +
