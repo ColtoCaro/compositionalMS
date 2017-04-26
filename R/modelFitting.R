@@ -119,7 +119,7 @@ compCall <- function(dat,
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   n_t <- length(unique(oneDat$tag_plex))
-  condKey <- data.frame(number = 1:n_c, 
+  condKey <- data.frame(number = 1:n_c,
                         name = levels(factor(oneDat$condID)))
   condID <- as.integer(factor(oneDat$condID))
   tagID <- as.integer(factor(oneDat$tag_plex))
@@ -133,12 +133,12 @@ compCall <- function(dat,
     max_nc <- 0
   }else{
     n_b <- length(unique(oneDat$bioID))
-    bioID <- levels(factor(oneDat$bioID))
+    bioID <- as.integer(factor(oneDat$bioID))
     #make a mapping for use in a heierarchical model (not yet implemented)
     bioMap <- oneDat$condID[match(levels(factor(oneDat$bioID)),
                                   oneDat$bioID)]
     conditionNumber <- condKey$number[match(bioMap, condKey$name)]
-    bioKey <- data.frame(number = 1:n_b, bioID,
+    bioKey <- data.frame(number = 1:n_b, bioID = levels(factor(oneDat$bioID)),
                          condID = bioMap, conditionNumber)
     bioToCond <- bioKey$conditionNumber
 
@@ -199,7 +199,7 @@ compCall <- function(dat,
       pnorm(nullSet[1], postMeans, sqrt(postVar))
     ptmDf <- data.frame(ptmName, mean = postMeans,
                         var = postVar, P_null = pvals)
-    varNames <- c(levels(factor(oneDat$tag_plex)), 
+    varNames <- c(levels(factor(oneDat$tag_plex)),
                   paste("ptm", levels(factor(ptm))[-1]))
   }else{
     ptmDf <- NULL
