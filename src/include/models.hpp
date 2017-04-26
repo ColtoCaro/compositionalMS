@@ -29,12 +29,14 @@ private:
     int N_;
     int n_b;
     int n_c;
+    int n_t;
     int n_p;
     int n_ptm;
     vector<int> n_nc;
     int max_nc;
     vector<int> condID;
     vector<int> bioID;
+    vector<int> tagID;
     vector<int> ptm;
     vector<int> ptmPep;
     vector<vector<int> > condToBio;
@@ -91,6 +93,11 @@ public:
         vals_i__ = context__.vals_i("n_c");
         pos__ = 0;
         n_c = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "n_t", "int", context__.to_vec());
+        n_t = int(0);
+        vals_i__ = context__.vals_i("n_t");
+        pos__ = 0;
+        n_t = vals_i__[pos__++];
         context__.validate_dims("data initialization", "n_p", "int", context__.to_vec());
         n_p = int(0);
         vals_i__ = context__.vals_i("n_p");
@@ -135,6 +142,16 @@ public:
         size_t bioID_limit_0__ = N_;
         for (size_t i_0__ = 0; i_0__ < bioID_limit_0__; ++i_0__) {
             bioID[i_0__] = vals_i__[pos__++];
+        }
+        validate_non_negative_index("tagID", "N_", N_);
+        context__.validate_dims("data initialization", "tagID", "int", context__.to_vec(N_));
+        validate_non_negative_index("tagID", "N_", N_);
+        tagID = std::vector<int>(N_,int(0));
+        vals_i__ = context__.vals_i("tagID");
+        pos__ = 0;
+        size_t tagID_limit_0__ = N_;
+        for (size_t i_0__ = 0; i_0__ < tagID_limit_0__; ++i_0__) {
+            tagID[i_0__] = vals_i__[pos__++];
         }
         validate_non_negative_index("ptm", "N_", N_);
         context__.validate_dims("data initialization", "ptm", "int", context__.to_vec(N_));
@@ -206,6 +223,7 @@ public:
         check_greater_or_equal(function__,"N_",N_,0);
         check_greater_or_equal(function__,"n_b",n_b,0);
         check_greater_or_equal(function__,"n_c",n_c,0);
+        check_greater_or_equal(function__,"n_t",n_t,0);
         check_greater_or_equal(function__,"n_p",n_p,0);
         check_greater_or_equal(function__,"n_ptm",n_ptm,0);
         for (int k0__ = 0; k0__ < n_c; ++k0__) {
@@ -219,6 +237,10 @@ public:
         for (int k0__ = 0; k0__ < N_; ++k0__) {
             check_greater_or_equal(function__,"bioID[k0__]",bioID[k0__],0);
             check_less_or_equal(function__,"bioID[k0__]",bioID[k0__],n_b);
+        }
+        for (int k0__ = 0; k0__ < N_; ++k0__) {
+            check_greater_or_equal(function__,"tagID[k0__]",tagID[k0__],0);
+            check_less_or_equal(function__,"tagID[k0__]",tagID[k0__],n_t);
         }
         for (int k0__ = 0; k0__ < N_; ++k0__) {
             check_greater_or_equal(function__,"ptm[k0__]",ptm[k0__],0);
@@ -267,8 +289,8 @@ public:
         num_params_r__ += (useCov * n_b);
         validate_non_negative_index("alpha", "n_p", n_p);
         num_params_r__ += n_p;
-        validate_non_negative_index("sigma", "(n_ptm + 1)", (n_ptm + 1));
-        num_params_r__ += (n_ptm + 1);
+        validate_non_negative_index("sigma", "(n_ptm + n_t)", (n_ptm + n_t));
+        num_params_r__ += (n_ptm + n_t);
         validate_non_negative_index("tau", "useCov", useCov);
         num_params_r__ += useCov;
     }
@@ -375,13 +397,13 @@ public:
             throw std::runtime_error("variable sigma missing");
         vals_r__ = context__.vals_r("sigma");
         pos__ = 0U;
-        validate_non_negative_index("sigma", "(n_ptm + 1)", (n_ptm + 1));
-        context__.validate_dims("initialization", "sigma", "double", context__.to_vec((n_ptm + 1)));
+        validate_non_negative_index("sigma", "(n_ptm + n_t)", (n_ptm + n_t));
+        context__.validate_dims("initialization", "sigma", "double", context__.to_vec((n_ptm + n_t)));
         // generate_declaration sigma
-        std::vector<double> sigma((n_ptm + 1),double(0));
-        for (int i0__ = 0U; i0__ < (n_ptm + 1); ++i0__)
+        std::vector<double> sigma((n_ptm + n_t),double(0));
+        for (int i0__ = 0U; i0__ < (n_ptm + n_t); ++i0__)
             sigma[i0__] = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < (n_ptm + 1); ++i0__)
+        for (int i0__ = 0U; i0__ < (n_ptm + n_t); ++i0__)
             try {
             writer__.scalar_lb_unconstrain(0,sigma[i0__]);
         } catch (const std::exception& e) { 
@@ -486,7 +508,7 @@ public:
         }
 
         vector<T__> sigma;
-        size_t dim_sigma_0__ = (n_ptm + 1);
+        size_t dim_sigma_0__ = (n_ptm + n_t);
         sigma.reserve(dim_sigma_0__);
         for (size_t k_0__ = 0; k_0__ < dim_sigma_0__; ++k_0__) {
             if (jacobian__)
@@ -584,7 +606,7 @@ public:
         // model body
         try {
 
-            for (int i = 1; i <= (n_ptm + 1); ++i) {
+            for (int i = 1; i <= (n_ptm + n_t); ++i) {
 
                 lp_accum__.add(normal_log<propto__>(get_base1(sigma,i,"sigma",1), 0, 5));
             }
@@ -607,11 +629,11 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,1,"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -625,11 +647,11 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), get_base1(sigma,1,"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -648,11 +670,11 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_c,get_base1(condID,i,"condID",1),"slope_c",1))), get_base1(sigma,1,"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_c,get_base1(condID,i,"condID",1),"slope_c",1))), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_c,get_base1(condID,i,"condID",1),"betaP_c",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_c,get_base1(condID,i,"condID",1),"betaP_c",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -667,11 +689,11 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_b,get_base1(bioID,i,"bioID",1),"slope_b",1))), get_base1(sigma,1,"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_b,get_base1(bioID,i,"bioID",1),"slope_b",1))), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(1 + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
                         }
                     }
                 }
@@ -735,7 +757,7 @@ public:
         dims__.push_back(n_p);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((n_ptm + 1));
+        dims__.push_back((n_ptm + n_t));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(useCov);
@@ -796,7 +818,7 @@ public:
             alpha.push_back(in__.scalar_constrain());
         }
         vector<double> sigma;
-        size_t dim_sigma_0__ = (n_ptm + 1);
+        size_t dim_sigma_0__ = (n_ptm + n_t);
         for (size_t k_0__ = 0; k_0__ < dim_sigma_0__; ++k_0__) {
             sigma.push_back(in__.scalar_lb_constrain(0));
         }
@@ -820,7 +842,7 @@ public:
         for (int k_0__ = 0; k_0__ < n_p; ++k_0__) {
             vars__.push_back(alpha[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < (n_ptm + 1); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < (n_ptm + n_t); ++k_0__) {
             vars__.push_back(sigma[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < useCov; ++k_0__) {
@@ -991,7 +1013,7 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_ptm + 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_ptm + n_t); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1062,7 +1084,7 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_ptm + 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_ptm + n_t); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
