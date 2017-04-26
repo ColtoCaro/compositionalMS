@@ -40,7 +40,7 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
-  real<lower = 0> sigma[n_ptm + n_t] ; //experimental error
+  real<lower = 0> sigma[n_t] ; //experimental error
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
 }
@@ -71,7 +71,7 @@ transformed parameters{
 model{
   //first set parameters that apply to all models
 
-  for(i in 1:(n_ptm + n_t)){
+  for(i in 1:(n_t)){
   sigma[i] ~ normal(0, 5) ;
   }
 
@@ -95,7 +95,7 @@ model{
       lr[i] ~ normal(beta[condID[i]] , sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
+        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[tagID[i]]) ;
       }
     }
   } // end base model
@@ -110,7 +110,7 @@ model{
       lr[i] ~ normal(beta_b[bioID[i]] , sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
+        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[tagID[i]]) ;
       }
     }
   } // end bioRep model
@@ -135,7 +135,7 @@ model{
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(betaP_c[condID[i]] + alpha[ptmPep[i]],
-        sigma[n_t + ptm[i]]) ;
+        sigma[tagID[i]]) ;
       }
   }
 
@@ -154,7 +154,7 @@ model{
       + covariate[i]*slope_b[bioID[i]], sigma[tagID[i]]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], sigma[n_t + ptm[i]]) ;
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], sigma[tagID[i]]) ;
       }
     }
 

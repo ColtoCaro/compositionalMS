@@ -289,8 +289,8 @@ public:
         num_params_r__ += (useCov * n_b);
         validate_non_negative_index("alpha", "n_p", n_p);
         num_params_r__ += n_p;
-        validate_non_negative_index("sigma", "(n_ptm + n_t)", (n_ptm + n_t));
-        num_params_r__ += (n_ptm + n_t);
+        validate_non_negative_index("sigma", "n_t", n_t);
+        num_params_r__ += n_t;
         validate_non_negative_index("tau", "useCov", useCov);
         num_params_r__ += useCov;
     }
@@ -397,13 +397,13 @@ public:
             throw std::runtime_error("variable sigma missing");
         vals_r__ = context__.vals_r("sigma");
         pos__ = 0U;
-        validate_non_negative_index("sigma", "(n_ptm + n_t)", (n_ptm + n_t));
-        context__.validate_dims("initialization", "sigma", "double", context__.to_vec((n_ptm + n_t)));
+        validate_non_negative_index("sigma", "n_t", n_t);
+        context__.validate_dims("initialization", "sigma", "double", context__.to_vec(n_t));
         // generate_declaration sigma
-        std::vector<double> sigma((n_ptm + n_t),double(0));
-        for (int i0__ = 0U; i0__ < (n_ptm + n_t); ++i0__)
+        std::vector<double> sigma(n_t,double(0));
+        for (int i0__ = 0U; i0__ < n_t; ++i0__)
             sigma[i0__] = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < (n_ptm + n_t); ++i0__)
+        for (int i0__ = 0U; i0__ < n_t; ++i0__)
             try {
             writer__.scalar_lb_unconstrain(0,sigma[i0__]);
         } catch (const std::exception& e) { 
@@ -508,7 +508,7 @@ public:
         }
 
         vector<T__> sigma;
-        size_t dim_sigma_0__ = (n_ptm + n_t);
+        size_t dim_sigma_0__ = n_t;
         sigma.reserve(dim_sigma_0__);
         for (size_t k_0__ = 0; k_0__ < dim_sigma_0__; ++k_0__) {
             if (jacobian__)
@@ -606,7 +606,7 @@ public:
         // model body
         try {
 
-            for (int i = 1; i <= (n_ptm + n_t); ++i) {
+            for (int i = 1; i <= n_t; ++i) {
 
                 lp_accum__.add(normal_log<propto__>(get_base1(sigma,i,"sigma",1), 0, 5));
             }
@@ -633,7 +633,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
@@ -651,7 +651,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
@@ -674,7 +674,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_c,get_base1(condID,i,"condID",1),"betaP_c",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_c,get_base1(condID,i,"condID",1),"betaP_c",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
@@ -693,7 +693,7 @@ public:
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,(n_t + get_base1(ptm,i,"ptm",1)),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
@@ -757,7 +757,7 @@ public:
         dims__.push_back(n_p);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((n_ptm + n_t));
+        dims__.push_back(n_t);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(useCov);
@@ -818,7 +818,7 @@ public:
             alpha.push_back(in__.scalar_constrain());
         }
         vector<double> sigma;
-        size_t dim_sigma_0__ = (n_ptm + n_t);
+        size_t dim_sigma_0__ = n_t;
         for (size_t k_0__ = 0; k_0__ < dim_sigma_0__; ++k_0__) {
             sigma.push_back(in__.scalar_lb_constrain(0));
         }
@@ -842,7 +842,7 @@ public:
         for (int k_0__ = 0; k_0__ < n_p; ++k_0__) {
             vars__.push_back(alpha[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < (n_ptm + n_t); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < n_t; ++k_0__) {
             vars__.push_back(sigma[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < useCov; ++k_0__) {
@@ -1013,7 +1013,7 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_ptm + n_t); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= n_t; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1084,7 +1084,7 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_ptm + n_t); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= n_t; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());

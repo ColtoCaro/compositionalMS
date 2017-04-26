@@ -81,8 +81,13 @@ getCond <- function(strVec, ptm = FALSE){
   }else{
     condNumber <- as.integer(substring(strVec, sPosition +1))
   }
-  
+
   condNumber
+}
+
+#function to reverse strings
+strReverse <- function(x){
+  sapply(lapply(strsplit(x, NULL), rev), paste, collapse="")
 }
 
 

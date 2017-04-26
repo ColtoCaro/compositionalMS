@@ -10,8 +10,10 @@
 #' @export
 #' @param results The results list generated from the function
 #'   \code{\link{compCall}}
-#' @param ptm A boolean variable denoting whether or not plots for ptm peptides
-#'   should be generated.
+#' @param ptm A variable that determines what type of fold changes will be
+#'   plotted.  The default, ptm = 0, plots relative protein abundance.
+#'   Setting ptm = x, for any x > 0, will plot the PTM with ID x in the
+#'   original dataframe. This will not work if x > 9.
 #' @param allPars A boolean variable indicating whether or not all parameters
 #'   should be plotted.  The default is false, resulting in a plot for only
 #'   parameters with 95% credible intervals that do not contain zero.
@@ -19,26 +21,34 @@
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
 #'
-caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
+caterpillar <- function(results, ptm = 0, allPars = FALSE,
                         byCond = FALSE){
   if(byCond == FALSE){
-  if(ptm == T){
-    parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
-    parName <- "alpha"
-  }else{
-    if(results[[3]]@par_dims$avgCond == 0){
-      parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
-      parName <- "beta"
+    if(ptm > 0){
+      ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
+      ptmIndex <- which(ptmType == ptm)
+      parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
+      parName <- "alpha"
     }else{
-      parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
-      parName <- "avgCond"
+      if(results[[3]]@par_dims$avgCond == 0){
+        parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
+        parName <- "beta"
+      }else{
+        parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
+        parName <- "avgCond"
+      }
     }
-  }
 
   if(allPars == FALSE){
     sigParIndex <- which(parSumm[ , "2.5%"] > 0 | parSumm[ , "97.5%"] < 0)
+    if(ptm > 0){
+      sigParIndex <- intersect(sigParIndex, ptmIndex)
+    }
   }else{
     sigParIndex <- 1:dim(parSumm)[1]
+    if(ptm > 0){
+      sigParIndex <- intersect(sigParIndex, ptmIndex)
+    }
   }
   orderedIndex <- sigParIndex[order(parSumm[sigParIndex, "50%"])]
 
@@ -47,8 +57,10 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
   rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
     ggplot2::scale_y_discrete(labels = NULL)
   }else{ # stratify by condition
-    
-    if(ptm == T){
+
+    if(ptm > 0){
+      ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
+      ptmIndex <- which(ptmType == ptm)
       parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
       parName <- "alpha"
       condition <- getCond(results[[2]]$ptmName, ptm = TRUE)
@@ -63,10 +75,10 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
         condition <- getCond(results[[1]]$name, ptm = F)
       }
     }
-    
+
     for(i in 1:length(unique(condition))){
     condIndex <- which(condition == unique(condition)[i])
-      
+
     if(allPars == FALSE){
       sigParIndex <- which(parSumm[ , "2.5%"] > 0 | parSumm[ , "97.5%"] < 0)
     }else{
@@ -74,21 +86,24 @@ caterpillar <- function(results, ptm = FALSE, allPars = FALSE,
     }
     #intersect the indices
     sigParIndex <- intersect(condIndex, sigParIndex)
+    if(ptm > 0){
+      sigParIndex <- intersect(sigParIndex, ptmIndex)
+    }
     if(length(sigParIndex) == 0){next}
-    
+
     orderedIndex <- sigParIndex[order(parSumm[sigParIndex, "50%"])]
-    
+
     parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
-    
-    cPlot <- rstan::plot(results[[3]], pars = parStr, mapping = 
+
+    cPlot <- rstan::plot(results[[3]], pars = parStr, mapping =
                            ggplot2::theme) +
-      ggplot2::scale_y_discrete(labels = NULL) + 
+      ggplot2::scale_y_discrete(labels = NULL) +
       ggplot2::ggtitle(paste("Condition", unique(condition)[i]))
     print(cPlot)
     } # end for loop
-    
+
   } # end by condition = T
-  
+
 }#end caterpillar
 
 #' Precision plot

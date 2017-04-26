@@ -4,14 +4,16 @@
 \alias{caterpillar}
 \title{Caterpillar plot}
 \usage{
-caterpillar(results, ptm = FALSE, allPars = FALSE, byCond = FALSE)
+caterpillar(results, ptm = 0, allPars = FALSE, byCond = FALSE)
 }
 \arguments{
 \item{results}{The results list generated from the function
 \code{\link{compCall}}}
 
-\item{ptm}{A boolean variable denoting whether or not plots for ptm peptides
-should be generated.}
+\item{ptm}{A variable that determines what type of fold changes will be
+plotted.  The default, ptm = 0, plots relative protein abundance.
+Setting ptm = x, for any x > 0, will plot the PTM with ID x in the
+original dataframe. This will not work if x > 9.}
 
 \item{allPars}{A boolean variable indicating whether or not all parameters
 should be plotted.  The default is false, resulting in a plot for only

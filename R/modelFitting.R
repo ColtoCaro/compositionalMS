@@ -199,14 +199,11 @@ compCall <- function(dat,
       pnorm(nullSet[1], postMeans, sqrt(postVar))
     ptmDf <- data.frame(ptmName, mean = postMeans,
                         var = postVar, P_null = pvals)
-    varNames <- c(levels(factor(oneDat$tag_plex)),
-                  paste("ptm", levels(factor(ptm))[-1]))
   }else{
     ptmDf <- NULL
-    varNames <- levels(factor(oneDat$tag_plex))
   }
 
-
+  varNames <- levels(factor(oneDat$tag_plex))
 
   RES <- list()
   RES[[1]] <- resDf
