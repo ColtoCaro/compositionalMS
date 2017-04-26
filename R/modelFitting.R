@@ -106,7 +106,7 @@ compCall <- function(dat,
     }
 
     nonPtms <- which(oneDat$ptm == 0)
-    ptmName <- unique(oneDat[-nonPtms , ]$ptmID)
+    ptmName <- levels(factor(oneDat[-nonPtms , ]$ptmID))
     n_p <- length(ptmName)
     n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
     ptm <- as.integer(oneDat$ptm)
@@ -119,7 +119,8 @@ compCall <- function(dat,
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   n_t <- length(unique(oneDat$tag_plex))
-  condKey <- data.frame(number = 1:n_c, name = unique(oneDat$condID))
+  condKey <- data.frame(number = 1:n_c, 
+                        name = levels(factor(oneDat$condID)))
   condID <- as.integer(factor(oneDat$condID))
   tagID <- as.integer(factor(oneDat$tag_plex))
 
@@ -132,11 +133,12 @@ compCall <- function(dat,
     max_nc <- 0
   }else{
     n_b <- length(unique(oneDat$bioID))
-    bioID <- as.integer(factor(oneDat$bioID))
-    #make a mapping for use in a heierarchical model (not implemented)
-    bioMap <- oneDat$condID[match(unique(oneDat$bioID), oneDat$bioID)]
+    bioID <- levels(factor(oneDat$bioID))
+    #make a mapping for use in a heierarchical model (not yet implemented)
+    bioMap <- oneDat$condID[match(levels(factor(oneDat$bioID)),
+                                  oneDat$bioID)]
     conditionNumber <- condKey$number[match(bioMap, condKey$name)]
-    bioKey <- data.frame(number = 1:n_b, bioID = unique(oneDat$bioID),
+    bioKey <- data.frame(number = 1:n_b, bioID,
                          condID = bioMap, conditionNumber)
     bioToCond <- bioKey$conditionNumber
 
@@ -151,9 +153,6 @@ compCall <- function(dat,
     }
   }
 
-
-
-  condID <- as.integer(factor(oneDat$condID))
 
   sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
   useCov <- 1*(sumCov > 0)
@@ -189,7 +188,7 @@ compCall <- function(dat,
       pnorm(nullSet[1], postMeans, sqrt(postVar))
   }
 
-  resDf <- data.frame(name = unique(oneDat$condID), mean = postMeans,
+  resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
                       var = postVar, P_null = pvals)
 
   if(n_p > 0){
@@ -200,11 +199,14 @@ compCall <- function(dat,
       pnorm(nullSet[1], postMeans, sqrt(postVar))
     ptmDf <- data.frame(ptmName, mean = postMeans,
                         var = postVar, P_null = pvals)
+    varNames <- c(levels(factor(oneDat$tag_plex)), 
+                  paste("ptm", levels(factor(ptm))[-1]))
   }else{
     ptmDf <- NULL
+    varNames <- levels(factor(oneDat$tag_plex))
   }
 
-  varNames <- c(unique(oneDat$tag_plex), paste("ptm", unique(ptm))[-1])
+
 
   RES <- list()
   RES[[1]] <- resDf
