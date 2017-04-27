@@ -189,7 +189,7 @@ compCall <- function(dat,
   }
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, P_null = pvals)
+                      var = postVar, P_null = pvals, stringsAsFactors = F)
 
   if(n_p > 0){
     targetChain <- rstan::extract(model, pars="alpha")$alpha
@@ -198,7 +198,7 @@ compCall <- function(dat,
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
     ptmDf <- data.frame(ptmName, mean = postMeans,
-                        var = postVar, P_null = pvals)
+                        var = postVar, P_null = pvals, stringsAsFactors = F)
   }else{
     ptmDf <- NULL
   }

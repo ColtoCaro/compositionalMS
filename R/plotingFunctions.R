@@ -25,7 +25,8 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
                         byCond = FALSE){
   if(byCond == FALSE){
     if(ptm > 0){
-      ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
+      ptmName <- as.character(results[[2]]$ptmName)
+      ptmType <- substring(ptmName, nchar(ptmName))
       ptmIndex <- which(ptmType == ptm)
       parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
       parName <- "alpha"
@@ -59,7 +60,8 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
   }else{ # stratify by condition
 
     if(ptm > 0){
-      ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
+      ptmName <- as.character(results[[2]]$ptmName)
+      ptmType <- substring(ptmName, nchar(ptmName))
       ptmIndex <- which(ptmType == ptm)
       parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
       parName <- "alpha"
@@ -123,21 +125,42 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
 #'
-precisionPlot <- function(summaryRes, byCond = FALSE){
+precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
   if(byCond){
-    condition <- getCond(summaryRes$name)
-    ptmType <- substring(results[[2]]$ptmName, nchar(results[[2]]$ptmName))
-    newDf <- data.frame(summaryRes, condition, ptmType)
+    if(ptm == 0){
+    condition <- getCond(RES[[1]]$name)
+    newDf <- data.frame(RES[[1]], condition)
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
       ggplot2::geom_point(ggplot2::aes(color = P_null)) +
       ggplot2::scale_color_gradient(high = "black",low = "red") +
       ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change") +
       ggplot2::facet_grid(ptmType ~ condition)
+    }else{
+      ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
+      ptmIndex <- which(ptmType == ptm)
+      condition <- getCond(RES[[2]]$ptmName, TRUE)
+      newDf <- data.frame(RES[[2]][ptmIndex, ], condition[ptmIndex])
+
+      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
+        ggplot2::geom_point(ggplot2::aes(color = P_null)) +
+        ggplot2::scale_color_gradient(high = "black",low = "red") +
+        ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change")
+      + ggplot2::facet_grid(ptmType ~ condition)
+    }
   }else{
-    ggplot2::ggplot(summaryRes, ggplot2::aes(x = mean, y = 1/var)) +
+    if(ptm == 0){
+      ggplot2::ggplot(RES[[1]], ggplot2::aes(x = mean, y = 1/var)) +
       ggplot2::geom_point(ggplot2::aes(color = P_null)) +
       ggplot2::scale_color_gradient(high = "black", low = "red") +
       ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold-change")
+    }else{
+      ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
+      ptmIndex <- which(ptmType == ptm)
+      ggplot2::ggplot(RES[[1]][ptmIndex,], ggplot2::aes(x = mean, y = 1/var)) +
+        ggplot2::geom_point(ggplot2::aes(color = P_null)) +
+        ggplot2::scale_color_gradient(high = "black", low = "red") +
+        ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold-change")
+    }
   }
 }
 
