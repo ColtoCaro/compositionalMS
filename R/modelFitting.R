@@ -79,11 +79,10 @@ compCall <- function(dat,
 
 
 
-  readyDat <- lapply(1:length(dat), function(x) transformDat(dat[[x]], modelFit,
-                                                             x))
+  readyDat <- lapply(1:length(dat), function(x) 
+    transformDat(dat[[x]], modelFit, x))
   oneDat <- do.call(rbind, readyDat)
-  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, oneDat$ptmID),]
-
+ 
   #set data variables
   #Do ptms first since it might change the dimensions of the data
   N_ <- nrow(oneDat)
@@ -95,12 +94,15 @@ compCall <- function(dat,
     ptmPep <- rep(0,N_)
   }else{
     #find and remove ptm data with no corresponding protein data
-    globalProts <- unique(oneDat$condID[oneDat$ptm == 0])
-    ptmProts <- unique(oneDat$condID[oneDat$ptm > 0])
+    globalProts <- unique(oneDat$bioID[oneDat$ptm == 0])
+    ptmProts <- unique(oneDat$bioID[oneDat$ptm > 0])
     orphanProts <- setdiff(ptmProts, globalProts)
     if(length(orphanProts > 0)){
-      orphanIndex <- which(oneDat$condID %in% orphanProts)
-      oneDat <- oneDat[-orphanIndex, ]
+      #remove orphan prots from ptm data
+      ptmIndex <- which(oneDat$ptm > 0)
+      orphanIndex <- which(oneDat$bioID %in% orphanProts)
+      bad <- intersect(ptmIndex, orphanIndex)
+      oneDat <- oneDat[-bad, ]
       wText <- paste(length(orphanIndex), "PTM data points were removed because they had no corresponding protein level measurements")
       warning(wText)
     }
@@ -110,12 +112,14 @@ compCall <- function(dat,
     n_p <- length(ptmName)
     n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
     ptm <- as.integer(oneDat$ptm)
-    ptmPep <- rep(0,N_)
+    ptmPep <- rep(0, nrow(oneDat))
     ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
 
   } # end actions for ptm experiments
 
-
+  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, 
+                         oneDat$ptmID),]
+  
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   n_t <- length(unique(oneDat$tag_plex))
@@ -193,7 +197,7 @@ compCall <- function(dat,
   }
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, P_null = pvals, n_obs,
+                      var = postVar, P_null = pvals, n_obs = as.vector(n_obs),
                       stringsAsFactors = F)
 
   if(n_p > 0){
@@ -205,7 +209,8 @@ compCall <- function(dat,
     justPtms <- oneDat[oneDat$ptm > 0 , ]
     n_obs <- unlist(by(justPtms$lr, justPtms$ptmID, length))
     ptmDf <- data.frame(ptmName, mean = postMeans, var = postVar,
-                        P_null = pvals, n_obs, stringsAsFactors = F)
+                        P_null = pvals, n_obs = as.vector(n_obs),
+                        stringsAsFactors = F)
   }else{
     ptmDf <- NULL
   }
