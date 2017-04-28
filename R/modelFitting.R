@@ -180,16 +180,21 @@ compCall <- function(dat,
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
+    justProts <- oneDat[oneDat$ptm == 0 , ]
+    n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }else{
     targetChain <- rstan::extract(model, pars="beta")$beta
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
+    justProts <- oneDat[oneDat$ptm == 0 , ]
+    n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, P_null = pvals, stringsAsFactors = F)
+                      var = postVar, P_null = pvals, n_obs,
+                      stringsAsFactors = F)
 
   if(n_p > 0){
     targetChain <- rstan::extract(model, pars="alpha")$alpha
@@ -197,13 +202,20 @@ compCall <- function(dat,
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
-    ptmDf <- data.frame(ptmName, mean = postMeans,
-                        var = postVar, P_null = pvals, stringsAsFactors = F)
+    justPtms <- oneDat[oneDat$ptm > 0 , ]
+    n_obs <- unlist(by(justPtms$lr, justPtms$ptmID, length))
+    ptmDf <- data.frame(ptmName, mean = postMeans, var = postVar,
+                        P_null = pvals, n_obs, stringsAsFactors = F)
   }else{
     ptmDf <- NULL
   }
 
   varNames <- levels(factor(oneDat$tag_plex))
+  targetChain <- rstan::extract(model, pars="sigma")$sigma
+  postMeans <- colMeans(targetChain)
+  postVar <- apply(targetChain, 2, var)
+  residDf <- data.frame(varNames, mean = postMeans,
+                      var = postVar, stringsAsFactors = F)
 
   RES <- list()
   RES[[1]] <- resDf
@@ -213,7 +225,7 @@ compCall <- function(dat,
   }else{
     RES[[3]] <- model
   }
-  RES[[4]] <- varNames
+  RES[[4]] <- residDf
 
   RES
 } #end of compFit function

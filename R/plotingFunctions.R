@@ -126,40 +126,66 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #'   creation of a single plot.
 #'
 precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
+  colorVals <- c("(0,0.05]" = "#fb0000", "(0.05,0.25]" = "#dd1c77",
+                                                 "(0.25,0.5]" = "#c994c7",
+                                                 "(0.5,1]" = "black")
+  labelScheme <- ggplot2::labs(y = "Log10 Precision", x = "Posterior mean of log2 fold-change")
+  
   if(byCond){
     if(ptm == 0){
     condition <- getCond(RES[[1]]$name)
-    newDf <- data.frame(RES[[1]], condition)
-    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
-      ggplot2::geom_point(ggplot2::aes(color = P_null)) +
-      ggplot2::scale_color_gradient(high = "black",low = "red") +
-      ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change") +
-      ggplot2::facet_grid(ptmType ~ condition)
+    sigFac <- cut(RES[[1]]$P_null, c(0,.05,.25,.5,1))
+    newDf <- data.frame(RES[[1]], condition, "P_Null" = sigFac )
+    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var),
+                                        shape = P_Null)) +
+      ggplot2::geom_point(ggplot2::aes(color = P_Null)) + 
+      ggplot2::scale_colour_manual(values = 
+                                     c("(0,0.05]" = "#fb0000", 
+                                       "(0.05,0.25]" = "#dd1c77",
+                                       "(0.25,0.5]" = "#c994c7",
+                                       "(0.5,1]" = "black")) + 
+      labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }else{
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
       condition <- getCond(RES[[2]]$ptmName, TRUE)
-      newDf <- data.frame(RES[[2]][ptmIndex, ], condition[ptmIndex])
+      sigFac <- cut(RES[[2]]$P_null, c(0,.05,.25,.5,1))
+      newDf <- data.frame(RES[[2]][ptmIndex, ], 
+                          condition = condition[ptmIndex],
+                          "P_Null" = sigFac[ptmIndex] )
 
-      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1/var)) +
-        ggplot2::geom_point(ggplot2::aes(color = P_null)) +
-        ggplot2::scale_color_gradient(high = "black",low = "red") +
-        ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold change")
-      + ggplot2::facet_grid(ptmType ~ condition)
+      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
+        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + 
+        ggplot2::scale_colour_manual(values = 
+                                       c("(0,0.05]" = "#fb0000", 
+                                         "(0.05,0.25]" = "#dd1c77",
+                                         "(0.25,0.5]" = "#c994c7",
+                                         "(0.5,1]" = "black")) + 
+        labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }
   }else{
     if(ptm == 0){
-      ggplot2::ggplot(RES[[1]], ggplot2::aes(x = mean, y = 1/var)) +
-      ggplot2::geom_point(ggplot2::aes(color = P_null)) +
-      ggplot2::scale_color_gradient(high = "black", low = "red") +
-      ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold-change")
+      sigFac <- cut(RES[[1]]$P_null, c(0,.05,.25,.5,1))
+      newDf <- data.frame(RES[[1]], "P_Null" = sigFac )
+      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
+      ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + 
+      ggplot2::scale_colour_manual(values = 
+                                     c("(0,0.05]" = "#fb0000", 
+                                       "(0.05,0.25]" = "#dd1c77",
+                                       "(0.25,0.5]" = "#c994c7",
+                                       "(0.5,1]" = "black")) + labelScheme
     }else{
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
-      ggplot2::ggplot(RES[[1]][ptmIndex,], ggplot2::aes(x = mean, y = 1/var)) +
-        ggplot2::geom_point(ggplot2::aes(color = P_null)) +
-        ggplot2::scale_color_gradient(high = "black", low = "red") +
-        ggplot2::labs(y = "Precision", x = "Posterior mean of log2 fold-change")
+      sigFac <- cut(RES[[2]]$P_null, c(0,.05,.25,.5,1))
+      newDf <- data.frame(RES[[2]], "P_Null" = sigFac )
+      newDf <- newDf[ptmIndex, ]
+      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
+        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + labelScheme + ggplot2::scale_color_manual(values = 
+                                        c("(0,0.05]" = "#fb0000", 
+                                          "(0.05,0.25]" = "#dd1c77",
+                                          "(0.25,0.5]" = "#c994c7",
+                                          "(0.5,1]" = "black"))
     }
   }
 }
@@ -178,9 +204,12 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
 #' \code{\link{compCall}}.
 #'
 checkVariance <- function(results){
-  npars <- length(results[[4]])
-  rstan::stan_plot(results[[3]], pars ="sigma") +
-    ggplot2::scale_y_continuous(breaks = npars:1, labels = results[[4]])
-
+  npars <- length(results[[4]]$varNames)
+  ptmType <- substring(results[[4]]$varNames, nchar(results[[4]]$varNames))
+  orderPars <- order(ptmType)
+  parString <- paste("sigma[", orderPars, "]", sep = "")
+  rstan::stan_plot(results[[3]], pars = parString) +
+    ggplot2::scale_y_continuous(breaks = npars:1, 
+                                labels = results[[4]]$varNames[orderPars])
 }
 
