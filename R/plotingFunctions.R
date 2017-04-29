@@ -130,7 +130,7 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
                                                  "(0.25,0.5]" = "#c994c7",
                                                  "(0.5,1]" = "black")
   labelScheme <- ggplot2::labs(y = "Log10 Precision", x = "Posterior mean of log2 fold-change")
-  
+
   if(byCond){
     if(ptm == 0){
     condition <- getCond(RES[[1]]$name)
@@ -138,29 +138,29 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
     newDf <- data.frame(RES[[1]], condition, "P_Null" = sigFac )
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var),
                                         shape = P_Null)) +
-      ggplot2::geom_point(ggplot2::aes(color = P_Null)) + 
-      ggplot2::scale_colour_manual(values = 
-                                     c("(0,0.05]" = "#fb0000", 
+      ggplot2::geom_point(ggplot2::aes(color = P_Null)) +
+      ggplot2::scale_colour_manual(values =
+                                     c("(0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
-                                       "(0.5,1]" = "black")) + 
+                                       "(0.5,1]" = "black")) +
       labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }else{
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
       condition <- getCond(RES[[2]]$ptmName, TRUE)
       sigFac <- cut(RES[[2]]$P_null, c(0,.05,.25,.5,1))
-      newDf <- data.frame(RES[[2]][ptmIndex, ], 
+      newDf <- data.frame(RES[[2]][ptmIndex, ],
                           condition = condition[ptmIndex],
                           "P_Null" = sigFac[ptmIndex] )
 
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + 
-        ggplot2::scale_colour_manual(values = 
-                                       c("(0,0.05]" = "#fb0000", 
+        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
+        ggplot2::scale_colour_manual(values =
+                                       c("(0,0.05]" = "#fb0000",
                                          "(0.05,0.25]" = "#dd1c77",
                                          "(0.25,0.5]" = "#c994c7",
-                                         "(0.5,1]" = "black")) + 
+                                         "(0.5,1]" = "black")) +
         labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }
   }else{
@@ -168,9 +168,9 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
       sigFac <- cut(RES[[1]]$P_null, c(0,.05,.25,.5,1))
       newDf <- data.frame(RES[[1]], "P_Null" = sigFac )
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-      ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + 
-      ggplot2::scale_colour_manual(values = 
-                                     c("(0,0.05]" = "#fb0000", 
+      ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
+      ggplot2::scale_colour_manual(values =
+                                     c("(0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
                                        "(0.5,1]" = "black")) + labelScheme
@@ -181,8 +181,8 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
       newDf <- data.frame(RES[[2]], "P_Null" = sigFac )
       newDf <- newDf[ptmIndex, ]
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + labelScheme + ggplot2::scale_color_manual(values = 
-                                        c("(0,0.05]" = "#fb0000", 
+        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + labelScheme + ggplot2::scale_color_manual(values =
+                                        c("(0,0.05]" = "#fb0000",
                                           "(0.05,0.25]" = "#dd1c77",
                                           "(0.25,0.5]" = "#c994c7",
                                           "(0.5,1]" = "black"))
@@ -205,11 +205,36 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
 #'
 checkVariance <- function(results){
   npars <- length(results[[4]]$varNames)
-  ptmType <- substring(results[[4]]$varNames, nchar(results[[4]]$varNames))
-  orderPars <- order(ptmType)
-  parString <- paste("sigma[", orderPars, "]", sep = "")
+  #check to see if the model uses redundancies
+  redun <- (length(results[[4]]$varNames[1]) > 0)
+  if(redun){
+    rPos <- regexpr("R", results[[4]]$varNames)
+    redundancy <- substring(results[[4]]$varNames, rPos + 1)
+    ptmPos <- rPos - 1
+  }else{ptmPos <- nchar(results[[4]]$varNames)}
+
+
+  if(redun == F){
+    ptmType <- substring(results[[4]]$varNames, ptmPos)
+    orderPars <- order(ptmType)
+    parString <- paste("sigma[", orderPars, "]", sep = "")
   rstan::stan_plot(results[[3]], pars = parString) +
-    ggplot2::scale_y_continuous(breaks = npars:1, 
+    ggplot2::scale_y_continuous(breaks = npars:1,
                                 labels = results[[4]]$varNames[orderPars])
-}
+  }else{
+    rLevels <- levels(factor(redundancy))
+    nPlots <- length(rLevels)
+    for(i in 1:nPlots){
+      whichVar <- which(redundancy == rLevels[i])
+      parString <- paste("sigma[", whichVar, "]", sep = "")
+      npars <- length(whichVar)
+      pic <- rstan::plot(results[[3]], pars = parString) +
+        ggplot2::scale_y_continuous(breaks = npars:1,
+          labels = results[[4]]$varNames[whichVar])
+      print(pic)
+    }
+  }
+
+
+}#end checkVariance
 

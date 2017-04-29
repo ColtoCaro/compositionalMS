@@ -32,11 +32,14 @@ transformDat <- function(df, modelFit, plexNumber){
   header <- makeHeader(df[ , value_index], normal_index)
   colnames(lrMat) <- header
 
-  newDf <- data.frame(Protein = df[4:n_, ]$Protein, Peptide = df[4:n_, ]$Peptide,                             bioID = df[4:n_, ]$bioID, Covariate =
-                        df[4:n_, ]$Covariate, lrMat, stringsAsFactors = F)
+  newDf <- data.frame(Protein = df[4:n_, ]$Protein,
+                      Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                      Covariate = df[4:n_, ]$Covariate,
+                      Redundant = df[4:n_, ]$Redundant,
+                      lrMat, stringsAsFactors = F)
 
   melted <- reshape2::melt(newDf, id.vars = c("Protein", "Peptide", "bioID",
-                                              "Covariate"),
+                                              "Covariate", "Redundant"),
                  value.name = "lr", variable.name = "header")
 
 
@@ -57,7 +60,9 @@ transformDat <- function(df, modelFit, plexNumber){
                          ptmID = paste(melted$Protein, separated[, 3],
                                        melted$Peptide, separated[ , 5],
                                        sep = "_"),
-                  ptm = separated[ , 5], tag_plex, covariate = melted$Covariate,
+                  ptm = separated[ , 5], tag_plex,
+                  covariate = melted$Covariate,
+                  redundant = melted$Redundant,
                   lr = melted$lr, stringsAsFactors = F)
   finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
 

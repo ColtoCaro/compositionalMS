@@ -1,4 +1,4 @@
-#File for reading in the dataset and fitting the corresponding model
+ #File for reading in the dataset and fitting the corresponding model
 
 #' Fitting a compositional Stan model
 #'
@@ -77,12 +77,17 @@ compCall <- function(dat,
     }
   }
 
+  #determine how many redundancies are being used
+  maxRedun <- unlist(lapply(dat, function(x) max(x[1, "Redundant"])))
+  if(!(maxRedun %in% c(0,1,2,3))){
+    stop("Error: Header requests an invalid number of redundancy categories")
+  }
 
 
-  readyDat <- lapply(1:length(dat), function(x) 
+  readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], modelFit, x))
   oneDat <- do.call(rbind, readyDat)
- 
+
   #set data variables
   #Do ptms first since it might change the dimensions of the data
   N_ <- nrow(oneDat)
@@ -117,16 +122,51 @@ compCall <- function(dat,
 
   } # end actions for ptm experiments
 
-  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm, 
+  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
                          oneDat$ptmID),]
-  
+
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
-  n_t <- length(unique(oneDat$tag_plex))
   condKey <- data.frame(number = 1:n_c,
                         name = levels(factor(oneDat$condID)))
   condID <- as.integer(factor(oneDat$condID))
-  tagID <- as.integer(factor(oneDat$tag_plex))
+
+  #Create a tag by redundancy variable which determines vc's
+  if(maxRedun == 0){
+    tagID <- as.integer(factor(oneDat$tag_plex))
+  }
+  if(maxRedun == 1){
+    redunStr <- rep("R0", nrow(oneDat))
+    redunStr[oneDat$redundant > 0] <- "R1"
+    if(sumPtm > 0){
+      redunStr[which(oneDat$ptm > 0)] <- "Rp"
+    }
+    oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
+    tagID <- as.integer(factor(oneDat$tag_plex))}
+  if(maxRedun == 2){
+    redunStr <- rep("R0", nrow(oneDat))
+    redunStr[oneDat$redundant == 1] <- "R1"
+    redunStr[oneDat$redundant > 1] <- "R2"
+    if(sumPtm > 0){
+      redunStr[which(oneDat$ptm > 0)] <- "Rp"
+    }
+    oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
+    tagID <- as.integer(factor(oneDat$tag_plex))
+  }
+  if(maxRedun == 3){
+    redunStr <- rep("R0", nrow(oneDat))
+    redunStr[oneDat$redundant == 1] <- "R1"
+    redunStr[oneDat$redundant == 2] <- "R2"
+    redunStr[oneDat$redundant > 2] <- "R3"
+    if(sumPtm > 0){
+      redunStr[which(oneDat$ptm > 0)] <- "Rp"
+    }
+    oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
+    tagID <- as.integer(factor(oneDat$tag_plex))
+  }
+
+  n_t <- length(unique(oneDat$tag_plex))
+
 
   sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
   if(sumBio == 0){
@@ -234,7 +274,5 @@ compCall <- function(dat,
 
   RES
 } #end of compFit function
-
-
 
 
