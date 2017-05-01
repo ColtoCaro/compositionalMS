@@ -92,10 +92,11 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigma[tagID[i]]) ;
+      lr[i] ~ normal(beta[condID[i]] , fabs(beta[condID[i]])*sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]], sigma[tagID[i]]) ;
+        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
+          sigma[tagID[i]]) ;
       }
     }
   } // end base model
@@ -107,7 +108,8 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] , sigma[tagID[i]]) ;
+      lr[i] ~ normal(beta_b[bioID[i]] ,
+                     fabs(beta_b[bioID[i]])*sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[tagID[i]]) ;

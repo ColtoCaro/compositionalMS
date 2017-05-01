@@ -650,7 +650,7 @@ public:
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
                             current_statement_begin__ = 95;
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), (fabs(get_base1(beta,get_base1(condID,i,"condID",1),"beta",1)) * get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1))));
                         }
                         current_statement_begin__ = 97;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
@@ -660,90 +660,90 @@ public:
                         }
                     }
                 }
-                current_statement_begin__ = 104;
+                current_statement_begin__ = 105;
                 if (as_bool(logical_gt(n_b,0))) {
 
-                    current_statement_begin__ = 105;
+                    current_statement_begin__ = 106;
                     for (int i = 1; i <= n_b; ++i) {
 
-                        current_statement_begin__ = 106;
+                        current_statement_begin__ = 107;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
                     }
-                    current_statement_begin__ = 108;
+                    current_statement_begin__ = 109;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 109;
+                        current_statement_begin__ = 110;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 110;
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
+                            current_statement_begin__ = 111;
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), (fabs(get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1)) * get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1))));
                         }
-                        current_statement_begin__ = 112;
+                        current_statement_begin__ = 114;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 113;
+                            current_statement_begin__ = 115;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
             }
-            current_statement_begin__ = 121;
+            current_statement_begin__ = 123;
             if (as_bool(logical_eq(useCov,1))) {
 
-                current_statement_begin__ = 122;
+                current_statement_begin__ = 124;
                 lp_accum__.add(normal_log<propto__>(tau, 0, 5));
-                current_statement_begin__ = 125;
+                current_statement_begin__ = 127;
                 if (as_bool(logical_eq(n_b,0))) {
 
-                    current_statement_begin__ = 127;
+                    current_statement_begin__ = 129;
                     for (int i = 1; i <= n_c; ++i) {
 
-                        current_statement_begin__ = 128;
+                        current_statement_begin__ = 130;
                         lp_accum__.add(normal_log<propto__>(get_base1(deviate_c,i,"deviate_c",1), 0, 5));
-                        current_statement_begin__ = 129;
+                        current_statement_begin__ = 131;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta,i,"beta",1), 0, 10));
                     }
-                    current_statement_begin__ = 131;
+                    current_statement_begin__ = 133;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 132;
+                        current_statement_begin__ = 134;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 133;
+                            current_statement_begin__ = 135;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_c,get_base1(condID,i,"condID",1),"slope_c",1))), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
-                        current_statement_begin__ = 136;
+                        current_statement_begin__ = 138;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 137;
+                            current_statement_begin__ = 139;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_c,get_base1(condID,i,"condID",1),"betaP_c",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
                 }
-                current_statement_begin__ = 145;
+                current_statement_begin__ = 147;
                 if (as_bool(logical_gt(n_b,0))) {
 
-                    current_statement_begin__ = 146;
+                    current_statement_begin__ = 148;
                     for (int i = 1; i <= n_b; ++i) {
 
-                        current_statement_begin__ = 147;
+                        current_statement_begin__ = 149;
                         lp_accum__.add(normal_log<propto__>(get_base1(deviate_b,i,"deviate_b",1), 0, 5));
-                        current_statement_begin__ = 148;
+                        current_statement_begin__ = 150;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
                     }
-                    current_statement_begin__ = 151;
+                    current_statement_begin__ = 153;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 152;
+                        current_statement_begin__ = 154;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 153;
+                            current_statement_begin__ = 155;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_b,get_base1(bioID,i,"bioID",1),"slope_b",1))), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
-                        current_statement_begin__ = 156;
+                        current_statement_begin__ = 158;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 157;
+                            current_statement_begin__ = 159;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                     }
@@ -983,34 +983,34 @@ public:
 
 
         try {
-            current_statement_begin__ = 174;
+            current_statement_begin__ = 176;
             if (as_bool((primitive_value(logical_eq(useCov,0)) && primitive_value(logical_eq(bioInd,1))))) {
 
-                current_statement_begin__ = 175;
+                current_statement_begin__ = 177;
                 for (int i = 1; i <= n_c; ++i) {
 
-                    current_statement_begin__ = 176;
+                    current_statement_begin__ = 178;
                     stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                    current_statement_begin__ = 177;
+                    current_statement_begin__ = 179;
                     for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
 
-                        current_statement_begin__ = 178;
+                        current_statement_begin__ = 180;
                         stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(beta_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"beta_b",1) / get_base1(n_nc,i,"n_nc",1))));
                     }
                 }
             }
-            current_statement_begin__ = 183;
+            current_statement_begin__ = 185;
             if (as_bool((primitive_value(logical_eq(useCov,1)) && primitive_value(logical_eq(bioInd,1))))) {
 
-                current_statement_begin__ = 184;
+                current_statement_begin__ = 186;
                 for (int i = 1; i <= n_c; ++i) {
 
-                    current_statement_begin__ = 185;
+                    current_statement_begin__ = 187;
                     stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                    current_statement_begin__ = 186;
+                    current_statement_begin__ = 188;
                     for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
 
-                        current_statement_begin__ = 187;
+                        current_statement_begin__ = 189;
                         stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(betaP_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"betaP_b",1) / get_base1(n_nc,i,"n_nc",1))));
                     }
                 }
