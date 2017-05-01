@@ -629,7 +629,7 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), (fabs(get_base1(beta,get_base1(condID,i,"condID",1),"beta",1)) * get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1))));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
@@ -647,7 +647,7 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), (fabs(get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1)) * get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1))));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), get_base1(sigma,get_base1(tagID,i,"tagID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
