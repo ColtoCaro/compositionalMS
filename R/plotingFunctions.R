@@ -56,7 +56,8 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
   parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
 
   rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
-    ggplot2::scale_y_discrete(labels = NULL)
+    ggplot2::scale_y_discrete(labels = NULL) +
+    ggplot2::coord_flip()
   }else{ # stratify by condition
 
     if(ptm > 0){
@@ -100,7 +101,8 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
     cPlot <- rstan::plot(results[[3]], pars = parStr, mapping =
                            ggplot2::theme) +
       ggplot2::scale_y_discrete(labels = NULL) +
-      ggplot2::ggtitle(paste("Condition", unique(condition)[i]))
+      ggplot2::ggtitle(paste("Condition", unique(condition)[i])) + 
+      ggplot2::coord_flip()
     print(cPlot)
     } # end for loop
 
@@ -161,7 +163,9 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
                                          "(0.05,0.25]" = "#dd1c77",
                                          "(0.25,0.5]" = "#c994c7",
                                          "(0.5,1]" = "black")) +
-        labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
+        labelScheme + ggplot2::facet_wrap( ~ condition, 
+                                           ncol = min(5, 
+                                           length(unique(condition))))
     }
   }else{
     if(ptm == 0){
