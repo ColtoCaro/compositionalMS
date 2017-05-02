@@ -213,8 +213,8 @@ compCall <- function(dat,
   if(approx){
       model <- rstan::vb(sMod, cores = nCores)
   }else{
-      model <- rstan::sampling(sMod, cores = nCores,
-                               iter = iter)
+      model <- rstan::sampling(sMod, cores = nCores, iter = iter, 
+                               control = list(max_treedepth = 15))
   }
 
   #create summary table
