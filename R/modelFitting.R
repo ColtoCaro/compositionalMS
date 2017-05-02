@@ -78,10 +78,8 @@ compCall <- function(dat,
   }
 
   #determine how many redundancies are being used
-  maxRedun <- unlist(lapply(dat, function(x) max(x[1, "Redundant"])))
-  if(!(maxRedun %in% c(0,1,2,3))){
-    stop("Error: Header requests an invalid number of redundancy categories")
-  }
+  maxRedun <- unlist(lapply(dat, function(x) max(x[1, "varCat"])))
+
 
 
   readyDat <- lapply(1:length(dat), function(x)
@@ -131,39 +129,18 @@ compCall <- function(dat,
                         name = levels(factor(oneDat$condID)))
   condID <- as.integer(factor(oneDat$condID))
 
-  #Create a tag by redundancy variable which determines vc's
+  #Create a tag by varCat variable which determines vc's
   if(maxRedun == 0){
     tagID <- as.integer(factor(oneDat$tag_plex))
-  }
-  if(maxRedun == 1){
-    redunStr <- rep("R0", nrow(oneDat))
-    redunStr[oneDat$redundant > 0] <- "R1"
-    if(sumPtm > 0){
-      redunStr[which(oneDat$ptm > 0)] <- "Rp"
-    }
-    oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
-    tagID <- as.integer(factor(oneDat$tag_plex))}
-  if(maxRedun == 2){
-    redunStr <- rep("R0", nrow(oneDat))
-    redunStr[oneDat$redundant == 1] <- "R1"
-    redunStr[oneDat$redundant > 1] <- "R2"
+  }else{
+    redunStr <- paste("R", oneDat$varCat, sep = "")
     if(sumPtm > 0){
       redunStr[which(oneDat$ptm > 0)] <- "Rp"
     }
     oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
     tagID <- as.integer(factor(oneDat$tag_plex))
-  }
-  if(maxRedun == 3){
-    redunStr <- rep("R0", nrow(oneDat))
-    redunStr[oneDat$redundant == 1] <- "R1"
-    redunStr[oneDat$redundant == 2] <- "R2"
-    redunStr[oneDat$redundant > 2] <- "R3"
-    if(sumPtm > 0){
-      redunStr[which(oneDat$ptm > 0)] <- "Rp"
     }
-    oneDat$tag_plex <- paste(oneDat$tag_plex, redunStr, sep="")
-    tagID <- as.integer(factor(oneDat$tag_plex))
-  }
+
 
   n_t <- length(unique(oneDat$tag_plex))
 
@@ -213,7 +190,7 @@ compCall <- function(dat,
   if(approx){
       model <- rstan::vb(sMod, cores = nCores)
   }else{
-      model <- rstan::sampling(sMod, cores = nCores, iter = iter, 
+      model <- rstan::sampling(sMod, cores = nCores, iter = iter,
                                control = list(max_treedepth = 15))
   }
 

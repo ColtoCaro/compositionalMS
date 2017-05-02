@@ -11,7 +11,7 @@ logRatio <- function(mat, ref_index){
   lMat <- log2(mat)
   denom <- rowMeans(lMat[ , ref_index, drop = F])
   numCols <- lMat[ , -ref_index, drop = F]
-  
+
   p_ <- ncol(numCols)
   denomMat <- matrix(rep(denom, p_), ncol = p_)
   mintensity <- 2^(denomMat) + 2^(numCols)
@@ -46,25 +46,25 @@ transformDat <- function(df, modelFit, plexNumber){
   newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
                       Covariate = df[4:n_, ]$Covariate,
-                      Redundant = df[4:n_, ]$Redundant,
+                      varCat = df[4:n_, ]$varCat,
                       lrMat, stringsAsFactors = F)
-  
+
   newDf2 <- data.frame(Protein = df[4:n_, ]$Protein,
                        Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
                        Covariate = df[4:n_, ]$Covariate,
-                       Redundant = df[4:n_, ]$Redundant,
+                       varCat = df[4:n_, ]$varCat,
                        minTensities, stringsAsFactors = F)
 
   melted1 <- reshape2::melt(newDf1, id.vars = c("Protein", "Peptide", "bioID",
-                                              "Covariate", "Redundant"),
+                                              "Covariate", "varCat"),
                  value.name = "lr", variable.name = "header")
 
-  
+
   melted2 <- reshape2::melt(newDf2, id.vars = c("Protein", "Peptide", "bioID",
-                                                "Covariate", "Redundant"),
+                                                "Covariate", "varCat"),
                             value.name = "pairMin", variable.name = "header")
 
-  
+
   melted <- data.frame(melted1, pairMin = melted2$pairMin)
 
   separated <- stringr::str_split_fixed(as.character(melted$header), "qqqq",5)
@@ -85,7 +85,7 @@ transformDat <- function(df, modelFit, plexNumber){
                                        sep = "_"),
                   ptm = separated[ , 5], tag_plex,
                   covariate = melted$Covariate,
-                  redundant = melted$Redundant,
+                  varCat = melted$varCat,
                   pairMin = melted$pairMin,
                   lr = melted$lr, stringsAsFactors = F)
   finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
