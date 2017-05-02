@@ -40,7 +40,7 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
-  real<lower = 0> sigmaK ; //constant of proportionality
+  //real<lower = 0> sigmaK ; //constant of proportionality
   real<lower = 0> sigma[n_t] ; //experimental error
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
@@ -95,7 +95,7 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta[condID[i]] ,
-      sigmaK*fabs(beta[condID[i]])+sigma[tagID[i]]) ;
+      fabs(beta[condID[i]])+sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
@@ -112,7 +112,7 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta_b[bioID[i]] ,
-                     sigmaK*fabs(beta_b[bioID[i]]) + sigma[tagID[i]]) ;
+                     fabs(beta_b[bioID[i]]) + sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[tagID[i]]) ;
