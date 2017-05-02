@@ -40,6 +40,7 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
+  real<lower = 0> sigmaK ; //constant of proportionality
   real<lower = 0> sigma[n_t] ; //experimental error
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
@@ -50,7 +51,8 @@ transformed parameters{
   real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
   real slope_b[useCov*n_b] ;
   real betaP_b[useCov*n_b] ;  //predicted protein level at pp*covariate
-
+  
+  
   if(n_b > 0 && useCov > 0){
       for (i in 1:n_b){
         slope_b[i] = beta_b[i] + deviate_b[i] ;
@@ -92,7 +94,8 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigma[tagID[i]]) ;
+      lr[i] ~ normal(beta[condID[i]] , 
+      sigmaK*beta[condID[i]]+sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
@@ -109,7 +112,7 @@ model{
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta_b[bioID[i]] ,
-                     sigma[tagID[i]]) ;
+                     sigmaK*beta_b[bioID[i]] + sigma[tagID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], sigma[tagID[i]]) ;

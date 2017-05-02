@@ -206,7 +206,7 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
 checkVariance <- function(results){
   npars <- length(results[[4]]$varNames)
   #check to see if the model uses redundancies
-  redun <- (length(results[[4]]$varNames[1]) > 0)
+  redun <- (length(grep("R",results[[4]]$varNames[1])) > 0)
   if(redun){
     rPos <- regexpr("R", results[[4]]$varNames)
     redundancy <- substring(results[[4]]$varNames, rPos + 1)

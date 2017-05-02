@@ -2,15 +2,24 @@
 
 
 #Function that converts intensities into log ratios
+#also returns the minimum log intensity for each pair
 #mat should be a matrix of intensities
 #missing values and values < 1 will be set to 1.
 logRatio <- function(mat, ref_index){
   mat[is.na(mat)] <- 1
   mat[mat < 1] <- 1
   lMat <- log2(mat)
-  lrMat <- lMat[ , -ref_index, drop = F] - rowMeans(lMat[ , ref_index, drop = F])
-  lrMat
+  denom <- rowMeans(lMat[ , ref_index, drop = F])
+  numCols <- lMat[ , -ref_index, drop = F]
+  
+  p_ <- ncol(numCols)
+  denomMat <- matrix(rep(denom, p_), ncol = p_)
+  mintensity <- 2^(denomMat) + 2^(numCols)
+  lrMat <- numCols - denom
+
+  list(lrMat, mintensity)
 }
+
 
 #Function that makes a single groupID from the first 4 rows of df
 makeHeader <- function(df, index){
@@ -28,21 +37,35 @@ transformDat <- function(df, modelFit, plexNumber){
   ref_index <- which(condBio == condBio[1])
   normal_index <- setdiff(1:length(value_index), ref_index)
 
-  lrMat <- logRatio(as.matrix(df[4:(n_), value_index]), ref_index)
+  lRes <- logRatio(as.matrix(df[4:(n_), value_index]), ref_index)
+  lrMat <- lRes[[1]]
+  minTensities <- lRes[[2]]
   header <- makeHeader(df[ , value_index], normal_index)
   colnames(lrMat) <- header
 
-  newDf <- data.frame(Protein = df[4:n_, ]$Protein,
+  newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
                       Covariate = df[4:n_, ]$Covariate,
                       Redundant = df[4:n_, ]$Redundant,
                       lrMat, stringsAsFactors = F)
+  
+  newDf2 <- data.frame(Protein = df[4:n_, ]$Protein,
+                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                       Covariate = df[4:n_, ]$Covariate,
+                       Redundant = df[4:n_, ]$Redundant,
+                       minTensities, stringsAsFactors = F)
 
-  melted <- reshape2::melt(newDf, id.vars = c("Protein", "Peptide", "bioID",
+  melted1 <- reshape2::melt(newDf1, id.vars = c("Protein", "Peptide", "bioID",
                                               "Covariate", "Redundant"),
                  value.name = "lr", variable.name = "header")
 
+  
+  melted2 <- reshape2::melt(newDf2, id.vars = c("Protein", "Peptide", "bioID",
+                                                "Covariate", "Redundant"),
+                            value.name = "pairMin", variable.name = "header")
 
+  
+  melted <- data.frame(melted1, pairMin = melted2$pairMin)
 
   separated <- stringr::str_split_fixed(as.character(melted$header), "qqqq",5)
 
@@ -63,6 +86,7 @@ transformDat <- function(df, modelFit, plexNumber){
                   ptm = separated[ , 5], tag_plex,
                   covariate = melted$Covariate,
                   redundant = melted$Redundant,
+                  pairMin = melted$pairMin,
                   lr = melted$lr, stringsAsFactors = F)
   finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
 
