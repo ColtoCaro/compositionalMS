@@ -695,6 +695,8 @@ public:
         // model body
         try {
 
+            current_statement_begin__ = 78;
+            lp_accum__.add(normal_log<propto__>(cScale, 0, 5));
             current_statement_begin__ = 80;
             if (as_bool(logical_gt(n_ptm,0))) {
 

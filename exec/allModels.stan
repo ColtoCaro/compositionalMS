@@ -41,7 +41,7 @@ parameters{
   real alpha[n_p] ; // ptm means
 
 
-  real<lower = 0> cScale ; //Cauchy scale parameter (unif prior)
+  real<lower = 0> cScale ; //Cauchy scale parameter
   real<lower = 0> sigmaPtm[n_ptm] ; //ptm VC's
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
@@ -75,7 +75,7 @@ transformed parameters{
 
 model{
   //first set parameters that apply to all models
-
+  cScale ~ normal(0, 5) ;
   //set ptm distributions
   if(n_ptm > 0){
     for(i in 1:n_p){
@@ -114,7 +114,7 @@ model{
       lr[i] ~ normal(beta_b[bioID[i]] , sigmaP_b[bioID[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], 
+        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]],
         sigmaPtm[ptm[i]]) ;
       }
     }
@@ -161,7 +161,7 @@ model{
       + covariate[i]*slope_b[bioID[i]], sigmaP_b[bioID[i]]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], 
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
         sigmaPtm[ptm[i]]) ;
       }
     }
@@ -178,7 +178,7 @@ model{
 
 generated quantities{
   real avgCond[n_c*bioInd] ;
-  
+
 
   if(useCov == 0 && bioInd ==1){
     for(i in 1:n_c){

@@ -686,6 +686,7 @@ public:
         // model body
         try {
 
+            lp_accum__.add(normal_log<propto__>(cScale, 0, 5));
             if (as_bool(logical_gt(n_ptm,0))) {
 
                 for (int i = 1; i <= n_p; ++i) {
