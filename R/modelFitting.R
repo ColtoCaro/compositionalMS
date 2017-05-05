@@ -78,7 +78,7 @@ compCall <- function(dat,
   }
 
   #determine how many redundancies are being used
-  maxRedun <- unlist(lapply(dat, function(x) max(x[1, "varCat"])))
+  maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
 
 
 
@@ -184,9 +184,9 @@ compCall <- function(dat,
   summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
   print(summaryStr)
 
-
-  model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
-                iter = 2000, cores = 4, control = list(adapt_delta = .8))
+  #local call for testing
+  #model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
+   #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
   
   sMod <- compMS:::stanmodels$allModels
   if(approx){
