@@ -186,12 +186,14 @@ compCall <- function(dat,
   #If multiCore was selected check for the number of available cores and
   #use them
 
+  model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
+                iter = 2000, cores = 4, control = list(adapt_delta = .8))
+  
   sMod <- compMS:::stanmodels$allModels
   if(approx){
       model <- rstan::vb(sMod, cores = nCores)
   }else{
       model <- rstan::sampling(sMod, cores = nCores, iter = iter)
-      #,control = list(max_treedepth = 15)
   }
 
   #create summary table

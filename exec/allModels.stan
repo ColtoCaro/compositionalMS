@@ -13,7 +13,7 @@ data{
   int<lower=0, upper=n_c> condID[N_] ; //ID for condition*prot
   int<lower=0, upper=n_b> bioID[N_] ; //ID for biological replicates (nested
                                       //within condID)
-  int<lower=0, upper=n_t> tagID[N_] ;
+  //int<lower=0, upper=n_t> tagID[N_] ;
   int<lower=0, upper=n_ptm> ptm[N_] ; //ID for ptms (determines variance parameter)
   int<lower=0, upper=n_p> ptmPep[N_] ; //ID for ptm peptides
   int<lower=0, upper=n_b> condToBio[n_c, max(max_nc, 1)] ; //Mapping from bio to cond
@@ -40,13 +40,12 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
-
-  real<lower = 0> cScale ; //Cauchy scale parameter
-  real<lower = 0> sigmaPtm[n_ptm] ; //ptm VC's
+  real<lower = 0> sigma_raw[n_c * (1-bioInd)] ; // experimental error
+  real<lower = 0> sigma_rawb[n_b] ; // experimental error
+  real<lower = 0> scale ; //heierarchical variance scale
+  real<lower = 0> xi[n_ptm] ; // vc's for ptms
   real<lower = 0> tau[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
-  real<lower = 0> sigmaP[n_c * (1-bioInd)] ;
-  real<lower = 0> sigmaP_b[n_b] ;
 }
 
 transformed parameters{
@@ -54,8 +53,22 @@ transformed parameters{
   real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
   real slope_b[useCov*n_b] ;
   real betaP_b[useCov*n_b] ;  //predicted protein level at pp*covariate
+  real<lower = 0> sigma[n_c * (1-bioInd)] ;
+  real<lower = 0> sigmab[n_b] ;
+
+//create the real variance parameters
+if(n_b == 0){
+  for(i in 1:n_c){
+    sigma[i] = scale*sigma_raw[i] ;
+  }
+}else{
+  for(i in 1:n_b){
+    sigmab[i] = scale*sigma_rawb[i] ;
+  }
+}
 
 
+// Now take care of covariate parameters
   if(n_b > 0 && useCov > 0){
       for (i in 1:n_b){
         slope_b[i] = beta_b[i] + deviate_b[i] ;
@@ -75,9 +88,13 @@ transformed parameters{
 
 model{
   //first set parameters that apply to all models
-  cScale ~ normal(0, 5) ;
+
+
   //set ptm distributions
   if(n_ptm > 0){
+    for(i in 1:n_ptm){
+      xi[i] ~ cauchy(0, 5) ;
+    }
     for(i in 1:n_p){
       alpha[i] ~ normal(0, 10) ;
     }
@@ -90,15 +107,15 @@ model{
 
    for(i in 1:n_c){
       beta[i] ~ normal(0, 10) ;
-      sigmaP[i] ~ cauchy(0, cScale) ;
+      sigma_raw[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigmaP[condID[i]]) ;
+      lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]]) ;
       }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
-          sigmaPtm[ptm[i]]) ;
+          xi[ptm[i]]) ;
       }
     }
   } // end base model
@@ -107,15 +124,15 @@ model{
   if(n_b > 0){
     for(i in 1:n_b){
       beta_b[i] ~ normal(0, 10) ;
-      sigmaP_b[i] ~cauchy(0, cScale) ;
+      sigma_rawb[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] , sigmaP_b[bioID[i]]) ;
+      lr[i] ~ normal(beta_b[bioID[i]] , sigmab[bioID[i]]) ; 
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]],
-        sigmaPtm[ptm[i]]) ;
+        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], 
+        xi[ptm[i]]) ;
       }
     }
   } // end bioRep model
@@ -124,24 +141,24 @@ model{
 
   //Now repeat with covariate use
   if(useCov == 1){
-    tau ~ normal(0, 5) ;
+    tau ~ cauchy(0, 5) ;
 
   // base model
   if(n_b == 0){
 
    for(i in 1:n_c){
-      deviate_c[i] ~ normal(0, 5) ;
+      deviate_c[i] ~ cauchy(0, 5) ;
       beta[i] ~ normal(0, 10) ;
-      sigmaP[i] ~ cauchy(0, cScale) ;
+      sigma_raw[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta[condID[i]]  +
-      covariate[i]*slope_c[condID[i]], sigmaP[condID[i]]) ;
+      covariate[i]*slope_c[condID[i]], sigma[condID[i]]) ;
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(betaP_c[condID[i]] + alpha[ptmPep[i]],
-        sigmaPtm[ptm[i]]) ;
+        xi[ptm[i]]) ;
       }
   }
 
@@ -152,17 +169,17 @@ model{
     for(i in 1:(n_b)){
       deviate_b[i] ~ normal(0, 5) ;
       beta_b[i] ~ normal(0, 10) ;
-      sigmaP_b[i] ~ cauchy(0, cScale) ;
+      sigma_rawb[i] ~ inv_gamma(1, 1) ;
     }
 
     for(i in 1:N_){
       if(ptm[i] == 0){
       lr[i] ~ normal(beta_b[bioID[i]]
-      + covariate[i]*slope_b[bioID[i]], sigmaP_b[bioID[i]]) ;
+      + covariate[i]*slope_b[bioID[i]], sigmab[bioID[i]]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
-        sigmaPtm[ptm[i]]) ;
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], 
+        xi[ptm[i]]) ;
       }
     }
 
@@ -178,7 +195,6 @@ model{
 
 generated quantities{
   real avgCond[n_c*bioInd] ;
-
 
   if(useCov == 0 && bioInd ==1){
     for(i in 1:n_c){
