@@ -203,7 +203,6 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
 #' parameter is greatly different from the others it could be indicative of
 #' problems in the experimental workflow.
 #'
-#' @export
 #' @param model A results list generated from the function
 #' \code{\link{compCall}}.
 #'

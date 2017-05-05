@@ -183,8 +183,7 @@ compCall <- function(dat,
 
   summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
   print(summaryStr)
-  #If multiCore was selected check for the number of available cores and
-  #use them
+
 
   model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
                 iter = 2000, cores = 4, control = list(adapt_delta = .8))
@@ -234,12 +233,6 @@ compCall <- function(dat,
     ptmDf <- NULL
   }
 
-  varNames <- levels(factor(oneDat$tag_plex))
-  targetChain <- rstan::extract(model, pars="sigma")$sigma
-  postMeans <- colMeans(targetChain)
-  postVar <- apply(targetChain, 2, var)
-  residDf <- data.frame(varNames, mean = postMeans,
-                      var = postVar, stringsAsFactors = F)
 
   RES <- list()
   RES[[1]] <- resDf
@@ -249,7 +242,6 @@ compCall <- function(dat,
   }else{
     RES[[3]] <- model
   }
-  RES[[4]] <- residDf
 
   RES
 } #end of compFit function
