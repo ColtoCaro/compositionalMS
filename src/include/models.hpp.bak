@@ -726,6 +726,8 @@ public:
         // model body
         try {
 
+            current_statement_begin__ = 91;
+            lp_accum__.add(normal_log<propto__>(scale, 0, 5));
             current_statement_begin__ = 94;
             if (as_bool(logical_gt(n_ptm,0))) {
 
@@ -814,7 +816,7 @@ public:
                     for (int i = 1; i <= n_c; ++i) {
 
                         current_statement_begin__ = 150;
-                        lp_accum__.add(cauchy_log<propto__>(get_base1(deviate_c,i,"deviate_c",1), 0, 5));
+                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_c,i,"deviate_c",1), 0, tau));
                         current_statement_begin__ = 151;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta,i,"beta",1), 0, 10));
                         current_statement_begin__ = 152;
@@ -844,7 +846,7 @@ public:
                     for (int i = 1; i <= n_b; ++i) {
 
                         current_statement_begin__ = 170;
-                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_b,i,"deviate_b",1), 0, 5));
+                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_b,i,"deviate_b",1), 0, tau));
                         current_statement_begin__ = 171;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
                         current_statement_begin__ = 172;

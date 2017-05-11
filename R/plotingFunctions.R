@@ -32,8 +32,13 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
       parName <- "alpha"
     }else{
       if(results[[3]]@par_dims$avgCond == 0){
-        parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
-        parName <- "beta"
+        if(results[[3]]@par_dims$betaP_c == 0){
+          parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
+          parName <- "beta"
+        }else{
+          parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
+          parName <- "betaP_c"
+        }
       }else{
         parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
         parName <- "avgCond"
@@ -69,8 +74,13 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
       condition <- getCond(results[[2]]$ptmName, ptm = TRUE)
     }else{
       if(results[[3]]@par_dims$avgCond == 0){
-        parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
-        parName <- "beta"
+          if(results[[3]]@par_dims$betaP_c == 0){
+            parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
+            parName <- "beta"
+          }else{
+            parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
+            parName <- "betaP_c"
+          }
         condition <- getCond(results[[1]]$name, ptm = F)
       }else{
         parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
@@ -127,7 +137,10 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
 #'
-precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
+precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
+  
+  #First compute approximate p(nullSet)
+  
   colorVals <- c("(0,0.05]" = "#fb0000", "(0.05,0.25]" = "#dd1c77",
                                                  "(0.25,0.5]" = "#c994c7",
                                                  "(0.5,1]" = "black")
@@ -135,23 +148,29 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
 
   if(byCond){
     if(ptm == 0){
+      
+      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) - 
+        pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
     condition <- getCond(RES[[1]]$name)
-    sigFac <- cut(RES[[1]]$P_null, c(0,.05,.25,.5,1))
+    sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
     newDf <- data.frame(RES[[1]], condition, "P_Null" = sigFac )
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var),
                                         shape = P_Null)) +
       ggplot2::geom_point(ggplot2::aes(color = P_Null)) +
       ggplot2::scale_colour_manual(values =
-                                     c("(0,0.05]" = "#fb0000",
+                                     c("[0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
                                        "(0.5,1]" = "black")) +
       labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }else{
+      
+      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) - 
+        pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
       condition <- getCond(RES[[2]]$ptmName, TRUE)
-      sigFac <- cut(RES[[2]]$P_null, c(0,.05,.25,.5,1))
+      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
       newDf <- data.frame(RES[[2]][ptmIndex, ],
                           condition = condition[ptmIndex],
                           "P_Null" = sigFac[ptmIndex] )
@@ -159,7 +178,7 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
         ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
         ggplot2::scale_colour_manual(values =
-                                       c("(0,0.05]" = "#fb0000",
+                                       c("[0,0.05]" = "#fb0000",
                                          "(0.05,0.25]" = "#dd1c77",
                                          "(0.25,0.5]" = "#c994c7",
                                          "(0.5,1]" = "black")) +
@@ -169,24 +188,30 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE){
     }
   }else{
     if(ptm == 0){
-      sigFac <- cut(RES[[1]]$P_null, c(0,.05,.25,.5,1))
+      
+      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) - 
+        pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
+      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
       newDf <- data.frame(RES[[1]], "P_Null" = sigFac )
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
       ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
       ggplot2::scale_colour_manual(values =
-                                     c("(0,0.05]" = "#fb0000",
+                                     c("[0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
                                        "(0.5,1]" = "black")) + labelScheme
     }else{
+      
+      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) - 
+        pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
-      sigFac <- cut(RES[[2]]$P_null, c(0,.05,.25,.5,1))
+      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
       newDf <- data.frame(RES[[2]], "P_Null" = sigFac )
       newDf <- newDf[ptmIndex, ]
       ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
         ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + labelScheme + ggplot2::scale_color_manual(values =
-                                        c("(0,0.05]" = "#fb0000",
+                                        c("[0,0.05]" = "#fb0000",
                                           "(0.05,0.25]" = "#dd1c77",
                                           "(0.25,0.5]" = "#c994c7",
                                           "(0.5,1]" = "black"))

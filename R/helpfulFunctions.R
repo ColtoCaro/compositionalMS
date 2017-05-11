@@ -6,15 +6,15 @@
 #mat should be a matrix of intensities
 #missing values and values < 1 will be set to 1.
 logRatio <- function(mat, ref_index){
-  mat[is.na(mat)] <- 1
-  mat[mat < 1] <- 1
+  #mat[is.na(mat)] <- 1  normalization now done prior to this routine
+  #mat[mat < 1] <- 1
   lMat <- log2(mat)
   denom <- rowMeans(lMat[ , ref_index, drop = F])
   numCols <- lMat[ , -ref_index, drop = F]
 
   p_ <- ncol(numCols)
   denomMat <- matrix(rep(denom, p_), ncol = p_)
-  mintensity <- 2^(denomMat) + 2^(numCols)
+  mintensity <- 2^(denomMat) + 2^(numCols) #for making pairwise ssn
   lrMat <- numCols - denom
 
   list(lrMat, mintensity)
@@ -30,14 +30,32 @@ makeHeader <- function(df, index){
 }
 
 #function that takes a dataframe and returns a dataframe with unique ids
-transformDat <- function(df, modelFit, plexNumber){
+transformDat <- function(df, modelFit, plexNumber, normalize){
+  #Zero out unused column
+  bioCol <- df$bioID[1]
+  if(bioCol == 0){
+    df$bioID[] <- 0
+  }
   n_ <- nrow(df)
+  
+  jDat <- df[4:(n_), ]
+  df[4:n_, ] <- jDat[order(jDat$bioID), ]
+  
   value_index <- grep("tag", colnames(df))
-  condBio <- paste(df[1, value_index], df[2, value_index])
+
+  nMat <- df[4:(n_), value_index]
+  #normalize the df by bioRep
+  if(normalize == TRUE){
+  normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
+  nMat <- as.matrix(do.call(cbind, normed))
+  }
+  
+  condBio <- paste(df[1, value_index], 
+                   as.integer(df[2, 1])*df[2, value_index])
   ref_index <- which(condBio == condBio[1])
   normal_index <- setdiff(1:length(value_index), ref_index)
 
-  lRes <- logRatio(as.matrix(df[4:(n_), value_index]), ref_index)
+  lRes <- logRatio(nMat, ref_index)
   lrMat <- lRes[[1]]
   minTensities <- lRes[[2]]
   header <- makeHeader(df[ , value_index], normal_index)
@@ -70,10 +88,11 @@ transformDat <- function(df, modelFit, plexNumber){
   separated <- stringr::str_split_fixed(as.character(melted$header), "qqqq",5)
 
   #Merge tag with tenplex info
+
   tag_plex <- paste(separated[ , 2], melted$bioID, plexNumber, sep = "_")
 
   #figure out if we are using a bioid from the header or from a column
-  bioCol <- df$bioID[1]
+  
   if(bioCol == 1){
     bioID <- paste(melted$Protein, separated[ , 3], melted$bioID,  sep = "_")
   }else{bioID <- paste(melted$Protein, separated[ , 3], separated[, 4])}
@@ -88,14 +107,18 @@ transformDat <- function(df, modelFit, plexNumber){
                   varCat = melted$varCat,
                   pairMin = melted$pairMin,
                   lr = melted$lr, stringsAsFactors = F)
-  finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
+  finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, 
+                             finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
 
+  #do normalization at a previous step
   #normalize the non-ptm data by tag
-  normed <- unlist(by(melted[finalDat$ptm == 0, ]$lr,
-                 finalDat[finalDat$ptm == 0, ]$tag_plex, function(x)
-                   x - mean(x)))
-  melted$lr[finalDat$ptm == 0] <- normed
-  finalDat$lr <- melted$lr
+    
+  #normed <- unlist(by(melted[finalDat$ptm == 0, ]$lr,
+   #              finalDat[finalDat$ptm == 0, ]$tag_plex, function(x)
+    #               x - mean(x)))
+  #melted$lr[finalDat$ptm == 0] <- normed
+  #finalDat$lr <- melted$lr
+  
 
   finalDat
 }#end function transformDat
@@ -119,4 +142,35 @@ strReverse <- function(x){
   sapply(lapply(strsplit(x, NULL), rev), paste, collapse="")
 }
 
+#closure function
+cl <- function(vec){
+  vec/sum(vec)
+}
+
+#centered log ratio
+clr <- function(vec){
+  gm <- exp(mean(log(vec)))
+  log(vec/gm)
+}
+
+clrInv <- function(vec){
+  cl(exp(vec))
+}
+
+#Function to normalize the data
+
+cNorm <- function(mat, subIndex = NULL){
+  #takes a compostion matrix and subracts out the mean
+  mat[mat < 1] <- 1
+  clrMat <- t(apply(mat, 1, clr))
+  
+  if(is.null(subIndex)){
+    cMean <- clrInv(apply(clrMat, 2, mean))
+  }else{
+    cMean <- clrInv(apply(clrMat[subIndex, ], 2, mean))
+  }
+  
+  normed <- t(apply(mat, 1, function(x) cl(x/cMean)))
+  normed
+}
 

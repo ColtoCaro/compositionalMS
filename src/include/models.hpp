@@ -712,6 +712,7 @@ public:
         // model body
         try {
 
+            lp_accum__.add(normal_log<propto__>(scale, 0, 5));
             if (as_bool(logical_gt(n_ptm,0))) {
 
                 for (int i = 1; i <= n_ptm; ++i) {
@@ -771,7 +772,7 @@ public:
 
                     for (int i = 1; i <= n_c; ++i) {
 
-                        lp_accum__.add(cauchy_log<propto__>(get_base1(deviate_c,i,"deviate_c",1), 0, 5));
+                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_c,i,"deviate_c",1), 0, tau));
                         lp_accum__.add(normal_log<propto__>(get_base1(beta,i,"beta",1), 0, 10));
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
                     }
@@ -791,7 +792,7 @@ public:
 
                     for (int i = 1; i <= n_b; ++i) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_b,i,"deviate_b",1), 0, 5));
+                        lp_accum__.add(normal_log<propto__>(get_base1(deviate_b,i,"deviate_b",1), 0, tau));
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
                     }

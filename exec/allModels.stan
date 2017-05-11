@@ -88,7 +88,7 @@ if(n_b == 0){
 
 model{
   //first set parameters that apply to all models
-
+  scale ~ normal(0, 5) ;
 
   //set ptm distributions
   if(n_ptm > 0){
@@ -147,7 +147,7 @@ model{
   if(n_b == 0){
 
    for(i in 1:n_c){
-      deviate_c[i] ~ cauchy(0, 5) ;
+      deviate_c[i] ~ normal(0, tau) ;
       beta[i] ~ normal(0, 10) ;
       sigma_raw[i] ~ inv_gamma(1, 1) ;
     }
@@ -167,7 +167,7 @@ model{
   // bioRep model
   if(n_b > 0){
     for(i in 1:(n_b)){
-      deviate_b[i] ~ normal(0, 5) ;
+      deviate_b[i] ~ normal(0, tau) ;
       beta_b[i] ~ normal(0, 10) ;
       sigma_rawb[i] ~ inv_gamma(1, 1) ;
     }

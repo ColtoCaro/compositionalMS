@@ -44,8 +44,13 @@
 #'   computer capable of parallel processing.
 #' @param iter Number of iterations for each chain
 #' @param nullSet An interval representing unimportant changes.  This is
-#'    used to create the posterior probability that changes fall within the
-#'    unimportant interval.
+#'   used to create the posterior probability that changes fall within the
+#'   unimportant interval.
+#' @param centerProts A boolean variable that determines whether or not 
+#'   adjustments should be made under the assumption that the average protein
+#'   abundance is equivalent in each channel.  By default this value is true 
+#'   which results in the average log ratios between the reference and each
+#'   channel being centered at zero.
 #'
 #' @details There are many details.  This will be filled out later.
 #'
@@ -57,7 +62,9 @@ compCall <- function(dat,
                      pp=.95,
                      nCores = 1,
                      iter = 2000,
-                     nullSet = c(-1, 1)
+                     nullSet = c(-1, 1),
+                     centerProts = TRUE,
+                     normalize = TRUE
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
@@ -76,14 +83,17 @@ compCall <- function(dat,
       stop("Error: Plexes have different reference channels")
     }
   }
-
+  
+  #make sure protein names do not have "_" characters
+  dat <- lapply(dat, function(x) within(x, Protein <- 
+                  gsub("_", "-", Protein)))
+  
   #determine how many redundancies are being used
   maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
 
 
-
   readyDat <- lapply(1:length(dat), function(x)
-    transformDat(dat[[x]], modelFit, x))
+    transformDat(dat[[x]], modelFit, x, normalize))
   oneDat <- do.call(rbind, readyDat)
 
   #set data variables
@@ -185,8 +195,8 @@ compCall <- function(dat,
   print(summaryStr)
 
   #local call for testing
-  #model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
-   #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
+  model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
+                iter = 4000, cores = 4, control = list(adapt_delta = .8))
   
   sMod <- compMS:::stanmodels$allModels
   if(approx){
@@ -202,20 +212,27 @@ compCall <- function(dat,
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
+    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
     justProts <- oneDat[oneDat$ptm == 0 , ]
     n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }else{
-    targetChain <- rstan::extract(model, pars="beta")$beta
+    if(useCov == 0){
+      targetChain <- rstan::extract(model, pars="beta")$beta
+    }else{
+      targetChain <- rstan::extract(model, pars="betaP_c")$beta
+    }
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
-    justProts <- oneDat[oneDat$ptm == 0 , ]
+    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
+    justProts <- oneDat[oneDat$ptm == 0, ]
     n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, P_null = pvals, n_obs = as.vector(n_obs),
+                      var = postVar, P_null = pvals,
+                      pValue, n_obs = as.vector(n_obs),
                       stringsAsFactors = F)
 
   if(n_p > 0){
@@ -224,10 +241,11 @@ compCall <- function(dat,
     postVar <- apply(targetChain, 2, var)
     pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
       pnorm(nullSet[1], postMeans, sqrt(postVar))
+    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
     justPtms <- oneDat[oneDat$ptm > 0 , ]
     n_obs <- unlist(by(justPtms$lr, justPtms$ptmID, length))
     ptmDf <- data.frame(ptmName, mean = postMeans, var = postVar,
-                        P_null = pvals, n_obs = as.vector(n_obs),
+                        P_null = pvals, pValue, n_obs = as.vector(n_obs),
                         stringsAsFactors = F)
   }else{
     ptmDf <- NULL
