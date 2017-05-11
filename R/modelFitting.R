@@ -46,9 +46,9 @@
 #' @param nullSet An interval representing unimportant changes.  This is
 #'   used to create the posterior probability that changes fall within the
 #'   unimportant interval.
-#' @param centerProts A boolean variable that determines whether or not 
+#' @param centerProts A boolean variable that determines whether or not
 #'   adjustments should be made under the assumption that the average protein
-#'   abundance is equivalent in each channel.  By default this value is true 
+#'   abundance is equivalent in each channel.  By default this value is true
 #'   which results in the average log ratios between the reference and each
 #'   channel being centered at zero.
 #'
@@ -83,11 +83,11 @@ compCall <- function(dat,
       stop("Error: Plexes have different reference channels")
     }
   }
-  
+
   #make sure protein names do not have "_" characters
-  dat <- lapply(dat, function(x) within(x, Protein <- 
+  dat <- lapply(dat, function(x) within(x, Protein <-
                   gsub("_", "-", Protein)))
-  
+
   #determine how many redundancies are being used
   maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
 
@@ -195,9 +195,9 @@ compCall <- function(dat,
   print(summaryStr)
 
   #local call for testing
-  model <- stan(file="~/Documents/compMS/exec/allModels.stan", 
-                iter = 4000, cores = 4, control = list(adapt_delta = .8))
-  
+#  model <- stan(file="~/Documents/compMS/exec/allModels.stan",
+ #               iter = 4000, cores = 4, control = list(adapt_delta = .8))
+
   sMod <- compMS:::stanmodels$allModels
   if(approx){
       model <- rstan::vb(sMod, cores = nCores)
