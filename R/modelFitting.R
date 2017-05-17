@@ -46,11 +46,12 @@
 #' @param nullSet An interval representing unimportant changes.  This is
 #'   used to create the posterior probability that changes fall within the
 #'   unimportant interval.
-#' @param centerProts A boolean variable that determines whether or not
+#' @param normalize A boolean variable that determines whether or not
 #'   adjustments should be made under the assumption that the average protein
 #'   abundance is equivalent in each channel.  By default this value is true
-#'   which results in the average log ratios between the reference and each
-#'   channel being centered at zero.
+#'   which results in each row of the matrix being perturbed by the inverse of
+#'   the compositional mean.  Consequently the geometric means of each tag will
+#'   be equivalent. 
 #'
 #' @details There are many details.  This will be filled out later.
 #'
@@ -62,8 +63,7 @@ compCall <- function(dat,
                      pp=.95,
                      nCores = 1,
                      iter = 2000,
-                     nullSet = c(-1, 1),
-                     centerProts = TRUE,
+                     nullSet = c(-.2, .2),
                      normalize = TRUE
                      ){
 
@@ -195,8 +195,8 @@ compCall <- function(dat,
   print(summaryStr)
 
   #local call for testing
-#  model <- stan(file="~/Documents/compMS/exec/allModels.stan",
- #               iter = 4000, cores = 4, control = list(adapt_delta = .8))
+  #model <- stan(file="~/Documents/compMS/exec/allModels.stan",
+   #             iter = 4000, cores = 4, control = list(adapt_delta = .8))
 
   sMod <- compMS:::stanmodels$allModels
   if(approx){
@@ -219,7 +219,7 @@ compCall <- function(dat,
     if(useCov == 0){
       targetChain <- rstan::extract(model, pars="beta")$beta
     }else{
-      targetChain <- rstan::extract(model, pars="betaP_c")$beta
+      targetChain <- rstan::extract(model, pars="beta")$beta
     }
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)

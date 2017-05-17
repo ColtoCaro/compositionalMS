@@ -35,7 +35,7 @@ parameters{
   real beta[n_c * (1-bioInd)] ;
   real beta_b[n_b] ;
 
-  real deviate_c[useCov * n_c * (1-bioInd)] ; // The correlated slope
+//  real deviate_c[useCov * n_c * (1-bioInd)] ; // The correlated slope
   real deviate_b[useCov * n_b] ; // The correlated slope per bioRep
 
   real alpha[n_p] ; // ptm means
@@ -44,13 +44,14 @@ parameters{
   real<lower = 0> sigma_rawb[n_b] ; // experimental error
   real<lower = 0> scale ; //heierarchical variance scale
   real<lower = 0> xi[n_ptm] ; // vc's for ptms
-  real<lower = 0> tau[useCov] ; // variance that determines the amount of
+  //real<lower = 0> slope[useCov] ; // variance that determines the amount of
                                 // correlation between means and slopes
+  //real<lower = 0, upper = 1> rho; //correlation 
 }
 
 transformed parameters{
-  real slope_c[useCov*n_c* (1-bioInd)] ;
-  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
+//  real slope_c[useCov*n_c* (1-bioInd)] ;
+//  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
   real slope_b[useCov*n_b] ;
   real betaP_b[useCov*n_b] ;  //predicted protein level at pp*covariate
   real<lower = 0> sigma[n_c * (1-bioInd)] ;
@@ -76,12 +77,12 @@ if(n_b == 0){
       }
 
   }
-  if(n_b == 0 && useCov > 0){
-      for (i in 1:n_c){
-        slope_c[i] = beta[i] + deviate_c[i] ;
-        betaP_c[i] = beta[i] + pp*slope_c[i] ;
-      }
-  }
+//  if(n_b == 0 && useCov > 0){
+  //    for (i in 1:n_c){
+    //    //slope_c[i] = rho*beta[i]*10 + sqrt(1-rho^2)*deviate_c[i]*10 ;
+  //      betaP_c[i] = beta[i] + pp*slope[1]*beta[i] ;
+  //    }
+//  }
 
 
 } // end transform parameters
@@ -141,23 +142,23 @@ model{
 
   //Now repeat with covariate use
   if(useCov == 1){
-    tau ~ cauchy(0, 5) ;
-
+    //tau ~ normal(0, 5) ;
+    //slope ~ normal(0,5) ;
   // base model
   if(n_b == 0){
-
+  
    for(i in 1:n_c){
-      deviate_c[i] ~ normal(0, tau) ;
+      //deviate_c[i] ~ normal(0, 1) ;
+      
       beta[i] ~ normal(0, 10) ;
       sigma_raw[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]]  +
-      covariate[i]*slope_c[condID[i]], sigma[condID[i]]) ;
+      lr[i] ~ normal(beta[condID[i]]*covariate[i], sigma[condID[i]]) ;  
     }
       if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_c[condID[i]] + alpha[ptmPep[i]],
+        lr[i] ~ normal(beta[condID[i]] + alpha[ptmPep[i]],
         xi[ptm[i]]) ;
       }
   }
@@ -167,7 +168,7 @@ model{
   // bioRep model
   if(n_b > 0){
     for(i in 1:(n_b)){
-      deviate_b[i] ~ normal(0, tau) ;
+      deviate_b[i] ~ normal(0, 5) ;
       beta_b[i] ~ normal(0, 10) ;
       sigma_rawb[i] ~ inv_gamma(1, 1) ;
     }

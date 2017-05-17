@@ -32,13 +32,13 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
       parName <- "alpha"
     }else{
       if(results[[3]]@par_dims$avgCond == 0){
-        if(results[[3]]@par_dims$betaP_c == 0){
+        #if(results[[3]]@par_dims$betaP_c == 0){
           parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
           parName <- "beta"
-        }else{
-          parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
-          parName <- "betaP_c"
-        }
+       # }else{
+       #   parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
+        #  parName <- "betaP_c"
+        #}
       }else{
         parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
         parName <- "avgCond"
@@ -74,13 +74,13 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
       condition <- getCond(results[[2]]$ptmName, ptm = TRUE)
     }else{
       if(results[[3]]@par_dims$avgCond == 0){
-          if(results[[3]]@par_dims$betaP_c == 0){
+         # if(results[[3]]@par_dims$betaP_c == 0){
             parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
             parName <- "beta"
-          }else{
-            parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
-            parName <- "betaP_c"
-          }
+        #  }else{
+        #    parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
+        #    parName <- "betaP_c"
+        #  }
         condition <- getCond(results[[1]]$name, ptm = F)
       }else{
         parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
