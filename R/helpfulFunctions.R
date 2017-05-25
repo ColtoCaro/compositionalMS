@@ -30,12 +30,34 @@ makeHeader <- function(df, index){
 }
 
 #function that takes a dataframe and returns a dataframe with unique ids
-transformDat <- function(df, modelFit, plexNumber, normalize){
-  #Zero out unused column
+transformDat <- function(df, plexNumber, normalize){
+  #convert factors to strings
+  facIndex <- which(sapply(df, is.factor))
+  df[facIndex] <- lapply(df[facIndex], as.character)
+  
+  #Zero out unused columns
   bioCol <- df$bioID[1]
   if(bioCol == 0){
     df$bioID[] <- 0
   }
+  
+  covarCol <- df$Covariate[1]
+  if(covarCol == 0){
+    df$Covariate[] <- 0
+  }
+  varCol <- df$varCat[1]
+  if(varCol == 0){
+    df$varCat[] <- 0
+  }
+
+  
+  if(df[2, 1] == 0){
+    df[2, ][] <- 0
+  }
+  if(df[3, 1] == 0){
+    df[3, ][] <- 0
+  }
+  
   n_ <- nrow(df)
 
   jDat <- df[4:(n_), ]

@@ -93,7 +93,7 @@ compBayes <- function(dat,
 
 
   readyDat <- lapply(1:length(dat), function(x)
-    transformDat(dat[[x]], modelFit, x, normalize))
+    transformDat(dat[[x]], plexNumber = x, normalize = normalize))
   oneDat <- do.call(rbind, readyDat)
 
   #set data variables
