@@ -37,10 +37,10 @@ transformDat <- function(df, modelFit, plexNumber, normalize){
     df$bioID[] <- 0
   }
   n_ <- nrow(df)
-  
+
   jDat <- df[4:(n_), ]
   df[4:n_, ] <- jDat[order(jDat$bioID), ]
-  
+
   value_index <- grep("tag", colnames(df))
 
   nMat <- df[4:(n_), value_index]
@@ -49,8 +49,8 @@ transformDat <- function(df, modelFit, plexNumber, normalize){
   normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
   nMat <- as.matrix(do.call(cbind, normed))
   }
-  
-  condBio <- paste(df[1, value_index], 
+
+  condBio <- paste(df[1, value_index],
                    as.integer(df[2, 1])*df[2, value_index])
   ref_index <- which(condBio == condBio[1])
   normal_index <- setdiff(1:length(value_index), ref_index)
@@ -92,14 +92,15 @@ transformDat <- function(df, modelFit, plexNumber, normalize){
   tag_plex <- paste(separated[ , 2], melted$bioID, plexNumber, sep = "_")
 
   #figure out if we are using a bioid from the header or from a column
-  
+
   if(bioCol == 1){
     bioID <- paste(melted$Protein, separated[ , 3], melted$bioID,  sep = "_")
   }else{bioID <- paste(melted$Protein, separated[ , 3], separated[, 4])}
 
-  finalDat <- data.frame(condID = paste(melted$Protein, separated[, 3],
+  finalDat <- data.frame(protein = melted$Protein,
+                  condID = paste(melted$Protein, separated[, 3],
                                         sep = "_"), bioID,
-                         ptmID = paste(melted$Protein, separated[, 3],
+                  ptmID = paste(melted$Protein, separated[, 3],
                                        melted$Peptide, separated[ , 5],
                                        sep = "_"),
                   ptm = separated[ , 5], tag_plex,
@@ -107,18 +108,18 @@ transformDat <- function(df, modelFit, plexNumber, normalize){
                   varCat = melted$varCat,
                   pairMin = melted$pairMin,
                   lr = melted$lr, stringsAsFactors = F)
-  finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID, 
+  finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID,
                              finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
 
   #do normalization at a previous step
   #normalize the non-ptm data by tag
-    
+
   #normed <- unlist(by(melted[finalDat$ptm == 0, ]$lr,
    #              finalDat[finalDat$ptm == 0, ]$tag_plex, function(x)
     #               x - mean(x)))
   #melted$lr[finalDat$ptm == 0] <- normed
   #finalDat$lr <- melted$lr
-  
+
 
   finalDat
 }#end function transformDat
@@ -163,14 +164,40 @@ cNorm <- function(mat, subIndex = NULL){
   #takes a compostion matrix and subracts out the mean
   mat[mat < 1] <- 1
   clrMat <- t(apply(mat, 1, clr))
-  
+
   if(is.null(subIndex)){
     cMean <- clrInv(apply(clrMat, 2, mean))
   }else{
     cMean <- clrInv(apply(clrMat[subIndex, ], 2, mean))
   }
-  
+
   normed <- t(apply(mat, 1, function(x) cl(x/cMean)))
   normed
 }
 
+
+#Function to prepare data for an ANOVA.
+
+anovaPrep <- function(df){
+  #Zero out unused column
+  bioCol <- df$bioID[1]
+  if(bioCol == 0){
+    df$bioID[] <- 0
+  }
+  n_ <- nrow(df)
+
+  jDat <- df[4:(n_), ]
+  df[4:n_, ] <- jDat[order(jDat$bioID), ]
+
+  value_index <- grep("tag", colnames(df))
+
+header <- makeHeader(df[ , value_index], normal_index)
+  colnames(lrMat) <- header
+
+  newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
+                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                       Covariate = df[4:n_, ]$Covariate,
+                       varCat = df[4:n_, ]$varCat,
+                       lrMat, stringsAsFactors = F)
+
+}
