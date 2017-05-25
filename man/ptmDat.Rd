@@ -34,6 +34,16 @@ this example.
  to noise values or isolation specificities.  If a covariate is to be used, a
  one must be entered in the first row of this column.  The second and third
  rows do nothing.}
+ \item{varCat}{This column provides a way to allow for additional variance
+ components.  Separate variance components are always generated for each
+ plex/tag combination.  However, it might be of interest to further
+ separate variance accoriding to some other factor that varies within a
+ tag, e.g. species.  This is accomplished by adding a categorical variable
+ for variance groups.  Observations beloning to the same category should
+ have the same category entry (either an integer or string).  These
+ categories are only intended for protein analysis and have no bearing on
+ PTM's (beyond altering the protein results). A 1 must be entered into the
+ first row of theheader when using this column.}
  \item{tag1-tag10}{These columns contain signal to noise intensity ratios.
  The column names are case sensitive and must include the string 'tag'
  followed by a number.  The entries in the first three rows of these columns

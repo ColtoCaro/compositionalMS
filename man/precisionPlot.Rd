@@ -4,7 +4,7 @@
 \alias{precisionPlot}
 \title{Precision plot}
 \usage{
-precisionPlot(summaryRes, byCond = FALSE)
+precisionPlot(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1))
 }
 \arguments{
 \item{byCond}{A boolean parameter which determines if separate plots should
