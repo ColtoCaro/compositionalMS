@@ -19,7 +19,7 @@ data{
   int<lower=0, upper=n_b> condToBio[n_c, max(max_nc, 1)] ; //Mapping from bio to cond
 
   int<lower=0> useCov ;  //Indicator for use of covariate (either 0 or 1)
-  real<lower=0, upper=1> covariate[N_] ; // covariate
+  real<lower=0> covariate[N_] ; // covariate
   real pp ; // prediction percentile for the covariate
 
   real lr[N_] ; // log-ratio observations
@@ -44,14 +44,12 @@ parameters{
   real<lower = 0> sigma_rawb[n_b] ; // experimental error
   real<lower = 0> scale ; //heierarchical variance scale
   real<lower = 0> xi[n_ptm] ; // vc's for ptms
-  //real<lower = 0> slope[useCov] ; // variance that determines the amount of
-                                // correlation between means and slopes
-  //real<lower = 0, upper = 1> rho; //correlation 
+  real<lower = 0> delta[useCov] ; //slope multiplier
 }
 
 transformed parameters{
 //  real slope_c[useCov*n_c* (1-bioInd)] ;
-//  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
+  real betaP_c[useCov*n_c* (1-bioInd)] ;  //predicted protein level
   real slope_b[useCov*n_b] ;
   real betaP_b[useCov*n_b] ;  //predicted protein level at pp*covariate
   real<lower = 0> sigma[n_c * (1-bioInd)] ;
@@ -72,17 +70,18 @@ if(n_b == 0){
 // Now take care of covariate parameters
   if(n_b > 0 && useCov > 0){
       for (i in 1:n_b){
-        slope_b[i] = beta_b[i] + deviate_b[i] ;
-        betaP_b[i] = beta_b[i] + pp*slope_b[i] ;
+        //slope_b[i] = beta_b[i] + deviate_b[i] ;
+        betaP_b[i] = beta_b[i] * (1 + pp*delta[useCov]);
       }
 
   }
-//  if(n_b == 0 && useCov > 0){
-  //    for (i in 1:n_c){
-    //    //slope_c[i] = rho*beta[i]*10 + sqrt(1-rho^2)*deviate_c[i]*10 ;
-  //      betaP_c[i] = beta[i] + pp*slope[1]*beta[i] ;
-  //    }
-//  }
+
+  if(n_b == 0 && useCov > 0){
+      for (i in 1:n_c){
+        //slope_c[i] = rho*beta[i]*10 + sqrt(1-rho^2)*deviate_c[i]*10 ;
+        betaP_c[i] = beta[i] * (1 + pp*delta[useCov]) ;
+      }
+  }
 
 
 } // end transform parameters
@@ -129,10 +128,10 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]] , sigmab[bioID[i]]) ; 
+      lr[i] ~ normal(beta_b[bioID[i]] , sigmab[bioID[i]]) ;
       }
       if(ptm[i] > 0){
-        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]], 
+        lr[i] ~ normal(beta_b[bioID[i]] + alpha[ptmPep[i]],
         xi[ptm[i]]) ;
       }
     }
@@ -146,16 +145,16 @@ model{
     //slope ~ normal(0,5) ;
   // base model
   if(n_b == 0){
-  
+
    for(i in 1:n_c){
       //deviate_c[i] ~ normal(0, 1) ;
-      
+
       beta[i] ~ normal(0, 10) ;
       sigma_raw[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]]*covariate[i], sigma[condID[i]]) ;  
+      lr[i] ~ normal(beta[condID[i]]*covariate[i], sigma[condID[i]]) ;
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]] + alpha[ptmPep[i]],
@@ -179,7 +178,7 @@ model{
       + covariate[i]*slope_b[bioID[i]], sigmab[bioID[i]]) ;
     }
   if(ptm[i] > 0){
-        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]], 
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
         xi[ptm[i]]) ;
       }
     }
