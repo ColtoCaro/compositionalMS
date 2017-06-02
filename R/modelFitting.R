@@ -188,7 +188,7 @@ compBayes <- function(dat,
   sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
   useCov <- 1*(sumCov > 0)
 
-  covariate <- oneDat$pairMin/max(oneDat$pairMin)
+  covariate <- oneDat$covariate/max(oneDat$covariate)
   lr <- oneDat$lr
 
   summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
