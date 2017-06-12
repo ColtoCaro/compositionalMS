@@ -244,7 +244,6 @@ public:
         check_greater_or_equal(function__,"useCov",useCov,0);
         for (int k0__ = 0; k0__ < N_; ++k0__) {
             check_greater_or_equal(function__,"covariate[k0__]",covariate[k0__],0);
-            check_less_or_equal(function__,"covariate[k0__]",covariate[k0__],1);
         }
         // initialize data variables
         bioInd = int(0);
@@ -279,6 +278,8 @@ public:
         ++num_params_r__;
         validate_non_negative_index("xi", "n_ptm", n_ptm);
         num_params_r__ += n_ptm;
+        validate_non_negative_index("delta", "useCov", useCov);
+        num_params_r__ += useCov;
     }
 
     ~model_allModels() { }
@@ -427,6 +428,23 @@ public:
             throw std::runtime_error(std::string("Error transforming variable xi: ") + e.what());
         }
 
+        if (!(context__.contains_r("delta")))
+            throw std::runtime_error("variable delta missing");
+        vals_r__ = context__.vals_r("delta");
+        pos__ = 0U;
+        validate_non_negative_index("delta", "useCov", useCov);
+        context__.validate_dims("initialization", "delta", "double", context__.to_vec(useCov));
+        // generate_declaration delta
+        std::vector<double> delta(useCov,double(0));
+        for (int i0__ = 0U; i0__ < useCov; ++i0__)
+            delta[i0__] = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < useCov; ++i0__)
+            try {
+            writer__.scalar_lb_unconstrain(0,delta[i0__]);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable delta: ") + e.what());
+        }
+
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -534,8 +552,22 @@ public:
                 xi.push_back(in__.scalar_lb_constrain(0));
         }
 
+        vector<T__> delta;
+        size_t dim_delta_0__ = useCov;
+        delta.reserve(dim_delta_0__);
+        for (size_t k_0__ = 0; k_0__ < dim_delta_0__; ++k_0__) {
+            if (jacobian__)
+                delta.push_back(in__.scalar_lb_constrain(0,lp__));
+            else
+                delta.push_back(in__.scalar_lb_constrain(0));
+        }
+
 
         // transformed parameters
+        validate_non_negative_index("betaP_c", "((useCov * n_c) * (1 - bioInd))", ((useCov * n_c) * (1 - bioInd)));
+        vector<T__> betaP_c(((useCov * n_c) * (1 - bioInd)));
+        stan::math::initialize(betaP_c, DUMMY_VAR__);
+        stan::math::fill(betaP_c,DUMMY_VAR__);
         validate_non_negative_index("slope_b", "(useCov * n_b)", (useCov * n_b));
         vector<T__> slope_b((useCov * n_b));
         stan::math::initialize(slope_b, DUMMY_VAR__);
@@ -572,8 +604,14 @@ public:
 
                 for (int i = 1; i <= n_b; ++i) {
 
-                    stan::math::assign(get_base1_lhs(slope_b,i,"slope_b",1), (get_base1(beta_b,i,"beta_b",1) + get_base1(deviate_b,i,"deviate_b",1)));
-                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) + (pp * get_base1(slope_b,i,"slope_b",1))));
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                }
+            }
+            if (as_bool((primitive_value(logical_eq(n_b,0)) && primitive_value(logical_gt(useCov,0))))) {
+
+                for (int i = 1; i <= n_c; ++i) {
+
+                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
                 }
             }
         } catch (const std::exception& e) {
@@ -583,6 +621,13 @@ public:
         }
 
         // validate transformed parameters
+        for (int i0__ = 0; i0__ < ((useCov * n_c) * (1 - bioInd)); ++i0__) {
+            if (stan::math::is_uninitialized(betaP_c[i0__])) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: betaP_c" << '[' << i0__ << ']';
+                throw std::runtime_error(msg__.str());
+            }
+        }
         for (int i0__ = 0; i0__ < (useCov * n_b); ++i0__) {
             if (stan::math::is_uninitialized(slope_b[i0__])) {
                 std::stringstream msg__;
@@ -690,7 +735,7 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) * get_base1(covariate,i,"covariate",1)), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
@@ -710,7 +755,7 @@ public:
 
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + (get_base1(covariate,i,"covariate",1) * get_base1(slope_b,get_base1(bioID,i,"bioID",1),"slope_b",1))), get_base1(sigmab,get_base1(bioID,i,"bioID",1),"sigmab",1)));
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigmab,get_base1(bioID,i,"bioID",1),"sigmab",1)));
                         }
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
@@ -752,6 +797,8 @@ public:
         names__.push_back("sigma_rawb");
         names__.push_back("scale");
         names__.push_back("xi");
+        names__.push_back("delta");
+        names__.push_back("betaP_c");
         names__.push_back("slope_b");
         names__.push_back("betaP_b");
         names__.push_back("sigma");
@@ -785,6 +832,12 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(n_ptm);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(useCov);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(((useCov * n_c) * (1 - bioInd)));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((useCov * n_b));
@@ -852,6 +905,11 @@ public:
         for (size_t k_0__ = 0; k_0__ < dim_xi_0__; ++k_0__) {
             xi.push_back(in__.scalar_lb_constrain(0));
         }
+        vector<double> delta;
+        size_t dim_delta_0__ = useCov;
+        for (size_t k_0__ = 0; k_0__ < dim_delta_0__; ++k_0__) {
+            delta.push_back(in__.scalar_lb_constrain(0));
+        }
         for (int k_0__ = 0; k_0__ < (n_c * (1 - bioInd)); ++k_0__) {
             vars__.push_back(beta[k_0__]);
         }
@@ -874,6 +932,9 @@ public:
         for (int k_0__ = 0; k_0__ < n_ptm; ++k_0__) {
             vars__.push_back(xi[k_0__]);
         }
+        for (int k_0__ = 0; k_0__ < useCov; ++k_0__) {
+            vars__.push_back(delta[k_0__]);
+        }
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -884,6 +945,10 @@ public:
         double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
         (void) DUMMY_VAR__;  // suppress unused var warning
 
+        validate_non_negative_index("betaP_c", "((useCov * n_c) * (1 - bioInd))", ((useCov * n_c) * (1 - bioInd)));
+        vector<double> betaP_c(((useCov * n_c) * (1 - bioInd)), 0.0);
+        stan::math::initialize(betaP_c, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(betaP_c,DUMMY_VAR__);
         validate_non_negative_index("slope_b", "(useCov * n_b)", (useCov * n_b));
         vector<double> slope_b((useCov * n_b), 0.0);
         stan::math::initialize(slope_b, std::numeric_limits<double>::quiet_NaN());
@@ -920,8 +985,14 @@ public:
 
                 for (int i = 1; i <= n_b; ++i) {
 
-                    stan::math::assign(get_base1_lhs(slope_b,i,"slope_b",1), (get_base1(beta_b,i,"beta_b",1) + get_base1(deviate_b,i,"deviate_b",1)));
-                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) + (pp * get_base1(slope_b,i,"slope_b",1))));
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                }
+            }
+            if (as_bool((primitive_value(logical_eq(n_b,0)) && primitive_value(logical_gt(useCov,0))))) {
+
+                for (int i = 1; i <= n_c; ++i) {
+
+                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
                 }
             }
         } catch (const std::exception& e) {
@@ -939,6 +1010,9 @@ public:
         }
 
         // write transformed parameters
+        for (int k_0__ = 0; k_0__ < ((useCov * n_c) * (1 - bioInd)); ++k_0__) {
+            vars__.push_back(betaP_c[k_0__]);
+        }
         for (int k_0__ = 0; k_0__ < (useCov * n_b); ++k_0__) {
             vars__.push_back(slope_b[k_0__]);
         }
@@ -1063,8 +1137,18 @@ public:
             param_name_stream__ << "xi" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
+        for (int k_0__ = 1; k_0__ <= useCov; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "delta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= ((useCov * n_c) * (1 - bioInd)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "betaP_c" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         for (int k_0__ = 1; k_0__ <= (useCov * n_b); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "slope_b" << '.' << k_0__;
@@ -1137,8 +1221,18 @@ public:
             param_name_stream__ << "xi" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
+        for (int k_0__ = 1; k_0__ <= useCov; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "delta" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= ((useCov * n_c) * (1 - bioInd)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "betaP_c" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         for (int k_0__ = 1; k_0__ <= (useCov * n_b); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "slope_b" << '.' << k_0__;

@@ -154,7 +154,8 @@ model{
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]]*covariate[i], sigma[condID[i]]) ;
+      lr[i] ~ normal(beta[condID[i]] * (1 + covariate[i]*delta[useCov]),
+        sigma[condID[i]]) ;
     }
       if(ptm[i] > 0){
         lr[i] ~ normal(beta[condID[i]] + alpha[ptmPep[i]],
@@ -174,8 +175,8 @@ model{
 
     for(i in 1:N_){
       if(ptm[i] == 0){
-      lr[i] ~ normal(beta_b[bioID[i]]
-      + covariate[i]*slope_b[bioID[i]], sigmab[bioID[i]]) ;
+      lr[i] ~ normal(beta_b[bioID[i]] * (1 + covariate[i]*delta[useCov]),
+      sigmab[bioID[i]]) ;
     }
   if(ptm[i] > 0){
         lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
