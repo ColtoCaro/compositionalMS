@@ -188,15 +188,21 @@ compBayes <- function(dat,
   sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
   useCov <- 1*(sumCov > 0)
 
-  covariate <- oneDat$covariate/max(oneDat$covariate)
+  if(useCov){
+    covariate <- oneDat$covariate/quantile(oneDat$covariate, probs = pp)
+  }else{covariate <- oneDat$covariate}
+
   lr <- oneDat$lr
+  if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
+                        consequence of normalizing values already less than
+                        one")}
 
   summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
   print(summaryStr)
 
   #local call for testing
-  #model <- stan(file="~/Documents/compMS/exec/allModels.stan",
-   #             iter = 4000, cores = 4, control = list(adapt_delta = .8))
+ # model <- stan(file="~/Documents/compMS/exec/allModels.stan",
+   #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
 
   sMod <- compMS:::stanmodels$allModels
   if(approx){

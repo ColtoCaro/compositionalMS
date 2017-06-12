@@ -20,7 +20,7 @@ data{
 
   int<lower=0> useCov ;  //Indicator for use of covariate (either 0 or 1)
   real<lower=0> covariate[N_] ; // covariate
-  real pp ; // prediction percentile for the covariate
+  //real pp ; // prediction percentile for the covariate
 
   real lr[N_] ; // log-ratio observations
 
@@ -71,7 +71,7 @@ if(n_b == 0){
   if(n_b > 0 && useCov > 0){
       for (i in 1:n_b){
         //slope_b[i] = beta_b[i] + deviate_b[i] ;
-        betaP_b[i] = beta_b[i] * (1 + pp*delta[useCov]);
+        betaP_b[i] = beta_b[i] * (1 + delta[useCov]);
       }
 
   }
@@ -79,7 +79,7 @@ if(n_b == 0){
   if(n_b == 0 && useCov > 0){
       for (i in 1:n_c){
         //slope_c[i] = rho*beta[i]*10 + sqrt(1-rho^2)*deviate_c[i]*10 ;
-        betaP_c[i] = beta[i] * (1 + pp*delta[useCov]) ;
+        betaP_c[i] = beta[i] * (1 + delta[useCov]) ;
       }
   }
 

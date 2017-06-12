@@ -41,7 +41,6 @@ private:
     vector<vector<int> > condToBio;
     int useCov;
     vector<double> covariate;
-    double pp;
     vector<double> lr;
     int bioInd;
 public:
@@ -192,11 +191,6 @@ public:
         for (size_t i_0__ = 0; i_0__ < covariate_limit_0__; ++i_0__) {
             covariate[i_0__] = vals_r__[pos__++];
         }
-        context__.validate_dims("data initialization", "pp", "double", context__.to_vec());
-        pp = double(0);
-        vals_r__ = context__.vals_r("pp");
-        pos__ = 0;
-        pp = vals_r__[pos__++];
         validate_non_negative_index("lr", "N_", N_);
         context__.validate_dims("data initialization", "lr", "double", context__.to_vec(N_));
         validate_non_negative_index("lr", "N_", N_);
@@ -613,7 +607,7 @@ public:
                 for (int i = 1; i <= n_b; ++i) {
 
                     current_statement_begin__ = 74;
-                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
             current_statement_begin__ = 79;
@@ -623,7 +617,7 @@ public:
                 for (int i = 1; i <= n_c; ++i) {
 
                     current_statement_begin__ = 82;
-                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
         } catch (const std::exception& e) {
@@ -1050,7 +1044,7 @@ public:
                 for (int i = 1; i <= n_b; ++i) {
 
                     current_statement_begin__ = 74;
-                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
             current_statement_begin__ = 79;
@@ -1060,7 +1054,7 @@ public:
                 for (int i = 1; i <= n_c; ++i) {
 
                     current_statement_begin__ = 82;
-                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + (pp * get_base1(delta,useCov,"delta",1)))));
+                    stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
         } catch (const std::exception& e) {
