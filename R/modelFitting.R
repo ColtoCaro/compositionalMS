@@ -225,7 +225,7 @@ compBayes <- function(dat,
     if(useCov == 0){
       targetChain <- rstan::extract(model, pars="beta")$beta
     }else{
-      targetChain <- rstan::extract(model, pars="beta")$beta
+      targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
     }
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
