@@ -277,95 +277,46 @@ compBayes <- function(dat,
 
 
 
-#' A frequentist version of the compositional model
+#' A transformation from log ratio space into proportions
 #'
-#' This function runs the main code for fitting an appropriate compositonal
-#' proteomics model with a separate linear model for each protein.  It
-#' returns a list of size 3.  The first component of the list
-#' contains summary data on relative protein abundance.  The second component
-#' summarizes PTM peptides and the third component contains asyptotic
-#' standard errors generated from the models.
+#' This function transforms all estimated log ratios into proportions
 #'
 #' @export
-#' @param dat The data to be analyzed.  This data must be formatted as shown in
-#'   the included sample data \code{\link{ptmDat}}.  Both the reference channel
-#'   and the reference
-#'   conditions will be defined from the first column of data. If multiple runs
-#'   are to be analyzed at once then the dat object must be a list of
-#'   dataframes.  This is only recommended if biological or technical
-#'   replicates exist across multiple runs.  Otherwise, for computational
-#'   simplicity, each run should be analyzed separately.  For a single run, the
-#'   data should be formatted as a dataframe.  In each dataframe the first
-#'   two rows are used to determine which columns are technical replicates and
-#'   which are biological replicates.  For example, if two columns, possibly
-#'   from different plexes, both have the number '3' in the first row, then
-#'   they will be treated as technical replicates.  Likewise, columns that
-#'   share a number in the second row are treated as biological replicates. If
-#'   there are no biological replicates in the experiment then the second row
-#'   should be all zeroes.  If technical replicates are not also labeled as
-#'   biological replicates an error will be generated.
-#' @param normalize A boolean variable that determines whether or not
-#'   adjustments should be made under the assumption that the average protein
-#'   abundance is equivalent in each channel.  By default this value is true
-#'   which results in each row of the matrix being perturbed by the inverse of
-#'   the compositional mean.  Consequently the geometric means of each tag will
-#'   be equivalent.
+#' @param RES Results from the compBayes function.
 #'
-#' @details There are many details.  This will be filled out later.
+#' @details Estimates from compBayes are done after using the additive log ratio
+#'   transformation.  This function applies the inverse transformation to the
+#'   full sampling chains and recomputes summary statistics.
 #'
 #'
 #'
-compFreq <- function(dat, normalize = TRUE, ssn = FALSE){
+toSimplex <- function(RES){
 
-  #Put single dataframe into a list so that we will always work with a list of dataframes
-  if(is.data.frame(dat)){dat <- list(dat)}
+  condNames <- RES[[1]]$name
+  condNum <- getCond(condNames)
+  nCond <- length(unique(condNum))
+  nProts <- length(condNames)/nCond
 
-  #test to make sure each list component is a dataframe
-  if (length(dat) > 1){
-    testDf <- lapply(dat, is.data.frame)
-    if(sum(unlist(testDf)) != length(dat)){
-      stop("Error: at least one list component is not a dataframe")
-    }
-    #make sure that each dataframe has the same reference condition
-    refList <- lapply(dat, function(x) paste(x[1, "tag1"],
-                                             x[2, "tag1"]))
-    if(!do.call(all.equal,refList)){
-      stop("Error: Plexes have different reference channels")
-    }
+  indices <- lapply(1:nCond, function(x) which(condNum == x + 1))
+  indices <- do.call(cbind, indices)
+
+  simpRES <- lapply(1:nProts, function(x)
+    alrInv(makeMat(indices[x, ], RES[[3]])))
+
+  meanMat <- simpRES[[1]][[1]]
+  varMat <- simpRES[[1]][[2]]
+  for(j in 2:length(simpRES)){
+    meanMat <- rbind(meanMat, simpRES[[j]][[1]])
+    varMat <- rbind(varMat, simpRES[[j]][[2]])
   }
 
-  #make sure protein names do not have "_" characters
-  dat <- lapply(dat, function(x) within(x, Protein <-
-                                          gsub("_", "-", Protein)))
+  pName <- substr(condNames[indices[ , 1]], 1,
+                  regexpr("_", condNames[indices[ , 1]])-1)
+  rownames(meanMat) <- pName
+  rownames(varMat) <- pName
 
-  #determine how many redundancies are being used
-  maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
-
-
-  readyDat <- lapply(1:length(dat), function(x)
-    transformDat(dat[[x]], modelFit, x, normalize))
-  oneDat <- do.call(rbind, readyDat)
+  cbind(meanMat, varMat)
+} #end to Simplex
 
 
-  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
-                         oneDat$ptmID),]
 
-  sumCov <- sum(unlist(lapply(dat, function(x) x[1, "Covariate"])))
-  useCov <- 1*(sumCov > 0)
-
-  if(ssn){
-    covariate <- oneDat$pairMin/max(oneDat$pairMin)
-  }else{
-    covariate <- oneDat$covariate
-  }
-
-  lr <- oneDat$lr
-
-  summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
-  print(summaryStr)
-
-  #use this somehow
-  separated <- stringr::str_split_fixed(as.character(melted$header), "qqqq",5)
-
-
-}

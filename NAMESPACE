@@ -2,8 +2,8 @@
 
 export(caterpillar)
 export(compBayes)
-export(compFreq)
 export(precisionPlot)
+export(toSimplex)
 import(Rcpp)
 import(bayesplot)
 import(methods)

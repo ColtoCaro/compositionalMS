@@ -34,13 +34,13 @@ transformDat <- function(df, plexNumber, normalize){
   #convert factors to strings
   facIndex <- which(sapply(df, is.factor))
   df[facIndex] <- lapply(df[facIndex], as.character)
-  
+
   #Zero out unused columns
   bioCol <- df$bioID[1]
   if(bioCol == 0){
     df$bioID[] <- 0
   }
-  
+
   covarCol <- df$Covariate[1]
   if(covarCol == 0){
     df$Covariate[] <- 0
@@ -50,14 +50,14 @@ transformDat <- function(df, plexNumber, normalize){
     df$varCat[] <- 0
   }
 
-  
+
   if(df[2, 1] == 0){
     df[2, ][] <- 0
   }
   if(df[3, 1] == 0){
     df[3, ][] <- 0
   }
-  
+
   n_ <- nrow(df)
 
   jDat <- df[4:(n_), ]
@@ -222,4 +222,25 @@ header <- makeHeader(df[ , value_index], normal_index)
                        varCat = df[4:n_, ]$varCat,
                        lrMat, stringsAsFactors = F)
 
+}
+
+#function to make a matrix of relevant samples
+makeMat <- function(vec, model){
+  extracted <- lapply(vec, function(x)
+    rstan::extract(model,
+                   pars=paste("beta[", x, "]", sep = ""))$beta)
+  extractMat <- do.call(cbind, extracted)
+  extractMat
+}
+
+#function to apply alr inverse to a matrix
+alrInv <- function(mat){
+
+zeroMat <- cbind(rep(0,nrow(mat)),mat)
+expMat <- 2^zeroMat
+simplex <- t(apply(expMat, 1, function(x) x/sum(x)))
+simpMeans <- apply(simplex, 2, mean)
+simpVar <- apply(simplex, 2, var)
+
+list(simpMeans, simpVar)
 }
