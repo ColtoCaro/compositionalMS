@@ -17,7 +17,7 @@ sample data \code{\link{ptmDat}}.  Two sample files are included in the
 package, the dataframe "sampleDat" and the list object "ptmDat".
 
 Once data has been correctly formatted and loaded into your workspace, you can
-create a Stan model with the function \code{\link{compCall}}.
+create a Stan model with the function \code{\link{compBayes}}.
 }
 \section{Model Details}{
 
