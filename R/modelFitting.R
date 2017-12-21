@@ -209,11 +209,8 @@ compBayes <- function(dat,
    #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
 
   sMod <- compMS:::stanmodels$allModels
-  if(approx){
-      model <- rstan::vb(sMod, cores = nCores)
-  }else{
-      model <- rstan::sampling(sMod, cores = nCores, iter = iter)
-  }
+  model <- rstan::sampling(sMod, cores = nCores, iter = iter)
+
 
   #create summary table
   if(n_b > 0){
@@ -233,16 +230,13 @@ compBayes <- function(dat,
     }
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
-      pnorm(nullSet[1], postMeans, sqrt(postVar))
-    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
+    intervals <- apply(targetChain, 2, quantile, probs = c(.025, .975, .1, .9))
     justProts <- oneDat[oneDat$ptm == 0, ]
     n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, P_null = pvals,
-                      pValue, n_obs = as.vector(n_obs),
+                      var = postVar, intervals, n_obs = as.vector(n_obs),
                       stringsAsFactors = F)
 
   if(n_p > 0){
@@ -272,7 +266,7 @@ compBayes <- function(dat,
   }
 
   RES
-} #end of compFit function
+} #end of compBayes function
 
 
 
@@ -315,7 +309,10 @@ toSimplex <- function(RES){
   rownames(meanMat) <- pName
   rownames(varMat) <- pName
 
-  cbind(meanMat, varMat)
+  sres <- cbind(meanMat, varMat)
+  colnames(sres) <- c(paste0("Estimate", 1:nCond),
+                      paste0("Variance", 1:nCond))
+  sres
 } #end to Simplex
 
 

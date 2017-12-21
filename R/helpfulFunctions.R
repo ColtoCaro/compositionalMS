@@ -241,6 +241,7 @@ expMat <- 2^zeroMat
 simplex <- t(apply(expMat, 1, function(x) x/sum(x)))
 simpMeans <- apply(simplex, 2, mean)
 simpVar <- apply(simplex, 2, var)
+simpInt <- apply(simplex, 2, quantile, probs = c(.025, .975, .1, .9))
 
-list(simpMeans, simpVar)
+list(simpMeans, simpVar, simpInt)
 }
