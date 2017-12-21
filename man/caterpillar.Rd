@@ -7,8 +7,8 @@
 caterpillar(results, ptm = 0, allPars = FALSE, byCond = FALSE)
 }
 \arguments{
-\item{results}{The results list generated from the function
-\code{\link{compCall}}}
+\item{results}{The results list generated from the
+function \code{\link{compBayes}}}
 
 \item{ptm}{A variable that determines what type of fold changes will be
 plotted.  The default, ptm = 0, plots relative protein abundance.
@@ -17,7 +17,7 @@ original dataframe. This will not work if x > 9.}
 
 \item{allPars}{A boolean variable indicating whether or not all parameters
 should be plotted.  The default is false, resulting in a plot for only
-parameters with 95% credible intervals that do not contain zero.}
+parameters with 95\% credible intervals that do not contain zero.}
 
 \item{byCond}{A boolean parameter which determines if separate plots should
 be made for each condition.  The default is FALSE which results in the
@@ -26,6 +26,6 @@ creation of a single plot.}
 \description{
 This function takes a list which contains a Stanfit object and summary
 tables.  The output is a caterpillar plot of parameters with credible
-intervals that do not contain 0.  Red line segments denote a 80% credible
-interval, while the black tails show 95%.
+intervals that do not contain 0.  Red line segments denote a 80\% credible
+interval, while the black tails show 95\%.
 }

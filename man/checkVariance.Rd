@@ -8,7 +8,7 @@ checkVariance(results)
 }
 \arguments{
 \item{model}{A results list generated from the function
-\code{\link{compCall}}.}
+\code{\link{compBayes}}.}
 }
 \description{
 This function shows the distribution of each parameter corresponding to an

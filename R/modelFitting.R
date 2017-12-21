@@ -106,6 +106,8 @@ compBayes <- function(dat,
     ptm <- rep(0,N_)
     ptmPep <- rep(0,N_)
   }else{
+    stop("You have requested a PTM analysis.  This feature is currently
+         under development.")
     #find and remove ptm data with no corresponding protein data
     globalProts <- unique(oneDat$bioID[oneDat$ptm == 0])
     ptmProts <- unique(oneDat$bioID[oneDat$ptm > 0])
@@ -163,6 +165,8 @@ compBayes <- function(dat,
     n_nc <- rep(0, n_c)
     max_nc <- 0
   }else{
+    stop("You have requested a population level.  This feature is
+         currently under development")
     n_b <- length(unique(oneDat$bioID))
     bioID <- as.integer(factor(oneDat$bioID))
     #make a mapping for use in a heierarchical model (not yet implemented)

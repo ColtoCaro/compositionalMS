@@ -4,22 +4,24 @@
 #'
 #' This function takes a list which contains a Stanfit object and summary
 #' tables.  The output is a caterpillar plot of parameters with credible
-#' intervals that do not contain 0.  Red line segments denote a 80% credible
-#' interval, while the black tails show 95%.
+#' intervals that do not contain 0.  Red line segments denote a 80\% credible
+#' interval, while the black tails show 95\%.
 #'
 #' @export
-#' @param results The results list generated from the function
-#'   \code{\link{compCall}}
+#' @param results The results list generated from the
+#'   function \code{\link{compBayes}}
 #' @param ptm A variable that determines what type of fold changes will be
 #'   plotted.  The default, ptm = 0, plots relative protein abundance.
 #'   Setting ptm = x, for any x > 0, will plot the PTM with ID x in the
 #'   original dataframe. This will not work if x > 9.
 #' @param allPars A boolean variable indicating whether or not all parameters
 #'   should be plotted.  The default is false, resulting in a plot for only
-#'   parameters with 95% credible intervals that do not contain zero.
+#'   parameters with 95\% credible intervals that do not contain zero.
 #' @param byCond A boolean parameter which determines if separate plots should
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
+#'
+#'
 #'
 caterpillar <- function(results, ptm = 0, allPars = FALSE,
                         byCond = FALSE){
@@ -111,7 +113,7 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
     cPlot <- rstan::plot(results[[3]], pars = parStr, mapping =
                            ggplot2::theme) +
       ggplot2::scale_y_discrete(labels = NULL) +
-      ggplot2::ggtitle(paste("Condition", unique(condition)[i])) + 
+      ggplot2::ggtitle(paste("Condition", unique(condition)[i])) +
       ggplot2::coord_flip()
     print(cPlot)
     } # end for loop
@@ -122,7 +124,7 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 
 #' Precision plot
 #'
-#' This function takes a results summary from the \code{\link{compCall}}
+#' This function takes a results summary from the \code{\link{compBayes}}
 #' function.
 #' The output is a plot of showing posterior means on the
 #' x-axis and precision on the y-axis, where precision defined as the inverse
@@ -130,7 +132,7 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #'
 #' @export
 #' @param summary A results table generated from the function
-#'   \code{\link{compCall}}, which will be found in either the first (for
+#'   \code{\link{compBayes}}, which will be found in either the first (for
 #'   protein summaries) or second (for ptm's) component of the result list
 #'   object.
 #' @param byCond A boolean parameter which determines if separate plots should
@@ -138,9 +140,9 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #'   creation of a single plot.
 #'
 precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
-  
+
   #First compute approximate p(nullSet)
-  
+
   colorVals <- c("(0,0.05]" = "#fb0000", "(0.05,0.25]" = "#dd1c77",
                                                  "(0.25,0.5]" = "#c994c7",
                                                  "(0.5,1]" = "black")
@@ -148,8 +150,8 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
 
   if(byCond){
     if(ptm == 0){
-      
-      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) - 
+
+      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
         pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
     condition <- getCond(RES[[1]]$name)
     sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
@@ -164,8 +166,8 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
                                        "(0.5,1]" = "black")) +
       labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
     }else{
-      
-      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) - 
+
+      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) -
         pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
@@ -182,14 +184,14 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
                                          "(0.05,0.25]" = "#dd1c77",
                                          "(0.25,0.5]" = "#c994c7",
                                          "(0.5,1]" = "black")) +
-        labelScheme + ggplot2::facet_wrap( ~ condition, 
-                                           ncol = min(5, 
+        labelScheme + ggplot2::facet_wrap( ~ condition,
+                                           ncol = min(5,
                                            length(unique(condition))))
     }
   }else{
     if(ptm == 0){
-      
-      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) - 
+
+      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
         pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
       sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
       newDf <- data.frame(RES[[1]], "P_Null" = sigFac )
@@ -201,8 +203,8 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
                                        "(0.25,0.5]" = "#c994c7",
                                        "(0.5,1]" = "black")) + labelScheme
     }else{
-      
-      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) - 
+
+      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) -
         pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
       ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
       ptmIndex <- which(ptmType == ptm)
@@ -229,7 +231,7 @@ precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
 #' problems in the experimental workflow.
 #'
 #' @param model A results list generated from the function
-#' \code{\link{compCall}}.
+#' \code{\link{compBayes}}.
 #'
 checkVariance <- function(results){
   npars <- length(results[[4]]$varNames)

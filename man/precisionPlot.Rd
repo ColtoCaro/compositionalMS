@@ -12,12 +12,12 @@ be made for each condition.  The default is FALSE which results in the
 creation of a single plot.}
 
 \item{summary}{A results table generated from the function
-\code{\link{compCall}}, which will be found in either the first (for
+\code{\link{compBayes}}, which will be found in either the first (for
 protein summaries) or second (for ptm's) component of the result list
 object.}
 }
 \description{
-This function takes a results summary from the \code{\link{compCall}}
+This function takes a results summary from the \code{\link{compBayes}}
 function.
 The output is a plot of showing posterior means on the
 x-axis and precision on the y-axis, where precision defined as the inverse
