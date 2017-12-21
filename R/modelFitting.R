@@ -26,15 +26,6 @@
 #'   there are no biological replicates in the experiment then the second row
 #'   should be all zeroes.  If technical replicates are not also labeled as
 #'   biological replicates an error will be generated.
-#' @param approx A boolean variable which specifies whether or not a full
-#'   Bayesian
-#'   or an approximate Bayesian model should be fit.  A value of TRUE
-#'   fits a Variational Bayes approximation.
-#' @param resultsOnly A boolean variable that determines what information will
-#'   be returned after model fitting.  If resultsOnly is TRUE, then the
-#'   function will return a list containing two tables, one table for posterior
-#'   means and another with posterior standard deviations.  If resultsOnly is
-#'   FALSE then the results list will also contain an object of class Stanfit.
 #' @param pp The percentage covariate level to be used for predicting relative
 #'   protein abundance.  By default this value is .95, so that sum signal to
 #'   noise will be adjusted towards the 95th percentile of observed values.
@@ -43,9 +34,6 @@
 #'   For large datasets it is highly recommended that the package be used on a
 #'   computer capable of parallel processing.
 #' @param iter Number of iterations for each chain
-#' @param nullSet An interval representing unimportant changes.  This is
-#'   used to create the posterior probability that changes fall within the
-#'   unimportant interval.
 #' @param normalize A boolean variable that determines whether or not
 #'   adjustments should be made under the assumption that the average protein
 #'   abundance is equivalent in each channel.  By default this value is true
@@ -58,12 +46,9 @@
 #'
 #'
 compBayes <- function(dat,
-                     approx = FALSE,
-                     resultsOnly = FALSE,
-                     pp=.95,
+                     pp=.99,
                      nCores = 1,
                      iter = 2000,
-                     nullSet = c(-.2, .2),
                      normalize = TRUE
                      ){
 
@@ -230,7 +215,9 @@ compBayes <- function(dat,
     }
     postMeans <- colMeans(targetChain)
     postVar <- apply(targetChain, 2, var)
-    intervals <- apply(targetChain, 2, quantile, probs = c(.025, .975, .1, .9))
+    intervals <- t(apply(targetChain, 2, quantile,
+                         probs = c(.025, .975, .1, .9)))
+    colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
     justProts <- oneDat[oneDat$ptm == 0, ]
     n_obs <- unlist(by(justProts$lr, justProts$condID, length))
   }
@@ -259,11 +246,8 @@ compBayes <- function(dat,
   RES <- list()
   RES[[1]] <- resDf
   RES[[2]] <- ptmDf
-  if(resultsOnly){
-    RES[[3]] <- NULL
-  }else{
-    RES[[3]] <- model
-  }
+  RES[[3]] <- model
+
 
   RES
 } #end of compBayes function
@@ -280,7 +264,8 @@ compBayes <- function(dat,
 #'
 #' @details Estimates from compBayes are done after using the additive log ratio
 #'   transformation.  This function applies the inverse transformation to the
-#'   full sampling chains and recomputes summary statistics.
+#'   full sampling chains and recomputes summary statistics.  Returns a data
+#'   frame with estimates, variance and intervals in terms of proportions.
 #'
 #'
 #'
@@ -297,22 +282,16 @@ toSimplex <- function(RES){
   simpRES <- lapply(1:nProts, function(x)
     alrInv(makeMat(indices[x, ], RES[[3]])))
 
-  meanMat <- simpRES[[1]][[1]]
-  varMat <- simpRES[[1]][[2]]
-  for(j in 2:length(simpRES)){
-    meanMat <- rbind(meanMat, simpRES[[j]][[1]])
-    varMat <- rbind(varMat, simpRES[[j]][[2]])
-  }
-
+  #now manipulate results into a dataframe
   pName <- substr(condNames[indices[ , 1]], 1,
                   regexpr("_", condNames[indices[ , 1]])-1)
-  rownames(meanMat) <- pName
-  rownames(varMat) <- pName
+  Condition <- rep(1:(nCond + 1), nProts)
+  Name <- rep(pName, each = nCond + 1)
 
-  sres <- cbind(meanMat, varMat)
-  colnames(sres) <- c(paste0("Estimate", 1:nCond),
-                      paste0("Variance", 1:nCond))
-  sres
+  simpMat <- do.call(rbind, simpRES)
+  simpDf <- data.frame(Name, Condition, simpMat)
+
+  simpDf
 } #end to Simplex
 
 
