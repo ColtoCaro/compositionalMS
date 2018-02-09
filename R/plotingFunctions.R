@@ -8,127 +8,57 @@
 #' interval, while the black tails show 95\%.
 #'
 #' @export
-#' @param results The results list generated from the
+#' @param RES The results list generated from the
 #'   function \code{\link{compBayes}}
-#' @param ptm A variable that determines what type of fold changes will be
-#'   plotted.  The default, ptm = 0, plots relative protein abundance.
-#'   Setting ptm = x, for any x > 0, will plot the PTM with ID x in the
-#'   original dataframe. This will not work if x > 9.
-#' @param allPars A boolean variable indicating whether or not all parameters
-#'   should be plotted.  The default is false, resulting in a plot for only
-#'   parameters with 95\% credible intervals that do not contain zero.
 #' @param byCond A boolean parameter which determines if separate plots should
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
+#' @param allPars A boolean variable indicating whether or not all parameters
+#'   should be plotted.  The default is false, resulting in a plot for only
+#'   parameters with 95\% credible intervals that do not contain zero.
 #'
 #'
-#'
-caterpillar <- function(results, ptm = 0, allPars = FALSE,
-                        byCond = FALSE){
-  if(byCond == FALSE){
-    if(ptm > 0){
-      ptmName <- as.character(results[[2]]$ptmName)
-      ptmType <- substring(ptmName, nchar(ptmName))
-      ptmIndex <- which(ptmType == ptm)
-      parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
-      parName <- "alpha"
-    }else{
-      if(results[[3]]@par_dims$avgCond == 0){
-        #if(results[[3]]@par_dims$betaP_c == 0){
-          parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
-          parName <- "beta"
-       # }else{
-       #   parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
-        #  parName <- "betaP_c"
-        #}
-      }else{
-        parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
-        parName <- "avgCond"
-      }
-    }
+catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE){
 
-  if(allPars == FALSE){
-    sigParIndex <- which(parSumm[ , "2.5%"] > 0 | parSumm[ , "97.5%"] < 0)
-    if(ptm > 0){
-      sigParIndex <- intersect(sigParIndex, ptmIndex)
-    }
+  #find signif
+  sigIndex <- which(RES[[1]]$LL95 > 0 | RES[[1]]$UL95 < 0)
+  if(plotAll){sigIndex <- 1:nrow(RES[[1]])}
+
+  newDf <- RES[[1]][sigIndex, ]
+  newDf <- newDf[order(newDf$mean), ]
+  newDf$index <- 1:nrow(newDf)
+
+  labelScheme <- ggplot2::labs(y = "Log2 fold-change", x = "")
+  if(byCond){
+
+    ggplot2::ggplot(newDf, ggplot2::aes(y = mean, x = index)) +
+      labelScheme +
+      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL95, ymax = UL95)) +
+      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
+                                            colour = "80% Credible Interval"))+
+      ggplot2::geom_point() +
+      ggplot2::facet_wrap( ~ condition, ncol = 5)
+
   }else{
-    sigParIndex <- 1:dim(parSumm)[1]
-    if(ptm > 0){
-      sigParIndex <- intersect(sigParIndex, ptmIndex)
-    }
+
+    ggplot2::ggplot(newDf, ggplot2::aes(y = mean, x = index)) +
+      labelScheme +
+      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL95, ymax = UL95)) +
+      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
+                                            colour = "80% Credible Interval"))+
+      ggplot2::geom_point()
+
+
   }
-  orderedIndex <- sigParIndex[order(parSumm[sigParIndex, "50%"])]
-
-  parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
-
-  rstan::plot(results[[3]], pars = parStr, mapping = ggplot2::theme) +
-    ggplot2::scale_y_discrete(labels = NULL) +
-    ggplot2::coord_flip()
-  }else{ # stratify by condition
-
-    if(ptm > 0){
-      ptmName <- as.character(results[[2]]$ptmName)
-      ptmType <- substring(ptmName, nchar(ptmName))
-      ptmIndex <- which(ptmType == ptm)
-      parSumm <- rstan::summary(results[[3]], pars = "alpha")$summary
-      parName <- "alpha"
-      condition <- getCond(results[[2]]$ptmName, ptm = TRUE)
-    }else{
-      if(results[[3]]@par_dims$avgCond == 0){
-         # if(results[[3]]@par_dims$betaP_c == 0){
-            parSumm <- rstan::summary(results[[3]], pars = "beta")$summary
-            parName <- "beta"
-        #  }else{
-        #    parSumm <- rstan::summary(results[[3]], pars = "betaP_c")$summary
-        #    parName <- "betaP_c"
-        #  }
-        condition <- getCond(results[[1]]$name, ptm = F)
-      }else{
-        parSumm <- rstan::summary(results[[3]], pars = "avgCond")$summary
-        parName <- "avgCond"
-        condition <- getCond(results[[1]]$name, ptm = F)
-      }
-    }
-
-    for(i in 1:length(unique(condition))){
-    condIndex <- which(condition == unique(condition)[i])
-
-    if(allPars == FALSE){
-      sigParIndex <- which(parSumm[ , "2.5%"] > 0 | parSumm[ , "97.5%"] < 0)
-    }else{
-      sigParIndex <- 1:dim(parSumm)[1]
-    }
-    #intersect the indices
-    sigParIndex <- intersect(condIndex, sigParIndex)
-    if(ptm > 0){
-      sigParIndex <- intersect(sigParIndex, ptmIndex)
-    }
-    if(length(sigParIndex) == 0){next}
-
-    orderedIndex <- sigParIndex[order(parSumm[sigParIndex, "50%"])]
-
-    parStr <- paste(parName, "[", orderedIndex, "]", sep = "")
-
-    cPlot <- rstan::plot(results[[3]], pars = parStr, mapping =
-                           ggplot2::theme) +
-      ggplot2::scale_y_discrete(labels = NULL) +
-      ggplot2::ggtitle(paste("Condition", unique(condition)[i])) +
-      ggplot2::coord_flip()
-    print(cPlot)
-    } # end for loop
-
-  } # end by condition = T
-
-}#end caterpillar
+}#end catterPlot
 
 #' Precision plot
 #'
 #' This function takes a results summary from the \code{\link{compBayes}}
 #' function.
 #' The output is a plot of showing posterior means on the
-#' x-axis and precision on the y-axis, where precision defined as the inverse
-#' of the posterior variance.
+#' x-axis and precision on the y-axis, where precision ploted as the inverse
+#' of the posterior coefficient of variation.
 #'
 #' @export
 #' @param summary A results table generated from the function
@@ -138,88 +68,57 @@ caterpillar <- function(results, ptm = 0, allPars = FALSE,
 #' @param byCond A boolean parameter which determines if separate plots should
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
+#' @param nullSet An interval which will determine the color scheme of the
+#'   plot.  The probability of being in the nullSet interval is approximated
+#'   and points are colored according to categories of this probability.  If
+#'   a researcher is only interested in fold-changes greater than 2 then this
+#'   interval should be set to (-1, 1).
 #'
-precisionPlot <- function(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1)){
+precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1)){
 
-  #First compute approximate p(nullSet)
 
-  colorVals <- c("(0,0.05]" = "#fb0000", "(0.05,0.25]" = "#dd1c77",
-                                                 "(0.25,0.5]" = "#c994c7",
-                                                 "(0.5,1]" = "black")
-  labelScheme <- ggplot2::labs(y = "Log10 Precision", x = "Posterior mean of log2 fold-change")
-
+  labelScheme <- ggplot2::labs(y = "1 / CV",
+                               x = "Posterior mean of log2 fold-change")
   if(byCond){
-    if(ptm == 0){
 
-      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
-        pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
-    condition <- getCond(RES[[1]]$name)
+    pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
+      pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
     sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
-    newDf <- data.frame(RES[[1]], condition, "P_Null" = sigFac )
-    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var),
-                                        shape = P_Null)) +
-      ggplot2::geom_point(ggplot2::aes(color = P_Null)) +
+
+    cv <- sqrt(RES[[1]]$var) / abs(RES[[1]]$mean)
+
+    newDf <- data.frame(RES[[1]], cv, pNull, "P_Null" = sigFac)
+    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1 / cv)) +
+      ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
                                      c("[0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
                                        "(0.5,1]" = "black")) +
       labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
-    }else{
 
-      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) -
-        pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
-      ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
-      ptmIndex <- which(ptmType == ptm)
-      condition <- getCond(RES[[2]]$ptmName, TRUE)
-      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
-      newDf <- data.frame(RES[[2]][ptmIndex, ],
-                          condition = condition[ptmIndex],
-                          "P_Null" = sigFac[ptmIndex] )
-
-      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
-        ggplot2::scale_colour_manual(values =
-                                       c("[0,0.05]" = "#fb0000",
-                                         "(0.05,0.25]" = "#dd1c77",
-                                         "(0.25,0.5]" = "#c994c7",
-                                         "(0.5,1]" = "black")) +
-        labelScheme + ggplot2::facet_wrap( ~ condition,
-                                           ncol = min(5,
-                                           length(unique(condition))))
-    }
   }else{
-    if(ptm == 0){
 
-      pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
-        pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
-      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
-      newDf <- data.frame(RES[[1]], "P_Null" = sigFac )
-      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-      ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) +
+    pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
+      pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
+    sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
+
+    cv <- sqrt(RES[[1]]$var) / abs(RES[[1]]$mean)
+
+    newDf <- data.frame(RES[[1]], cv, pNull, "P_Null" = sigFac)
+    ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1 / cv)) +
+      ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
                                      c("[0,0.05]" = "#fb0000",
                                        "(0.05,0.25]" = "#dd1c77",
                                        "(0.25,0.5]" = "#c994c7",
-                                       "(0.5,1]" = "black")) + labelScheme
-    }else{
+                                       "(0.5,1]" = "black")) +
+      labelScheme
 
-      pNull <- pnorm(nullSet[2], RES[[2]]$mean, sqrt(RES[[2]]$var)) -
-        pnorm(nullSet[1], RES[[2]]$mean, sqrt(RES[[2]]$var))
-      ptmType <- substring(RES[[2]]$ptmName, nchar(RES[[2]]$ptmName))
-      ptmIndex <- which(ptmType == ptm)
-      sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
-      newDf <- data.frame(RES[[2]], "P_Null" = sigFac )
-      newDf <- newDf[ptmIndex, ]
-      ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = log10(1/var))) +
-        ggplot2::geom_point(ggplot2::aes(color = P_Null, shape = P_Null)) + labelScheme + ggplot2::scale_color_manual(values =
-                                        c("[0,0.05]" = "#fb0000",
-                                          "(0.05,0.25]" = "#dd1c77",
-                                          "(0.25,0.5]" = "#c994c7",
-                                          "(0.5,1]" = "black"))
-    }
+
   }
-}
+}# end precisionPlot
+
 
 #'
 #' Variance plot
