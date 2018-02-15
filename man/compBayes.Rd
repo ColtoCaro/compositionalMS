@@ -4,8 +4,7 @@
 \alias{compBayes}
 \title{Fitting a compositional Stan model}
 \usage{
-compBayes(dat, approx = FALSE, resultsOnly = FALSE, pp = 0.95,
-  nCores = 1, iter = 2000, nullSet = c(-0.2, 0.2), normalize = TRUE)
+compBayes(dat, pp = 0.99, nCores = 1, iter = 2000, normalize = TRUE)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -26,17 +25,6 @@ there are no biological replicates in the experiment then the second row
 should be all zeroes.  If technical replicates are not also labeled as
 biological replicates an error will be generated.}
 
-\item{approx}{A boolean variable which specifies whether or not a full
-Bayesian
-or an approximate Bayesian model should be fit.  A value of TRUE
-fits a Variational Bayes approximation.}
-
-\item{resultsOnly}{A boolean variable that determines what information will
-be returned after model fitting.  If resultsOnly is TRUE, then the
-function will return a list containing two tables, one table for posterior
-means and another with posterior standard deviations.  If resultsOnly is
-FALSE then the results list will also contain an object of class Stanfit.}
-
 \item{pp}{The percentage covariate level to be used for predicting relative
 protein abundance.  By default this value is .95, so that sum signal to
 noise will be adjusted towards the 95th percentile of observed values.}
@@ -47,10 +35,6 @@ For large datasets it is highly recommended that the package be used on a
 computer capable of parallel processing.}
 
 \item{iter}{Number of iterations for each chain}
-
-\item{nullSet}{An interval representing unimportant changes.  This is
-used to create the posterior probability that changes fall within the
-unimportant interval.}
 
 \item{normalize}{A boolean variable that determines whether or not
 adjustments should be made under the assumption that the average protein

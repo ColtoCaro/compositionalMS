@@ -4,12 +4,18 @@
 \alias{precisionPlot}
 \title{Precision plot}
 \usage{
-precisionPlot(RES, ptm = 0, byCond = FALSE, nullSet = c(-1, 1))
+precisionPlot(RES, byCond = FALSE, nullSet = c(-1, 1))
 }
 \arguments{
 \item{byCond}{A boolean parameter which determines if separate plots should
 be made for each condition.  The default is FALSE which results in the
 creation of a single plot.}
+
+\item{nullSet}{An interval which will determine the color scheme of the
+plot.  The probability of being in the nullSet interval is approximated
+and points are colored according to categories of this probability.  If
+a researcher is only interested in fold-changes greater than 2 then this
+interval should be set to (-1, 1).}
 
 \item{summary}{A results table generated from the function
 \code{\link{compBayes}}, which will be found in either the first (for
@@ -20,6 +26,6 @@ object.}
 This function takes a results summary from the \code{\link{compBayes}}
 function.
 The output is a plot of showing posterior means on the
-x-axis and precision on the y-axis, where precision defined as the inverse
-of the posterior variance.
+x-axis and precision on the y-axis, where precision ploted as the inverse
+of the posterior coefficient of variation.
 }

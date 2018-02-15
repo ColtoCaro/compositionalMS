@@ -72,6 +72,11 @@ transformDat <- function(df, plexNumber, normalize){
   nMat <- as.matrix(do.call(cbind, normed))
   }
 
+  #new paradigm.  Force the population model
+  if(bioCol == 0){
+    df[2, value_index] <- c(1:length(value_index))
+    bioCol == 1
+  }
   condBio <- paste(df[1, value_index],
                    as.integer(df[2, 1])*df[2, value_index])
   ref_index <- which(condBio == condBio[1])

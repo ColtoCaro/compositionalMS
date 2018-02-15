@@ -64,7 +64,7 @@ compBayes <- function(dat,
     #make sure that each dataframe has the same reference condition
     refList <- lapply(dat, function(x) paste(x[1, "tag1"],
                                              x[2, "tag1"]))
-    if(!do.call(all.equal,refList)){
+    if(!do.call(all.equal, refList)){
       stop("Error: Plexes have different reference channels")
     }
   }
@@ -142,7 +142,8 @@ compBayes <- function(dat,
   n_t <- length(unique(oneDat$tag_plex))
 
 
-  sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
+  #sumBio <- sum(unlist(lapply(dat, function(x) (x[1, 3] ==1 | x[2,1] == 1)  )))
+  sumBio <- 1
   if(sumBio == 0){
     n_b <- 0
     bioID <- rep(0,N_)
@@ -150,8 +151,6 @@ compBayes <- function(dat,
     n_nc <- rep(0, n_c)
     max_nc <- 0
   }else{
-    stop("You have requested a population level.  This feature is
-         currently under development")
     n_b <- length(unique(oneDat$bioID))
     bioID <- as.integer(factor(oneDat$bioID))
     #make a mapping for use in a heierarchical model (not yet implemented)
@@ -198,16 +197,7 @@ compBayes <- function(dat,
 
 
   #create summary table
-  if(n_b > 0){
-    targetChain <- rstan::extract(model, pars="avgCond")$avgCond
-    postMeans <- colMeans(targetChain)
-    postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
-      pnorm(nullSet[1], postMeans, sqrt(postVar))
-    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
-    justProts <- oneDat[oneDat$ptm == 0 , ]
-    n_obs <- unlist(by(justProts$lr, justProts$condID, length))
-  }else{
+
     if(useCov == 0){
       targetChain <- rstan::extract(model, pars="beta")$beta
     }else{
@@ -220,7 +210,7 @@ compBayes <- function(dat,
     colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
     justProts <- oneDat[oneDat$ptm == 0, ]
     n_obs <- unlist(by(justProts$lr, justProts$condID, length))
-  }
+
 
   resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
                       var = postVar, intervals, n_obs = as.vector(n_obs),

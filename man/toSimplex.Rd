@@ -15,5 +15,6 @@ This function transforms all estimated log ratios into proportions
 \details{
 Estimates from compBayes are done after using the additive log ratio
   transformation.  This function applies the inverse transformation to the
-  full sampling chains and recomputes summary statistics.
+  full sampling chains and recomputes summary statistics.  Returns a data
+  frame with estimates, variance and intervals in terms of proportions.
 }
