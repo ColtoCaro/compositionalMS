@@ -27,7 +27,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_allModels");
-    reader.add_event(216, 216, "end", "model_allModels");
+    reader.add_event(218, 218, "end", "model_allModels");
     return reader;
 }
 
@@ -50,6 +50,7 @@ private:
     int useCov;
     vector<double> covariate;
     vector<double> lr;
+    double pop_sd;
     int bioInd;
 public:
     model_allModels(stan::io::var_context& context__,
@@ -220,6 +221,11 @@ public:
             for (size_t i_0__ = 0; i_0__ < lr_limit_0__; ++i_0__) {
                 lr[i_0__] = vals_r__[pos__++];
             }
+            context__.validate_dims("data initialization", "pop_sd", "double", context__.to_vec());
+            pop_sd = double(0);
+            vals_r__ = context__.vals_r("pop_sd");
+            pos__ = 0;
+            pop_sd = vals_r__[pos__++];
 
             // validate, data variables
             check_greater_or_equal(function__,"N_",N_,0);
@@ -262,6 +268,7 @@ public:
             for (int k0__ = 0; k0__ < N_; ++k0__) {
                 check_greater_or_equal(function__,"covariate[k0__]",covariate[k0__],0);
             }
+            check_greater_or_equal(function__,"pop_sd",pop_sd,0);
             // initialize data variables
             bioInd = int(0);
             stan::math::fill(bioInd, std::numeric_limits<int>::min());
@@ -662,7 +669,7 @@ public:
 
                     for (int i = 1; i <= n_b; ++i) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), 10));
+                        lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {

@@ -49,7 +49,9 @@ compBayes <- function(dat,
                      pp=.99,
                      nCores = 1,
                      iter = 2000,
-                     normalize = TRUE
+                     normalize = TRUE,
+                     pop_sd = 1,
+                     ref_cond = NULL
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
@@ -197,45 +199,99 @@ compBayes <- function(dat,
 
 
   #create summary table
+  #Output depends on 1. Reference condition, 2. Population model
 
-    if(useCov == 0){
-      targetChain <- rstan::extract(model, pars="beta")$beta
-    }else{
-      targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
-    }
-    postMeans <- colMeans(targetChain)
-    postVar <- apply(targetChain, 2, var)
-    intervals <- t(apply(targetChain, 2, quantile,
-                         probs = c(.025, .975, .1, .9)))
-    colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
-    justProts <- oneDat[oneDat$ptm == 0, ]
-    n_obs <- unlist(by(justProts$lr, justProts$condID, length))
+  #Make Condition proportion table
+  uBio <- levels(factor(oneDat$condID))
+  condNum <- getCond(uBio, bio = FALSE)
+  condNames <- getName(uBio)
 
+  nCond <- length(unique(condNum)) + 1
+  nProts <- length(unique(condNames))
+  indices <- lapply(1:nProts, function(x) which(condNames == levels(factor(condNames))[x]))
+  condList <- lapply(indices, function(x) condNum[x])
 
-  resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-                      var = postVar, intervals, n_obs = as.vector(n_obs),
-                      stringsAsFactors = F)
+  simpRES <- lapply(indices, function(x)
+    alrInv(makeMat(x, model)))
 
-  if(n_p > 0){
-    targetChain <- rstan::extract(model, pars="alpha")$alpha
-    postMeans <- colMeans(targetChain)
-    postVar <- apply(targetChain, 2, var)
-    pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
-      pnorm(nullSet[1], postMeans, sqrt(postVar))
-    pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
-    justPtms <- oneDat[oneDat$ptm > 0 , ]
-    n_obs <- unlist(by(justPtms$lr, justPtms$ptmID, length))
-    ptmDf <- data.frame(ptmName, mean = postMeans, var = postVar,
-                        P_null = pvals, pValue, n_obs = as.vector(n_obs),
+  proportions <- t(mapply(function(x, y) x$Estimate[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(proportions) <- paste0("Est_Cond", 1:nCond)
+  pVars <- t(mapply(function(x, y) x$Variance[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pVars) <- paste0("Var_Cond", 1:nCond)
+  pLL95 <- t(mapply(function(x, y) x$LL95[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pLL95) <- paste0("LL95_Cond", 1:nCond)
+  pUL95 <- t(mapply(function(x, y) x$UL95[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pUL95) <- paste0("UL95_Cond", 1:nCond)
+
+  condDf <- data.frame(Protein = getName(uBio), proportions, pVars, pLL95, pUL95,
                         stringsAsFactors = F)
-  }else{
-    ptmDf <- NULL
-  }
+
+  #if we have a population model generate individual proportions
+if(n_b > n_c){
+  #Make Biorep proportion table
+  uBio <- levels(factor(oneDat$bioID))
+  condNum <- getCond(uBio, bio = TRUE)
+  condNames <- getName(uBio)
+
+  nCond <- length(unique(condNum)) + 1
+  nProts <- length(unique(condNames))
+  indices <- lapply(1:nProts, function(x) which(condNames == levels(factor(condNames))[x]))
+  condList <- lapply(indices, function(x) condNum[x])
+
+  simpRES <- lapply(indices, function(x)
+    alrInv(makeMat(x, model, bio = TRUE)))
+
+  proportions <- t(mapply(function(x, y) x$Estimate[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(proportions) <- paste0("Est_BioID", 1:nCond)
+  pVars <- t(mapply(function(x, y) x$Variance[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pVars) <- paste0("Var_BioID", 1:nCond)
+  pLL95 <- t(mapply(function(x, y) x$LL95[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pLL95) <- paste0("LL95_BioID", 1:nCond)
+  pUL95 <- t(mapply(function(x, y) x$UL95[match(1:nCond, c(1, y))], simpRES, condList))
+  colnames(pUL95) <- paste0("UL95_BioID", 1:nCond)
+
+  bioDf <- data.frame(Protein = getName(uBio), proportions, pVars, pLL95, pUL95,
+                       stringsAsFactors = F)
+
+}else{bioDf <- NULL}
+
+      #targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
+
+  #   postMeans <- colMeans(condChain)
+  #   postVar <- apply(condChain, 2, var)
+  #   intervals <- t(apply(condChain, 2, quantile,
+  #                        probs = c(.025, .975, .1, .9)))
+  #   colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
+  #   justProts <- oneDat[oneDat$ptm == 0, ]
+  #   n_obs <- unlist(by(justProts$lr, justProts$condID, length))
+  #
+  #
+  # resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
+  #                     var = postVar, intervals, n_obs = as.vector(n_obs),
+  #                     stringsAsFactors = F)
+
+
+  # Remove PTM output until the method is validated
+  # if(n_p > 0){
+  #   targetChain <- rstan::extract(model, pars="alpha")$alpha
+  #   postMeans <- colMeans(targetChain)
+  #   postVar <- apply(targetChain, 2, var)
+  #   pvals <- pnorm(nullSet[2], postMeans, sqrt(postVar)) -
+  #     pnorm(nullSet[1], postMeans, sqrt(postVar))
+  #   pValue <- 1 - pchisq((postMeans^2)/postVar, 1)
+  #   justPtms <- oneDat[oneDat$ptm > 0 , ]
+  #   n_obs <- unlist(by(justPtms$lr, justPtms$ptmID, length))
+  #   ptmDf <- data.frame(ptmName, mean = postMeans, var = postVar,
+  #                       P_null = pvals, pValue, n_obs = as.vector(n_obs),
+  #                       stringsAsFactors = F)
+  # }else{
+  #   ptmDf <- NULL
+  # }
 
 
   RES <- list()
-  RES[[1]] <- resDf
-  RES[[2]] <- ptmDf
+  RES[[1]] <- condDf
+  RES[[2]] <- bioDf
   RES[[3]] <- model
 
 

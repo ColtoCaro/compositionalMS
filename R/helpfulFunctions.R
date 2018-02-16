@@ -74,7 +74,9 @@ transformDat <- function(df, plexNumber, normalize){
 
   #new paradigm.  Force the population model
   if(bioCol == 0){
-    df[2, value_index] <- c(1:length(value_index))
+    startP <- length(value_index) * (plexNumber - 1) + 1
+    endP <- startP + length(value_index) - 1
+    df[2, value_index] <- c(startP:endP)
     bioCol == 1
   }
   condBio <- paste(df[1, value_index],
@@ -89,13 +91,13 @@ transformDat <- function(df, plexNumber, normalize){
   colnames(lrMat) <- header
 
   newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
-                      Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                      Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
                       Covariate = df[4:n_, ]$Covariate,
                       varCat = df[4:n_, ]$varCat,
                       lrMat, stringsAsFactors = F)
 
   newDf2 <- data.frame(Protein = df[4:n_, ]$Protein,
-                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
                        Covariate = df[4:n_, ]$Covariate,
                        varCat = df[4:n_, ]$varCat,
                        minTensities, stringsAsFactors = F)
@@ -122,7 +124,7 @@ transformDat <- function(df, plexNumber, normalize){
 
   if(bioCol == 1){
     bioID <- paste(melted$Protein, separated[ , 3], melted$bioID,  sep = "_")
-  }else{bioID <- paste(melted$Protein, separated[ , 3], separated[, 4])}
+  }else{bioID <- paste(melted$Protein, separated[ , 3], separated[, 4], sep = "_")}
 
   finalDat <- data.frame(protein = melted$Protein,
                   condID = paste(melted$Protein, separated[, 3],
@@ -152,17 +154,26 @@ transformDat <- function(df, plexNumber, normalize){
 }#end function transformDat
 
 #function for extracting the condition number from labels
-getCond <- function(strVec, ptm = FALSE){
-  sPosition <- regexpr("_", strVec)
-  if(ptm){
-  subbed <- sub("_", "*", strVec)
-  ePosition <- regexpr("_", subbed)
-  condNumber <- as.integer(substring(strVec, sPosition +1, ePosition -1))
-  }else{
-    condNumber <- as.integer(substring(strVec, sPosition +1))
+getCond <- function(strVec, bio = FALSE){
+
+  chunks <- strsplit(strVec, "_")
+
+  if(bio == FALSE){
+    condNumber <- unlist(lapply(chunks, function(x) x[2]))
   }
 
-  condNumber
+  if(bio == TRUE){
+    condNumber <- unlist(lapply(chunks, function(x) x[3]))
+  }
+
+  as.integer(condNumber)
+}
+
+getName <- function(strVec){
+  ePosition <- regexpr("_", strVec)
+  condName <- substring(strVec, 1, ePosition - 1)
+
+  condName
 }
 
 #function to reverse strings
@@ -222,7 +233,7 @@ header <- makeHeader(df[ , value_index], normal_index)
   colnames(lrMat) <- header
 
   newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
-                       Peptide = df[4:n_, ]$Peptide,                                                  bioID = df[4:n_, ]$bioID,
+                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
                        Covariate = df[4:n_, ]$Covariate,
                        varCat = df[4:n_, ]$varCat,
                        lrMat, stringsAsFactors = F)
@@ -230,10 +241,16 @@ header <- makeHeader(df[ , value_index], normal_index)
 }
 
 #function to make a matrix of relevant samples
-makeMat <- function(vec, model){
-  extracted <- lapply(vec, function(x)
-    rstan::extract(model,
+makeMat <- function(vec, model, bio = FALSE){
+  if(bio == FALSE){
+    extracted <- lapply(vec, function(x)
+      rstan::extract(model,
                    pars=paste("beta[", x, "]", sep = ""))$beta)
+  }else{
+    extracted <- lapply(vec, function(x)
+      rstan::extract(model,
+                     pars=paste("beta_b[", x, "]", sep = ""))$beta_b)
+  }
   extractMat <- do.call(cbind, extracted)
   extractMat
 }
@@ -241,7 +258,7 @@ makeMat <- function(vec, model){
 #function to apply alr inverse to a matrix
 alrInv <- function(mat){
 
-zeroMat <- cbind(rep(0,nrow(mat)),mat)
+zeroMat <- cbind(rep(0, nrow(mat)), mat)
 expMat <- 2^zeroMat
 simplex <- t(apply(expMat, 1, function(x) x/sum(x)))
 simpMeans <- apply(simplex, 2, mean)

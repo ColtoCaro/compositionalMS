@@ -25,6 +25,8 @@ data{
 
   real lr[N_] ; // log-ratio observations
 
+  real<lower = 0> pop_sd ; //user input population prior standard deviation
+
 }
 
 transformed data{
@@ -123,7 +125,7 @@ if(bioInd == 0 && useCov > 0){
 //    tau ~ normal(0, 5) ;
     for(i in 1:n_b){
       //beta_rawb[i] ~ normal(0, 10) ;
-      beta_b[i] ~ normal(beta[bioToCond[i]], 10) ;
+      beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
       sigma_rawb[i] ~ inv_gamma(1, 1) ;
     }
     for(i in 1:N_){
