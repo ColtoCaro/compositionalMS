@@ -583,7 +583,14 @@ public:
                     stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
                 }
             }
-            if (as_bool((primitive_value(logical_eq(bioInd,0)) && primitive_value(logical_gt(useCov,0))))) {
+            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+
+                for (int i = 1; i <= n_b; ++i) {
+
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
+                }
+            }
+            if (as_bool(logical_gt(useCov,0))) {
 
                 for (int i = 1; i <= n_c; ++i) {
 
@@ -685,6 +692,46 @@ public:
                     }
                 }
             }
+            if (as_bool(logical_eq(useCov,1))) {
+
+                if (as_bool(logical_eq(bioInd,0))) {
+
+                    for (int i = 1; i <= n_c; ++i) {
+
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
+                    }
+                    for (int i = 1; i <= N_; ++i) {
+
+                        if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
+
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
+                        }
+                        if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
+
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
+                        }
+                    }
+                }
+                if (as_bool(logical_gt(bioInd,0))) {
+
+                    for (int i = 1; i <= n_b; ++i) {
+
+                        lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
+                    }
+                    for (int i = 1; i <= N_; ++i) {
+
+                        if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
+
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigmab,get_base1(bioID,i,"bioID",1),"sigmab",1)));
+                        }
+                        if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
+
+                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
+                        }
+                    }
+                }
+            }
 
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -723,6 +770,7 @@ public:
         names__.push_back("betaP_b");
         names__.push_back("sigma");
         names__.push_back("sigmab");
+        names__.push_back("avgCond");
     }
 
 
@@ -763,6 +811,9 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((n_b * bioInd));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(n_c);
         dimss__.push_back(dims__);
     }
 
@@ -880,7 +931,14 @@ public:
                     stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
                 }
             }
-            if (as_bool((primitive_value(logical_eq(bioInd,0)) && primitive_value(logical_gt(useCov,0))))) {
+            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+
+                for (int i = 1; i <= n_b; ++i) {
+
+                    stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
+                }
+            }
+            if (as_bool(logical_gt(useCov,0))) {
 
                 for (int i = 1; i <= n_c; ++i) {
 
@@ -912,12 +970,42 @@ public:
 
             if (!include_gqs__) return;
             // declare and define generated quantities
+            validate_non_negative_index("avgCond", "n_c", n_c);
+            vector<double> avgCond(n_c, 0.0);
+            stan::math::initialize(avgCond, std::numeric_limits<double>::quiet_NaN());
+            stan::math::fill(avgCond,DUMMY_VAR__);
 
 
+            if (as_bool(logical_eq(useCov,0))) {
+
+                for (int i = 1; i <= n_c; ++i) {
+
+                    stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
+                    for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
+
+                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(beta_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"beta_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                    }
+                }
+            }
+            if (as_bool(logical_eq(useCov,1))) {
+
+                for (int i = 1; i <= n_c; ++i) {
+
+                    stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
+                    for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
+
+                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(betaP_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"betaP_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                    }
+                }
+            }
 
             // validate generated quantities
 
             // write generated quantities
+            for (int k_0__ = 0; k_0__ < n_c; ++k_0__) {
+            vars__.push_back(avgCond[k_0__]);
+            }
+
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -1014,6 +1102,11 @@ public:
         }
 
         if (!include_gqs__) return;
+        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "avgCond" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
     }
 
 
@@ -1083,6 +1176,11 @@ public:
         }
 
         if (!include_gqs__) return;
+        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "avgCond" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
     }
 
 }; // model

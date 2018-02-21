@@ -18,9 +18,14 @@
 #'   parameters with 95\% credible intervals that do not contain zero.
 #'
 #'
-catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE){
+catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 
   bigDf <- do.call(rbind, RES[4:length(RES)])
+  if(avgCond){
+    tempCol <- colnames(bigDf)[1:8]
+    bigDf <- bigDf[ , -c(3:9)]
+    colnames(bigDf) <- tempCol
+  }
 
   #find signif
   sigIndex <- which(bigDf$LL95 > 0 | bigDf$UL95 < 0)
@@ -76,9 +81,14 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE){
 #'   a researcher is only interested in fold-changes greater than 2 then this
 #'   interval should be set to (-1, 1).
 #'
-precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1)){
+precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE){
 
   bigDf <- do.call(rbind, RES[4:length(RES)])
+  if(avgCond){
+    tempCol <- colnames(bigDf)[1:8]
+    bigDf <- bigDf[ , -c(3:9)]
+    colnames(bigDf) <- tempCol
+  }
 
   labelScheme <- ggplot2::labs(y = "1 / CV",
                                x = "Posterior mean of log2 fold-change")
