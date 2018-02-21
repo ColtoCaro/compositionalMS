@@ -282,6 +282,7 @@ if(n_b > n_c){
   }else{
     targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
   }
+  avgChain <- rstan::extract(model, pars="avgCond")$avgCond
 
   justProts <- oneDat[oneDat$ptm == 0, ]
   n_obs <- unlist(by(justProts$lr, justProts$condID, length))
@@ -295,8 +296,16 @@ if(n_b > n_c){
                        probs = c(.025, .975, .1, .9)))
   colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
 
+  avgMeans <- colMeans(avgChain[ , subCols])
+  avgVar <- apply(avgChain[ , subCols], 2, var)
+  avgIntervals <- t(apply(avgChain[ , subCols], 2, quantile,
+                       probs = c(.025, .975, .1, .9)))
+  colnames(avgIntervals) <- c("avgLL95", "avgUL95", "avgLL80", "avgUL80")
+
+
   resDf <- data.frame(name = getName(uBio[subCols]), condition = condNum[i], mean = postMeans,
                       var = postVar, intervals, n_obs = as.vector(n_obs[subCols]),
+                      avgMean = avgMeans, avgVar, avgIntervals,
                       stringsAsFactors = F)
 
   RES[[3 + i]] <- resDf

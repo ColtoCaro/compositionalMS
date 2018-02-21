@@ -70,14 +70,14 @@ if(bioInd == 1){
 
 
 // //Now take care of covariate parameters
-// if(bioInd == 1 && useCov > 0){
-//     for (i in 1:n_b){
-//       betaP_b[i] = beta_b[i] * (1 + delta[useCov]);
-//     }
-//
-// }
+if(bioInd == 1 && useCov > 0){
+    for (i in 1:n_b){
+      betaP_b[i] = beta_b[i] * (1 + delta[useCov]);
+    }
 
-if(bioInd == 0 && useCov > 0){
+}
+
+if(useCov > 0){
     for (i in 1:n_c){
       betaP_c[i] = beta[i] * (1 + delta[useCov]) ;
     }
@@ -142,78 +142,78 @@ if(bioInd == 0 && useCov > 0){
   } //end no covariate
 
   //Now repeat with covariate use
- //  if(useCov == 1){
- //
- //  //base model
- // if(bioInd == 0){
- //
- //  for(i in 1:n_c){
- //     sigma_raw[i] ~ inv_gamma(1, 1) ;
- //   }
- // for(i in 1:N_){
- //   if(ptm[i] == 0){
- //   lr[i] ~ normal(beta[condID[i]] * (1 + covariate[i]*delta[useCov]),
- //     sigma[condID[i]]) ;
- // }
- // if(ptm[i] > 0){
- //   lr[i] ~ normal(beta[condID[i]] + alpha[ptmPep[i]],
- //   xi[ptm[i]]) ;
- // }
- // }
- //
- //  } // end base model
- //
+  if(useCov == 1){
+
+  //base model
+ if(bioInd == 0){
+
+  for(i in 1:n_c){
+     sigma_raw[i] ~ inv_gamma(1, 1) ;
+   }
+ for(i in 1:N_){
+   if(ptm[i] == 0){
+   lr[i] ~ normal(beta[condID[i]] * (1 + covariate[i]*delta[useCov]),
+     sigma[condID[i]]) ;
+ }
+ if(ptm[i] > 0){
+   lr[i] ~ normal(beta[condID[i]] + alpha[ptmPep[i]],
+   xi[ptm[i]]) ;
+ }
+ }
+
+  } // end base model
+
  //  // bioRep model
- //  if(bioInd > 0){
- //    for(i in 1:(n_b)){
- //      beta_b[i] ~ normal(0, 10) ;
- //      sigma_rawb[i] ~ inv_gamma(1, 1) ;
- //    }
- //
- //    for(i in 1:N_){
- //      if(ptm[i] == 0){
- //        lr[i] ~ normal(beta_b[bioID[i]] * (1 + covariate[i]*delta[useCov]),
- //        sigmab[bioID[i]]) ;
- //    }
- //  if(ptm[i] > 0){
- //        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
- //        xi[ptm[i]]) ;
- //      }
- //    }
- //
- //  } // end bioRep model
- //
- //
- //  } //end with covariate
+  if(bioInd > 0){
+    for(i in 1:(n_b)){
+      beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
+      sigma_rawb[i] ~ inv_gamma(1, 1) ;
+    }
+
+    for(i in 1:N_){
+      if(ptm[i] == 0){
+        lr[i] ~ normal(beta_b[bioID[i]] * (1 + covariate[i]*delta[useCov]),
+        sigmab[bioID[i]]) ;
+    }
+  if(ptm[i] > 0){
+        lr[i] ~ normal(betaP_b[bioID[i]] + alpha[ptmPep[i]],
+        xi[ptm[i]]) ;
+      }
+    }
+
+  } // end bioRep model
+
+
+  } //end with covariate
 
 } //end model statement
 
 
 
-// generated quantities{
-//   real avgCond[n_c*bioInd] ;
-//
-//   if(useCov == 0 && bioInd ==1){
-//     for(i in 1:n_c){
-//       avgCond[i] = 0;
-//       for(j in 1:n_nc[i]){
-//         avgCond[i] = avgCond[i] + beta_b[condToBio[i, j]]/n_nc[i] ;
-//       }
-//     }
-//   }
-//
-//   if(useCov == 1 && bioInd ==1){
-//     for(i in 1:n_c){
-//       avgCond[i] = 0;
-//       for(j in 1:n_nc[i]){
-//         avgCond[i] = avgCond[i] + betaP_b[condToBio[i, j]]/n_nc[i] ;
-//       }
-//     }
-//   }
-//
-//
-// } // end stan program
-//
+generated quantities{
+  real avgCond[n_c] ;
+
+  if(useCov == 0){
+    for(i in 1:n_c){
+      avgCond[i] = 0;
+      for(j in 1:n_nc[i]){
+        avgCond[i] = avgCond[i] + beta_b[condToBio[i, j]]/n_nc[i] ;
+      }
+    }
+  }
+
+  if(useCov == 1){
+    for(i in 1:n_c){
+      avgCond[i] = 0;
+      for(j in 1:n_nc[i]){
+        avgCond[i] = avgCond[i] + betaP_b[condToBio[i, j]]/n_nc[i] ;
+      }
+    }
+  }
+
+
+} // end stan program
+
 
 
 
