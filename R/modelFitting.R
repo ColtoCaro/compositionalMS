@@ -207,7 +207,7 @@ compBayes <- function(dat,
   condNum <- getCond(uBio, bio = FALSE)
   condNames <- getName(uBio)
 
-  refC <- dat[1, "tag1"]
+  refC <- dat[[1]][1, "tag1"]
   nCond <- length(unique(condNum)) + 1
   uCond <- c(refC, unique(condNum))
   uCond <- uCond[order(uCond)]
@@ -238,7 +238,7 @@ if(n_b > n_c){
   condNum <- getCond(uBio, bio = TRUE)
   condNames <- getName(uBio)
 
-  refC <- dat[2, "tag1"]
+  refC <- dat[[1]][2, "tag1"]
   nCond <- length(unique(condNum)) + 1
   uCond <- c(refC, unique(condNum))
   uCond <- uCond[order(uCond)]

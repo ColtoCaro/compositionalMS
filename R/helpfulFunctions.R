@@ -73,12 +73,11 @@ transformDat <- function(df, plexNumber, normalize){
   }
 
   #new paradigm.  Force the population model
-  if(bioCol == 0){
-    startP <- length(value_index) * (plexNumber - 1) + 1
-    endP <- startP + length(value_index) - 1
-    df[2, value_index] <- c(startP:endP)
-    bioCol == 1
-  }
+
+  startP <- length(value_index) * (plexNumber - 1) + 1
+  endP <- startP + length(value_index) - 1
+  df[2, value_index] <- c(startP:endP)
+
   condBio <- paste(df[1, value_index], df[2, value_index])
   ref_index <- which(condBio == condBio[1])
   normal_index <- setdiff(1:length(value_index), ref_index)
