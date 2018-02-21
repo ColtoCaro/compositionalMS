@@ -71,6 +71,7 @@ compBayes <- function(dat,
     }
   }
 
+
   #make sure protein names do not have "_" characters
   dat <- lapply(dat, function(x) within(x, Protein <-
                   gsub("_", "-", Protein)))
@@ -120,7 +121,7 @@ compBayes <- function(dat,
   } # end actions for ptm experiments
 
   oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
-                         oneDat$ptmID),]
+                         oneDat$ptmID), ]
 
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
@@ -206,69 +207,101 @@ compBayes <- function(dat,
   condNum <- getCond(uBio, bio = FALSE)
   condNames <- getName(uBio)
 
+  refC <- dat[1, "tag1"]
   nCond <- length(unique(condNum)) + 1
+  uCond <- c(refC, unique(condNum))
+  uCond <- uCond[order(uCond)]
+
   nProts <- length(unique(condNames))
   indices <- lapply(1:nProts, function(x) which(condNames == levels(factor(condNames))[x]))
   condList <- lapply(indices, function(x) condNum[x])
 
   simpRES <- lapply(indices, function(x)
-    alrInv(makeMat(x, model)))
+    alrInv(makeMat(x, model, bio = FALSE, useCov)))
 
-  proportions <- t(mapply(function(x, y) x$Estimate[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(proportions) <- paste0("Est_Cond", 1:nCond)
-  pVars <- t(mapply(function(x, y) x$Variance[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pVars) <- paste0("Var_Cond", 1:nCond)
-  pLL95 <- t(mapply(function(x, y) x$LL95[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pLL95) <- paste0("LL95_Cond", 1:nCond)
-  pUL95 <- t(mapply(function(x, y) x$UL95[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pUL95) <- paste0("UL95_Cond", 1:nCond)
+  proportions <- t(mapply(function(x, y) x$Estimate[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(proportions) <- paste0("Est_Cond", uCond)
+  pVars <- t(mapply(function(x, y) x$Variance[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pVars) <- paste0("Var_Cond", uCond)
+  pLL95 <- t(mapply(function(x, y) x$LL95[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pLL95) <- paste0("LL95_Cond", uCond)
+  pUL95 <- t(mapply(function(x, y) x$UL95[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pUL95) <- paste0("UL95_Cond", uCond)
 
-  condDf <- data.frame(Protein = getName(uBio), proportions, pVars, pLL95, pUL95,
+  condDf <- data.frame(Protein = condNames, proportions, pVars, pLL95, pUL95,
                         stringsAsFactors = F)
 
-  #if we have a population model generate individual proportions
+  #if we have a population model generate individual proportions and fold-change tables
 if(n_b > n_c){
   #Make Biorep proportion table
   uBio <- levels(factor(oneDat$bioID))
   condNum <- getCond(uBio, bio = TRUE)
   condNames <- getName(uBio)
 
+  refC <- dat[2, "tag1"]
   nCond <- length(unique(condNum)) + 1
+  uCond <- c(refC, unique(condNum))
+  uCond <- uCond[order(uCond)]
+
   nProts <- length(unique(condNames))
   indices <- lapply(1:nProts, function(x) which(condNames == levels(factor(condNames))[x]))
   condList <- lapply(indices, function(x) condNum[x])
 
   simpRES <- lapply(indices, function(x)
-    alrInv(makeMat(x, model, bio = TRUE)))
+    alrInv(makeMat(x, model, bio = TRUE, useCov)))
 
-  proportions <- t(mapply(function(x, y) x$Estimate[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(proportions) <- paste0("Est_BioID", 1:nCond)
-  pVars <- t(mapply(function(x, y) x$Variance[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pVars) <- paste0("Var_BioID", 1:nCond)
-  pLL95 <- t(mapply(function(x, y) x$LL95[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pLL95) <- paste0("LL95_BioID", 1:nCond)
-  pUL95 <- t(mapply(function(x, y) x$UL95[match(1:nCond, c(1, y))], simpRES, condList))
-  colnames(pUL95) <- paste0("UL95_BioID", 1:nCond)
+  proportions <- t(mapply(function(x, y) x$Estimate[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(proportions) <- paste0("Est_BioID", uCond)
+  pVars <- t(mapply(function(x, y) x$Variance[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pVars) <- paste0("Var_BioID", uCond)
+  pLL95 <- t(mapply(function(x, y) x$LL95[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pLL95) <- paste0("LL95_BioID", uCond)
+  pUL95 <- t(mapply(function(x, y) x$UL95[match(uCond, c(refC, y))], simpRES, condList))
+  colnames(pUL95) <- paste0("UL95_BioID", uCond)
 
-  bioDf <- data.frame(Protein = getName(uBio), proportions, pVars, pLL95, pUL95,
+  bioDf <- data.frame(Protein = condNames, proportions, pVars, pLL95, pUL95,
                        stringsAsFactors = F)
+
 
 }else{bioDf <- NULL}
 
-      #targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
+  RES <- list()
+  RES[[1]] <- condDf
+  RES[[2]] <- bioDf
+  RES[[3]] <- model
 
-  #   postMeans <- colMeans(condChain)
-  #   postVar <- apply(condChain, 2, var)
-  #   intervals <- t(apply(condChain, 2, quantile,
-  #                        probs = c(.025, .975, .1, .9)))
-  #   colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
-  #   justProts <- oneDat[oneDat$ptm == 0, ]
-  #   n_obs <- unlist(by(justProts$lr, justProts$condID, length))
-  #
-  #
-  # resDf <- data.frame(name = levels(factor(oneDat$condID)), mean = postMeans,
-  #                     var = postVar, intervals, n_obs = as.vector(n_obs),
-  #                     stringsAsFactors = F)
+  #Now make differential expression tables
+  uBio <- levels(factor(oneDat$condID))
+  condNum <- getCond(uBio, bio = FALSE)
+  condNames <- getName(uBio)
+
+  nCond <- length(unique(condNum))
+
+  if(useCov == 0){
+    targetChain <- rstan::extract(model, pars="beta")$beta
+  }else{
+    targetChain <- rstan::extract(model, pars="betaP_c")$betaP_c
+  }
+
+  justProts <- oneDat[oneDat$ptm == 0, ]
+  n_obs <- unlist(by(justProts$lr, justProts$condID, length))
+
+  for(i in 1:nCond){
+  subCols <- which(condNum == unique(condNum[i]))
+
+  postMeans <- colMeans(targetChain[ , subCols])
+  postVar <- apply(targetChain[ , subCols], 2, var)
+  intervals <- t(apply(targetChain[ , subCols], 2, quantile,
+                       probs = c(.025, .975, .1, .9)))
+  colnames(intervals) <- c("LL95", "UL95", "LL80", "UL80")
+
+  resDf <- data.frame(name = getName(uBio[subCols]), condition = condNum[i], mean = postMeans,
+                      var = postVar, intervals, n_obs = as.vector(n_obs[subCols]),
+                      stringsAsFactors = F)
+
+  RES[[3 + i]] <- resDf
+
+  }
 
 
   # Remove PTM output until the method is validated
@@ -289,10 +322,7 @@ if(n_b > n_c){
   # }
 
 
-  RES <- list()
-  RES[[1]] <- condDf
-  RES[[2]] <- bioDf
-  RES[[3]] <- model
+
 
 
   RES

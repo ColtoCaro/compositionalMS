@@ -66,7 +66,7 @@ transformDat <- function(df, plexNumber, normalize){
   value_index <- grep("tag", colnames(df))
 
   nMat <- df[4:(n_), value_index]
-  #normalize the df by bioRep
+  #normalize the df
   if(normalize == TRUE){
   normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
   nMat <- as.matrix(do.call(cbind, normed))
@@ -79,8 +79,7 @@ transformDat <- function(df, plexNumber, normalize){
     df[2, value_index] <- c(startP:endP)
     bioCol == 1
   }
-  condBio <- paste(df[1, value_index],
-                   as.integer(df[2, 1])*df[2, value_index])
+  condBio <- paste(df[1, value_index], df[2, value_index])
   ref_index <- which(condBio == condBio[1])
   normal_index <- setdiff(1:length(value_index), ref_index)
 
@@ -241,15 +240,27 @@ header <- makeHeader(df[ , value_index], normal_index)
 }
 
 #function to make a matrix of relevant samples
-makeMat <- function(vec, model, bio = FALSE){
+makeMat <- function(vec, model, bio = FALSE, useCov = FALSE){
   if(bio == FALSE){
-    extracted <- lapply(vec, function(x)
+    if(useCov == FALSE){
+      extracted <- lapply(vec, function(x)
       rstan::extract(model,
                    pars=paste("beta[", x, "]", sep = ""))$beta)
+    }else{
+      extracted <- lapply(vec, function(x)
+        rstan::extract(model,
+                       pars=paste("betaP_c[", x, "]", sep = ""))$betaP_c)
+    }
   }else{
-    extracted <- lapply(vec, function(x)
-      rstan::extract(model,
+    if(useCov == FALSE){
+      extracted <- lapply(vec, function(x)
+        rstan::extract(model,
                      pars=paste("beta_b[", x, "]", sep = ""))$beta_b)
+    }else{
+      extracted <- lapply(vec, function(x)
+        rstan::extract(model,
+                       pars=paste("betaP_b[", x, "]", sep = ""))$betaP_b)
+    }
   }
   extractMat <- do.call(cbind, extracted)
   extractMat

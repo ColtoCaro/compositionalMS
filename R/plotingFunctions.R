@@ -20,11 +20,13 @@
 #'
 catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE){
 
-  #find signif
-  sigIndex <- which(RES[[1]]$LL95 > 0 | RES[[1]]$UL95 < 0)
-  if(plotAll){sigIndex <- 1:nrow(RES[[1]])}
+  bigDf <- do.call(rbind, RES[4:length(RES)])
 
-  newDf <- RES[[1]][sigIndex, ]
+  #find signif
+  sigIndex <- which(bigDf$LL95 > 0 | bigDf$UL95 < 0)
+  if(plotAll){sigIndex <- 1:nrow(bigDf)}
+
+  newDf <- bigDf[sigIndex, ]
   newDf <- newDf[order(newDf$mean), ]
   newDf$index <- 1:nrow(newDf)
 
@@ -76,18 +78,19 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE){
 #'
 precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1)){
 
+  bigDf <- do.call(rbind, RES[4:length(RES)])
 
   labelScheme <- ggplot2::labs(y = "1 / CV",
                                x = "Posterior mean of log2 fold-change")
   if(byCond){
 
-    pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
-      pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
+    pNull <- pnorm(nullSet[2], bigDf$mean, sqrt(bigDf$var)) -
+      pnorm(nullSet[1], bigDf$mean, sqrt(bigDf$var))
     sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
 
-    cv <- sqrt(RES[[1]]$var) / abs(RES[[1]]$mean)
+    cv <- sqrt(bigDf$var) / abs(bigDf$mean)
 
-    newDf <- data.frame(RES[[1]], cv, pNull, "P_Null" = sigFac)
+    newDf <- data.frame(bigDf, cv, pNull, "P_Null" = sigFac)
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1 / cv)) +
       ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
@@ -99,13 +102,13 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1)){
 
   }else{
 
-    pNull <- pnorm(nullSet[2], RES[[1]]$mean, sqrt(RES[[1]]$var)) -
-      pnorm(nullSet[1], RES[[1]]$mean, sqrt(RES[[1]]$var))
+    pNull <- pnorm(nullSet[2], bigDf$mean, sqrt(bigDf$var)) -
+      pnorm(nullSet[1], bigDf$mean, sqrt(bigDf$var))
     sigFac <- cut(pNull, c(0,.05,.25,.5,1), include.lowest = TRUE)
 
-    cv <- sqrt(RES[[1]]$var) / abs(RES[[1]]$mean)
+    cv <- sqrt(bigDf$var) / abs(bigDf$mean)
 
-    newDf <- data.frame(RES[[1]], cv, pNull, "P_Null" = sigFac)
+    newDf <- data.frame(bigDf, cv, pNull, "P_Null" = sigFac)
     ggplot2::ggplot(newDf, ggplot2::aes(x = mean, y = 1 / cv)) +
       ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
