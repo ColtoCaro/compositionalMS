@@ -22,8 +22,7 @@
 #' requiring users to follow a very specific format for data entry.  Once
 #' the data is formatted properly everything else is handled internally.
 #' The required fields and headers are explained in the documentation for the
-#' sample data \code{\link{ptmDat}}.  Two sample files are included in the
-#' package, the dataframe "sampleDat" and the list object "ptmDat".
+#' sample data \code{\link{sampleDat}}.
 #'
 #' Once data has been correctly formatted and loaded into your workspace, you can
 #' create a Stan model with the function \code{\link{compBayes}}.
@@ -31,7 +30,8 @@
 #' @section Model Details:
 #' This is where I will explain the model and the options for use:
 #' \describe{
-#' Here is a detailed description.
+#' No description yet.  For now see the supplement from the manuscript
+#' https://pubs.acs.org/doi/10.1021/acs.jproteome.7b00699
 #' }
 #'
 #'

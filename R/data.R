@@ -1,12 +1,11 @@
 # Code for documenting the datasets
 
 
-#' Post-translational modification dataset
+#' Sample Data
 #'
-#' A dataset containing multiple tenplexes with tandem mass tag data for proteins,
-#' phosphopeptides and ubiqutinated peptides.
+#' A dataset containing subsample from a single tenplex
 #'
-#' @format A list object containing 3 dataframes.  Each dataframe contains the
+#' @format A single dataframe containing the
 #' same 14 columns.  The first three rows of each dataframe constitute a data
 #' header that will be used to specify the correct model to use in the data
 #' analysis.  The 14 columns must all be present and must have the names seen in
@@ -32,10 +31,10 @@
 #'  available.  Entries to the header rows in this column are irrelevant with the
 #'  exception of Row 1 which indicates whether or not the column is being used.}
 #'  \item{Covariate}{This column provides a continuous covariate to be used in a
-#'  compositional regression.  Typically these entries will either be sum signal
-#'  to noise values or isolation specificities.  If a covariate is to be used, a
-#'  one must be entered in the first row of this column.  The second and third
-#'  rows do nothing.}
+#'  compositional non-linear regression.  Typically these entries will either be
+#'  summed signal-to-noise values or isolation specificities.  If a covariate is
+#'  to be used, a one must be entered in the first row of this column.  The
+#'  second and third rows do nothing.}
 #'  \item{varCat}{This column provides a way to allow for additional variance
 #'  components.  Separate variance components are always generated for each
 #'  plex/tag combination.  However, it might be of interest to further
@@ -46,20 +45,20 @@
 #'  categories are only intended for protein analysis and have no bearing on
 #'  PTM's (beyond altering the protein results). A 1 must be entered into the
 #'  first row of theheader when using this column.}
-#'  \item{tag1-tag10}{These columns contain signal to noise intensity ratios.
+#'  \item{tag1-tagN}{These columns contain signal to noise intensity ratios.
 #'  The column names are case sensitive and must include the string 'tag'
 #'  followed by a number.  The entries in the first three rows of these columns
 #'  are used to tell the program which columns represent various conditions,
-#'  biological replicates, and PTMs.  Columns with the same entry in row 1 are
-#'  considered to be from the same condition (this determines what comparisons
-#'  will be made).  Similarly equivalent values in row two will determine which
-#'  columns are biological replicates. The same value in the third column
-#'  denotes the same type of PTM, e.g. 1 = phosphorylation and 2 = ubiqutination.
-#'  Ten columns are not necessary as the program accepts
+#'  biological replicates, and PTMs (not currently in use).  Columns with the
+#'  same entry in row 1 are considered to be from the same condition (this
+#'  determines what comparisons will be made).  Similarly equivalent values in
+#'  row two will determine which columns are biological replicates. The same
+#'  value in the third column denotes the same type of PTM, e.g. 1 =
+#'  phosphorylation and 2 = ubiqutination. Ten columns are not necessary as the program accepts
 #'  an arbitrary number of tag columns.  Values are assumed to represent signal
 #'  to noise measurements.  Accordingly any values that are missing or less than
 #'  one will be replaced with 1's during data processing.}
 #' }
 #'
 #'
-"ptmDat"
+"sampleDat"

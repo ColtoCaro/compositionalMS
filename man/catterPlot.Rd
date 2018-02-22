@@ -4,7 +4,7 @@
 \alias{catterPlot}
 \title{Caterpillar plot}
 \usage{
-catterPlot(RES, byCond = FALSE, plotAll = FALSE)
+catterPlot(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE)
 }
 \arguments{
 \item{RES}{The results list generated from the
@@ -14,9 +14,14 @@ function \code{\link{compBayes}}}
 be made for each condition.  The default is FALSE which results in the
 creation of a single plot.}
 
-\item{allPars}{A boolean variable indicating whether or not all parameters
+\item{plotAll}{A boolean variable indicating whether or not all parameters
 should be plotted.  The default is false, resulting in a plot for only
 parameters with 95\% credible intervals that do not contain zero.}
+
+\item{avgCond}{A boolean parameter that determines whether or not plots
+will be based on heierarchical population level mean parameters or average
+within sample parameters.  The default is to use the population level
+parameter, however with very small sample sizes this plot may not be useful.}
 }
 \description{
 This function takes a list which contains a Stanfit object and summary

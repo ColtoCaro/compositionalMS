@@ -4,9 +4,14 @@
 \alias{precisionPlot}
 \title{Precision plot}
 \usage{
-precisionPlot(RES, byCond = FALSE, nullSet = c(-1, 1))
+precisionPlot(RES, byCond = FALSE, nullSet = c(-1, 1), avgCond = FALSE)
 }
 \arguments{
+\item{RES}{A results list generated from the function
+\code{\link{compBayes}}, which will be found in either the first (for
+protein summaries) or second (for ptm's) component of the result list
+object.}
+
 \item{byCond}{A boolean parameter which determines if separate plots should
 be made for each condition.  The default is FALSE which results in the
 creation of a single plot.}
@@ -17,10 +22,10 @@ and points are colored according to categories of this probability.  If
 a researcher is only interested in fold-changes greater than 2 then this
 interval should be set to (-1, 1).}
 
-\item{summary}{A results table generated from the function
-\code{\link{compBayes}}, which will be found in either the first (for
-protein summaries) or second (for ptm's) component of the result list
-object.}
+\item{avgCond}{A boolean parameter that determines whether or not plots
+will be based on heierarchical population level mean parameters or average
+within sample parameters.  The default is to use the population level
+parameter, however with very small sample sizes this plot may not be useful.}
 }
 \description{
 This function takes a results summary from the \code{\link{compBayes}}

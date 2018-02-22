@@ -13,9 +13,13 @@
 #' @param byCond A boolean parameter which determines if separate plots should
 #'   be made for each condition.  The default is FALSE which results in the
 #'   creation of a single plot.
-#' @param allPars A boolean variable indicating whether or not all parameters
+#' @param plotAll A boolean variable indicating whether or not all parameters
 #'   should be plotted.  The default is false, resulting in a plot for only
 #'   parameters with 95\% credible intervals that do not contain zero.
+#' @param avgCond A boolean parameter that determines whether or not plots
+#'   will be based on heierarchical population level mean parameters or average
+#'   within sample parameters.  The default is to use the population level
+#'   parameter, however with very small sample sizes this plot may not be useful.
 #'
 #'
 catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
@@ -68,7 +72,7 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 #' of the posterior coefficient of variation.
 #'
 #' @export
-#' @param summary A results table generated from the function
+#' @param RES A results list generated from the function
 #'   \code{\link{compBayes}}, which will be found in either the first (for
 #'   protein summaries) or second (for ptm's) component of the result list
 #'   object.
@@ -80,6 +84,10 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 #'   and points are colored according to categories of this probability.  If
 #'   a researcher is only interested in fold-changes greater than 2 then this
 #'   interval should be set to (-1, 1).
+#' @param avgCond A boolean parameter that determines whether or not plots
+#'   will be based on heierarchical population level mean parameters or average
+#'   within sample parameters.  The default is to use the population level
+#'   parameter, however with very small sample sizes this plot may not be useful.
 #'
 precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE){
 
