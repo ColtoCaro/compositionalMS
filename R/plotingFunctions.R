@@ -23,17 +23,34 @@
 #'
 #'
 catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
-
-  bigDf <- do.call(rbind, RES[4:length(RES)])
   if(avgCond){
-    tempCol <- colnames(bigDf)[1:8]
-    bigDf <- bigDf[ , -c(3:9)]
-    colnames(bigDf) <- tempCol
+    tempTab <- RES[[3]]
+  }else{
+    tempTab <- RES[[5]]
   }
+  meltEst <- melt(tempTab[ , c(1, grep("Est", colnames(tempTab)))],
+                  id.vars = "Protein", variable.name = "condition", value.name = "mean")
+  meltEst <- meltEst[order(meltEst$Protein), ]
+  meltLL <- melt(tempTab[ , c(1, grep("LL", colnames(tempTab)))],
+                  id.vars = "Protein", variable.name = "condition", value.name = "LL95")
+  meltLL <- meltLL[order(meltLL$Protein), ]
+  meltUL <- melt(tempTab[ , c(1, grep("UL", colnames(tempTab)))],
+                  id.vars = "Protein", variable.name = "condition", value.name = "UL95")
+  meltUL <- meltUL[order(meltUL$Protein), ]
+
+  bigDf <- data.frame(meltEst, LL95 = meltLL$LL95, UL95 = meltUL$UL95)
+
+  # bigDf <- do.call(rbind, RES[4:length(RES)])
+  # if(avgCond){
+  #   tempCol <- colnames(bigDf)[1:8]
+  #   bigDf <- bigDf[ , -c(3:9)]
+  #   colnames(bigDf) <- tempCol
+  # }
 
   #find signif
   sigIndex <- which(bigDf$LL95 > 0 | bigDf$UL95 < 0)
   if(plotAll){sigIndex <- 1:nrow(bigDf)}
+  if(length(sigIndex) == 0){stop("There are no significant changes.  Use plotAll = T to see results")}
 
   newDf <- bigDf[sigIndex, ]
   newDf <- newDf[order(newDf$mean), ]
@@ -45,8 +62,8 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
     ggplot2::ggplot(newDf, ggplot2::aes(y = mean, x = index)) +
       labelScheme +
       ggplot2::geom_pointrange(ggplot2::aes(ymin = LL95, ymax = UL95)) +
-      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
-                                            colour = "80% Credible Interval"))+
+      #ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
+      #                                      colour = "80% Credible Interval"))+
       ggplot2::geom_point() +
       ggplot2::facet_wrap( ~ condition, ncol = 5)
 
@@ -55,8 +72,8 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
     ggplot2::ggplot(newDf, ggplot2::aes(y = mean, x = index)) +
       labelScheme +
       ggplot2::geom_pointrange(ggplot2::aes(ymin = LL95, ymax = UL95)) +
-      ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
-                                            colour = "80% Credible Interval"))+
+      #ggplot2::geom_pointrange(ggplot2::aes(ymin = LL80, ymax = UL80,
+      #                                      colour = "80% Credible Interval"))+
       ggplot2::geom_point()
 
 
@@ -91,12 +108,20 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 #'
 precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE){
 
-  bigDf <- do.call(rbind, RES[4:length(RES)])
   if(avgCond){
-    tempCol <- colnames(bigDf)[1:8]
-    bigDf <- bigDf[ , -c(3:9)]
-    colnames(bigDf) <- tempCol
+    tempTab <- RES[[3]]
+  }else{
+    tempTab <- RES[[5]]
   }
+  meltEst <- melt(tempTab[ , c(1, grep("Est", colnames(tempTab)))],
+                  id.vars = "Protein", variable.name = "condition", value.name = "mean")
+  meltEst <- meltEst[order(meltEst$Protein), ]
+  meltVar <- melt(tempTab[ , c(1, grep("Var", colnames(tempTab)))],
+                 id.vars = "Protein", variable.name = "condition", value.name = "var")
+  meltVar <- meltVar[order(meltVar$Protein), ]
+
+
+  bigDf <- data.frame(meltEst, var = meltVar$var)
 
   labelScheme <- ggplot2::labs(y = "1 / CV",
                                x = "Posterior mean of log2 fold-change")
@@ -113,8 +138,8 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALS
       ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
                                      c("[0,0.05]" = "#fb0000",
-                                       "(0.05,0.25]" = "#dd1c77",
-                                       "(0.25,0.5]" = "#c994c7",
+                                       "(0.05,0.25]" = "#c994c7", #"#dd1c77",
+                                       "(0.25,0.5]" =  "violetRed4",
                                        "(0.5,1]" = "black")) +
       labelScheme + ggplot2::facet_wrap( ~ condition, ncol = 5)
 
@@ -131,8 +156,8 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALS
       ggplot2::geom_point(ggplot2::aes(color = P_Null))  +
       ggplot2::scale_colour_manual(values =
                                      c("[0,0.05]" = "#fb0000",
-                                       "(0.05,0.25]" = "#dd1c77",
-                                       "(0.25,0.5]" = "#c994c7",
+                                       "(0.05,0.25]" = "#c994c7", #"#dd1c77",
+                                       "(0.25,0.5]" = "violetRed4",
                                        "(0.5,1]" = "black")) +
       labelScheme
 
