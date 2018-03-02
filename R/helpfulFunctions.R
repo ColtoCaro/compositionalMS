@@ -239,7 +239,15 @@ header <- makeHeader(df[ , value_index], normal_index)
 }
 
 #function to make a matrix of relevant samples
-makeMat <- function(vec, model, bio = FALSE, useCov = FALSE){
+makeMat <- function(vec, model, bio = FALSE, useCov = FALSE, avgCond = FALSE){
+  if(avgCond){
+    extracted <- lapply(vec, function(x)
+      rstan::extract(model,
+                   pars=paste("avgCond[", x, "]", sep = ""))$avgCond)
+    extractMat <- do.call(cbind, extracted)
+    return(extractMat)
+  }
+
   if(bio == FALSE){
     if(useCov == FALSE){
       extracted <- lapply(vec, function(x)
@@ -266,15 +274,30 @@ makeMat <- function(vec, model, bio = FALSE, useCov = FALSE){
 }
 
 #function to apply alr inverse to a matrix
-alrInv <- function(mat){
+alrInv <- function(mat, refCol = NULL){
 
-zeroMat <- cbind(rep(0, nrow(mat)), mat)
-expMat <- 2^zeroMat
-simplex <- t(apply(expMat, 1, function(x) x/sum(x)))
-simpMeans <- apply(simplex, 2, mean)
-simpVar <- apply(simplex, 2, var)
-simpInt <- t(apply(simplex, 2, quantile, probs = c(.025, .975, .1, .9)))
-colnames(simpInt) <- c("LL95", "UL95", "LL80", "UL80")
+if(length(refCol) == 0){
+  lrMat <- mat
+}else{
+  lrMat <- mat[ , -refCol] - mat[ , refCol]
+}
 
-data.frame(Estimate = simpMeans, Variance = simpVar, simpInt)
+  lrMeans <- apply(lrMat, 2, mean)
+  lrVar <- apply(lrMat, 2, var)
+  lrInt <- t(apply(lrMat, 2, quantile, probs = c(.025, .975, .1, .9)))
+  colnames(lrInt) <- c("LL95", "UL95", "LL80", "UL80")
+
+  lrDf <- data.frame(Estimate = lrMeans, Variance = lrVar, lrInt)
+
+  zeroMat <- cbind(rep(0, nrow(lrMat)), lrMat)
+  expMat <- 2^zeroMat
+  simplex <- t(apply(expMat, 1, function(x) x/sum(x)))
+  simpMeans <- apply(simplex, 2, mean)
+  simpVar <- apply(simplex, 2, var)
+  simpInt <- t(apply(simplex, 2, quantile, probs = c(.025, .975, .1, .9)))
+  colnames(simpInt) <- c("LL95", "UL95", "LL80", "UL80")
+
+  df <- data.frame(Estimate = simpMeans, Variance = simpVar, simpInt)
+
+  list(df, lrDf)
 }
