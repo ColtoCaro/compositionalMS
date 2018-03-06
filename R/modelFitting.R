@@ -283,7 +283,7 @@ compBayes <- function(dat,
   pUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, c(refC, y))], simpRES, condList))
   colnames(pUL95) <- paste0("UL95_BioID", uCond)
 
-  bioDf <- data.frame(Protein = condNames, proportions, pVars, pLL95, pUL95,
+  bioDf <- data.frame(Protein = levels(factor(condNames)), proportions, pVars, pLL95, pUL95,
                        stringsAsFactors = F)
 
   #make avgCond log-ratio tables
