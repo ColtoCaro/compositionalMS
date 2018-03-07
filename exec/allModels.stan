@@ -25,13 +25,14 @@ data{
 
   real lr[N_] ; // log-ratio observations
 
-  real<lower = 0> pop_sd ; //user input population prior standard deviation
+  real<lower=0> pop_sd ; //user input population prior standard deviation
+  int<lower=0, upper=1> simpleMod ;  //Indicator to use a simple model
 
 }
 
 transformed data{
   int<lower=0> bioInd ;
-  bioInd = (n_b == n_c) ? 0 : 1 ;
+  bioInd = (simpleMod == 1) ? 0 : 1 ;
 }
 
 parameters{
@@ -104,7 +105,7 @@ if(useCov > 0){
   //Now work on the different mean protein models
   if(useCov == 0){
   // base model
-  if(bioInd == 0){
+  if(simpleMod == 1){
 
    for(i in 1:n_c){
       sigma_raw[i] ~ inv_gamma(1, 1) ;
@@ -191,8 +192,9 @@ if(useCov > 0){
 
 
 generated quantities{
-  real avgCond[n_c] ;
+  real avgCond[n_c * bioInd] ;
 
+if(bioInd == 1){
   if(useCov == 0){
     for(i in 1:n_c){
       avgCond[i] = 0;
@@ -210,9 +212,9 @@ generated quantities{
       }
     }
   }
+} // end if bioInd == 1
 
-
-} // end stan program
+} // end generated quantities and stan program
 
 
 

@@ -79,7 +79,12 @@ transformDat <- function(df, plexNumber, normalize){
   df[2, value_index] <- c(startP:endP)
 
   condBio <- paste(df[1, value_index], df[2, value_index])
-  ref_index <- which(condBio == condBio[1])
+  #create set of columns to be averaged into one reference
+  if(simpleMod){
+    ref_index <- which(df[1, value_index] == as.numeric(df[1, value_index][1]))
+  }else{
+    ref_index <- which(condBio == condBio[1])
+  }
   normal_index <- setdiff(1:length(value_index), ref_index)
 
   lRes <- logRatio(nMat, ref_index)

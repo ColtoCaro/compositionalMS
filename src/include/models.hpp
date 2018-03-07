@@ -27,7 +27,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_allModels");
-    reader.add_event(218, 218, "end", "model_allModels");
+    reader.add_event(220, 220, "end", "model_allModels");
     return reader;
 }
 
@@ -51,6 +51,7 @@ private:
     vector<double> covariate;
     vector<double> lr;
     double pop_sd;
+    int simpleMod;
     int bioInd;
 public:
     model_allModels(stan::io::var_context& context__,
@@ -226,6 +227,11 @@ public:
             vals_r__ = context__.vals_r("pop_sd");
             pos__ = 0;
             pop_sd = vals_r__[pos__++];
+            context__.validate_dims("data initialization", "simpleMod", "int", context__.to_vec());
+            simpleMod = int(0);
+            vals_i__ = context__.vals_i("simpleMod");
+            pos__ = 0;
+            simpleMod = vals_i__[pos__++];
 
             // validate, data variables
             check_greater_or_equal(function__,"N_",N_,0);
@@ -269,11 +275,13 @@ public:
                 check_greater_or_equal(function__,"covariate[k0__]",covariate[k0__],0);
             }
             check_greater_or_equal(function__,"pop_sd",pop_sd,0);
+            check_greater_or_equal(function__,"simpleMod",simpleMod,0);
+            check_less_or_equal(function__,"simpleMod",simpleMod,1);
             // initialize data variables
             bioInd = int(0);
             stan::math::fill(bioInd, std::numeric_limits<int>::min());
 
-            stan::math::assign(bioInd, (logical_eq(n_b,n_c) ? 0 : 1 ));
+            stan::math::assign(bioInd, (logical_eq(simpleMod,1) ? 0 : 1 ));
 
             // validate transformed data
             check_greater_or_equal(function__,"bioInd",bioInd,0);
@@ -654,7 +662,7 @@ public:
             }
             if (as_bool(logical_eq(useCov,0))) {
 
-                if (as_bool(logical_eq(bioInd,0))) {
+                if (as_bool(logical_eq(simpleMod,1))) {
 
                     for (int i = 1; i <= n_c; ++i) {
 
@@ -813,7 +821,7 @@ public:
         dims__.push_back((n_b * bioInd));
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(n_c);
+        dims__.push_back((n_c * bioInd));
         dimss__.push_back(dims__);
     }
 
@@ -970,31 +978,34 @@ public:
 
             if (!include_gqs__) return;
             // declare and define generated quantities
-            validate_non_negative_index("avgCond", "n_c", n_c);
-            vector<double> avgCond(n_c, 0.0);
+            validate_non_negative_index("avgCond", "(n_c * bioInd)", (n_c * bioInd));
+            vector<double> avgCond((n_c * bioInd), 0.0);
             stan::math::initialize(avgCond, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(avgCond,DUMMY_VAR__);
 
 
-            if (as_bool(logical_eq(useCov,0))) {
+            if (as_bool(logical_eq(bioInd,1))) {
 
-                for (int i = 1; i <= n_c; ++i) {
+                if (as_bool(logical_eq(useCov,0))) {
 
-                    stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                    for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
+                    for (int i = 1; i <= n_c; ++i) {
 
-                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(beta_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"beta_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
+                        for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
+
+                            stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(beta_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"beta_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                        }
                     }
                 }
-            }
-            if (as_bool(logical_eq(useCov,1))) {
+                if (as_bool(logical_eq(useCov,1))) {
 
-                for (int i = 1; i <= n_c; ++i) {
+                    for (int i = 1; i <= n_c; ++i) {
 
-                    stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                    for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
+                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
+                        for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
 
-                        stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(betaP_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"betaP_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                            stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(betaP_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"betaP_b",1) / get_base1(n_nc,i,"n_nc",1))));
+                        }
                     }
                 }
             }
@@ -1002,7 +1013,7 @@ public:
             // validate generated quantities
 
             // write generated quantities
-            for (int k_0__ = 0; k_0__ < n_c; ++k_0__) {
+            for (int k_0__ = 0; k_0__ < (n_c * bioInd); ++k_0__) {
             vars__.push_back(avgCond[k_0__]);
             }
 
@@ -1102,7 +1113,7 @@ public:
         }
 
         if (!include_gqs__) return;
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_c * bioInd); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "avgCond" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1176,7 +1187,7 @@ public:
         }
 
         if (!include_gqs__) return;
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_c * bioInd); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "avgCond" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
