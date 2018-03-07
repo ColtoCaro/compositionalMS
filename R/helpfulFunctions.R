@@ -30,7 +30,7 @@ makeHeader <- function(df, index){
 }
 
 #function that takes a dataframe and returns a dataframe with unique ids
-transformDat <- function(df, plexNumber, normalize){
+transformDat <- function(df, plexNumber, normalize, simpleMod){
   #convert factors to strings
   facIndex <- which(sapply(df, is.factor))
   df[facIndex] <- lapply(df[facIndex], as.character)
