@@ -234,15 +234,25 @@ compBayes <- function(dat,
 
       refPos <- which(uCond == refC)
       suCond <- uCond[-refPos]
-      lrs <- t(mapply(function(x, y) x[[2]]$Estimate, simpRES, condList))
-      colnames(lrs) <- paste0("Est_avg_fc", suCond)
-      lrVars <- t(mapply(function(x, y) x[[2]]$Variance, simpRES, condList))
-      colnames(lrVars) <- paste0("Var_Cond", suCond)
-      lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95, simpRES, condList))
-      colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-      lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95, simpRES, condList))
-      colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-
+      if(length(suCond) == 1){
+        lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate, simpRES, condList))
+        colnames(lrs) <- paste0("Est_avg_fc", suCond)
+        lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance, simpRES, condList))
+        colnames(lrVars) <- paste0("Var_Cond", suCond)
+        lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95, simpRES, condList))
+        colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+        lrUL95 <- as.matrix(mapply(function(x, y) x[[2]]$UL95, simpRES, condList))
+        colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+      }else{
+        lrs <- t(mapply(function(x, y) x[[2]]$Estimate, simpRES, condList))
+        colnames(lrs) <- paste0("Est_avg_fc", suCond)
+        lrVars <- t(mapply(function(x, y) x[[2]]$Variance, simpRES, condList))
+        colnames(lrVars) <- paste0("Var_Cond", suCond)
+        lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95, simpRES, condList))
+        colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+        lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95, simpRES, condList))
+        colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+      }
       avgLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
                              stringsAsFactors = F)
 
