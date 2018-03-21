@@ -193,7 +193,7 @@ compBayes <- function(dat,
   if(simpleMod){
     summaryStr <- paste("Estimating ", n_c, " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
   }else{
-    summaryStr <- paste("Estimating ", max(n_b, n_c_), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
+    summaryStr <- paste("Estimating ", max(n_b, n_c), " relative protein abundances, and ", n_p, "protein adjusted ptm changes")
   }
     print(summaryStr)
 
