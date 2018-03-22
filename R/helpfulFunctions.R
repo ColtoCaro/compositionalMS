@@ -308,3 +308,13 @@ if(length(refCol) == 0){
 
   list(df, lrDf)
 }
+
+#Function to shift indices above a certain reference point
+partShift <- function(refPos, vec){
+  belowI <- which(vec < refPos)
+  aboveI <- which(vec > refPos)
+
+  shifted <- c(vec[belowI], vec[aboveI] - 1)
+  shifted
+}
+
