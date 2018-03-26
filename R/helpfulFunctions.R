@@ -314,7 +314,7 @@ partShift <- function(refPos, vec){
   belowI <- which(vec < refPos)
   aboveI <- which(vec > refPos)
 
-  shifted <- c(vec[belowI], vec[aboveI] - 1)
+  shifted <- c(vec[belowI], vec[aboveI] - 2)
   shifted
 }
 

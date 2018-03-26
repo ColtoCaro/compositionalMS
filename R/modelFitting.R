@@ -314,7 +314,7 @@ compBayes <- function(dat,
   refC <- dat[[1]][1, "tag1"]
 
     nCond <- length(unique(condNum))
-    uCond <- unique(c(refC, unique(condNum)))
+    uCond <- unique(c(unique(condNum)))
     uCond <- uCond[order(uCond)]
 
     nProts <- length(unique(condNames))
@@ -343,13 +343,13 @@ compBayes <- function(dat,
                        stringsAsFactors = F)
 
     #Now get the proportions
-    lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
+    lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
     colnames(lrs) <- paste0("Est_avg_Prop", uCond)
-    lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
+    lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
     colnames(lrVars) <- paste0("Var_Cond", uCond)
-    lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+    lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
     colnames(lrLL95) <- paste0("LL95_Cond", uCond)
-    lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+    lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
     colnames(lrUL95) <- paste0("UL95_Cond", uCond)
 
     avgPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
@@ -364,7 +364,7 @@ compBayes <- function(dat,
       refC <- dat[[1]][1, "tag1"]
 
       nCond <- length(unique(condNum))
-      uCond <- unique(c(refC, unique(condNum)))
+      uCond <- unique(condNum)
       uCond <- uCond[order(uCond)]
 
       nProts <- length(unique(condNames))
@@ -393,13 +393,13 @@ compBayes <- function(dat,
                              stringsAsFactors = F)
 
       #Now get the proportions
-      lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
+      lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
       colnames(lrs) <- paste0("Est_pop_Prop", uCond)
-      lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
+      lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
       colnames(lrVars) <- paste0("Var_Cond", uCond)
-      lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+      lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
       colnames(lrLL95) <- paste0("LL95_Cond", uCond)
-      lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+      lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
       colnames(lrUL95) <- paste0("UL95_Cond", uCond)
 
       popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
