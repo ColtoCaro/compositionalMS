@@ -5,7 +5,7 @@
 \title{Fitting a compositional Stan model}
 \usage{
 compBayes(dat, pp = 0.99, nCores = 1, iter = 2000, normalize = TRUE,
-  pop_sd = 1, ref_cond = NULL)
+  pop_sd = 1, ref_cond = NULL, simpleMod = FALSE)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in

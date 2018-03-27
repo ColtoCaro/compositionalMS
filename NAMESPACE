@@ -3,7 +3,6 @@
 export(catterPlot)
 export(compBayes)
 export(precisionPlot)
-export(toSimplex)
 import(Rcpp)
 import(bayesplot)
 import(methods)
