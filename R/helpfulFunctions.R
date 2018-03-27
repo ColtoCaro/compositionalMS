@@ -95,24 +95,26 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   header <- makeHeader(df[ , value_index], normal_index)
   colnames(lrMat) <- header
 
-  newDf1 <- data.frame(Protein = df[4:n_, ]$Protein,
+  newDf1 <- data.frame(Gene = df[4:n_, ]$Gene,
+                      Protein = df[4:n_, ]$Protein,
                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
                       Covariate = df[4:n_, ]$Covariate,
                       varCat = df[4:n_, ]$varCat,
                       lrMat, stringsAsFactors = F)
 
-  newDf2 <- data.frame(Protein = df[4:n_, ]$Protein,
+  newDf2 <- data.frame(Gene = df[4:n_, ]$Gene,
+                       Protein = df[4:n_, ]$Protein,
                        Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
                        Covariate = df[4:n_, ]$Covariate,
                        varCat = df[4:n_, ]$varCat,
                        minTensities, stringsAsFactors = F)
 
-  melted1 <- reshape2::melt(newDf1, id.vars = c("Protein", "Peptide", "bioID",
+  melted1 <- reshape2::melt(newDf1, id.vars = c("Gene", "Protein", "Peptide", "bioID",
                                               "Covariate", "varCat"),
                  value.name = "lr", variable.name = "header")
 
 
-  melted2 <- reshape2::melt(newDf2, id.vars = c("Protein", "Peptide", "bioID",
+  melted2 <- reshape2::melt(newDf2, id.vars = c("Gene", "Protein", "Peptide", "bioID",
                                                 "Covariate", "varCat"),
                             value.name = "pairMin", variable.name = "header")
 
@@ -131,7 +133,8 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
     bioID <- paste(melted$Protein, separated[ , 3], melted$bioID,  sep = "_")
   }else{bioID <- paste(melted$Protein, separated[ , 3], separated[, 4], sep = "_")}
 
-  finalDat <- data.frame(protein = melted$Protein,
+  finalDat <- data.frame(gene = melted$Gene,
+                  protein = melted$Protein,
                   condID = paste(melted$Protein, separated[, 3],
                                         sep = "_"), bioID,
                   ptmID = paste(melted$Protein, separated[, 3],
@@ -314,7 +317,7 @@ partShift <- function(refPos, vec){
   belowI <- which(vec < refPos)
   aboveI <- which(vec > refPos)
 
-  shifted <- c(vec[belowI], vec[aboveI] - 2)
+  shifted <- c(vec[belowI], vec[aboveI] - 1)
   shifted
 }
 
