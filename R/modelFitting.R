@@ -471,7 +471,12 @@ compBayes <- function(dat,
   RES[[6]] <- popPTab
 
   #add Gene back in
-  Gene <- oneDat$gene[match(avgLrTab$Protein, oneDat$protein)]
+  if(!is.null(avgLrTab)){
+    tempTab <- avgLrTab
+    }else{
+      tempTab <- bioDf
+    }
+  Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
   gRES <- lapply(RES, function(x) if(is.data.frame(x)){
     data.frame(Gene, x)}else{x})
 

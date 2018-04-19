@@ -51,9 +51,9 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   }
 
 
-  if(df[2, 1] == 0){
-    df[2, ][] <- 0
-  }
+  # if(df[2, 1] == 0){
+  #   df[2, ][] <- 0
+  # }
   if(df[3, 1] == 0){
     df[3, ][] <- 0
   }
@@ -75,10 +75,11 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   }
 
   #new paradigm.  Force the population model
-
-  startP <- length(value_index) * (plexNumber - 1) + 1
-  endP <- startP + length(value_index) - 1
-  df[2, value_index] <- c(startP:endP)
+  if(sum(df[2, value_index]) == 0){
+    startP <- length(value_index) * (plexNumber - 1) + 1
+    endP <- startP + length(value_index) - 1
+    df[2, value_index] <- c(startP:endP)
+  }
 
   condBio <- paste(df[1, value_index], df[2, value_index])
   #create set of columns to be averaged into one reference

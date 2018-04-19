@@ -28,13 +28,13 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
   }else{
     tempTab <- RES[[5]]
   }
-  meltEst <- melt(tempTab[ , c(1, grep("Est", colnames(tempTab)))],
+  meltEst <- melt(tempTab[ , c(2, grep("Est", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "mean")
   meltEst <- meltEst[order(meltEst$Protein), ]
-  meltLL <- melt(tempTab[ , c(1, grep("LL", colnames(tempTab)))],
+  meltLL <- melt(tempTab[ , c(2, grep("LL", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "LL95")
   meltLL <- meltLL[order(meltLL$Protein), ]
-  meltUL <- melt(tempTab[ , c(1, grep("UL", colnames(tempTab)))],
+  meltUL <- melt(tempTab[ , c(2, grep("UL", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "UL95")
   meltUL <- meltUL[order(meltUL$Protein), ]
 
@@ -113,10 +113,10 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALS
   }else{
     tempTab <- RES[[5]]
   }
-  meltEst <- melt(tempTab[ , c(1, grep("Est", colnames(tempTab)))],
+  meltEst <- melt(tempTab[ , c(2, grep("Est", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "mean")
   meltEst <- meltEst[order(meltEst$Protein), ]
-  meltVar <- melt(tempTab[ , c(1, grep("Var", colnames(tempTab)))],
+  meltVar <- melt(tempTab[ , c(2, grep("Var", colnames(tempTab)))],
                  id.vars = "Protein", variable.name = "condition", value.name = "var")
   meltVar <- meltVar[order(meltVar$Protein), ]
 
@@ -212,4 +212,57 @@ checkVariance <- function(results){
 
 
 }#end checkVariance
+
+
+#' Proportion plot
+#'
+#' This function plots the proportion of ions belonging
+#' to each biological replicate.  The first replicate
+#' is typically a bridge channel and all repicates are
+#' ordered and colored by experimental condition.
+#'
+#' @export
+#' @param df A dataframe typically generated and stored in the second
+#'   component of a results list from compBayes.
+#' @param gene A string that determines what data will be plotted.
+#' @param condKey A matrix with two columns.  The first column contains
+#'   integers denoting the experimental condition for each biological
+#'   replicate.  The second contains integers that represent each
+#'   biological replicate.  This key should be taken from the
+#'   header information required to run the compBayes function.
+#'
+propPlot <- function(df, gene, condKey){
+  estIndex <- grep("Est" , colnames(df))
+  ulIndex <- grep("UL95" , colnames(df))
+  llIndex <- grep("LL95", colnames(df))
+  geneIndex <- grep(gene, df$Gene)
+
+  channel <- colnames(df)[estIndex]
+  bioRep <- as.integer(substring(channel, regexpr("D", channel) + 1))
+  cond <- condKey[match(bioRep, condKey[ , 2]) , 1]
+
+  newDat <- data.frame(
+    Condition = cond,
+    Channel = bioRep,
+    Est = t(df[geneIndex, estIndex]),
+    LL = t(df[geneIndex, llIndex]),
+    UL = t(df[geneIndex, ulIndex])
+  )
+  names(newDat) <- c("Condition", "Channel", "Est", "LL", "UL")
+
+  newDat <- newDat[order(newDat$Condition, newDat$Channel), ]
+  newDat$Channel <- factor(newDat$Channel, levels = unique(newDat$Channel))
+  newDat$Condition <- factor(newDat$Condition, levels = unique(newDat$Condition))
+
+  titleStr <- paste0("Proportion Plot for ", gene)
+  labelScheme <- ggplot2::labs(y = "Estimated Proportion", x = "Biological Replicate")
+  ggplot2::ggplot(newDat, ggplot2::aes(y = Est, x = Channel, colour = Condition)) +
+    labelScheme +
+    ggplot2::geom_pointrange(ggplot2::aes(ymin = LL, ymax = UL)) +
+    ggplot2::geom_point() +
+    ggplot2::ggtitle(titleStr)
+
+
+}
+
 
