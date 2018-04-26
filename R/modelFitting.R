@@ -353,6 +353,7 @@ compBayes <- function(dat,
                        stringsAsFactors = F)
 
   #make avgCond log-ratio tables
+
   if(!is.null(ref_cond)){
   uBio <- levels(factor(oneDat$condID))
   condNum <- getCond(uBio, bio = FALSE)
@@ -480,10 +481,150 @@ compBayes <- function(dat,
   gRES <- lapply(RES, function(x) if(is.data.frame(x)){
     data.frame(Gene, x)}else{x})
 
-
   gRES
 } #end of compBayes function
 
+
+
+
+#' Changing the comparisons of interest
+#'
+#' This function manipulates a Stanfit object to change the contrasts that
+#' are estimated.
+#'
+#' @export
+#' @param res The results object to be altered.
+#' @param contrastMat A matrix specifying the contrasts of interest.
+#'   each row represents a contrast and the number of columns must match
+#'   the number of parameters.  If this is not specified then by default
+#'   tables for all possible pairwise comparisons will be generated.
+#'
+contrastEst <- function(res, contrastMat = NULL){
+  #Check to see if contrastMat has the correct dimensions
+  if(!is.null(contrastMat)){
+    if(ncol(contrastMat) != nCond){
+      stop("Specified contrast dimensions are incorrect")
+    }
+  }
+
+
+  #determine model structure
+
+  #Is it a population level model?
+  if(is.null(res[[2]])){
+    simpleMod = TRUE
+    protNames <- res[[3]]$Protein
+  }else{
+      simpleMod = FALSE
+      protNames = res[[2]]$Protein
+    }
+
+  #How many conditions are there?
+  condIndex <- grep("Est", colnames(res[[3]]))
+  nCond <- length(condIndex) + 1
+  nProt <- length(protNames)
+
+  #Obtain Simplex Matrix
+  if(simpleMod == TRUE){
+    uBio <- levels(factor(res[[3]]$Protein))
+  }else{
+    uBio <- levels(factor(res[[2]]$Protein))
+  }
+  condNames <- getName(uBio)
+
+  nCond <- length(unique(condNum))
+  uCond <- unique(condNum)
+  uCond <- uCond[order(uCond)]
+
+  nProts <- length(unique(condNames))
+
+  indices <- lapply(1:nProts, function(x)
+    which(condNames == levels(factor(condNames))[x]))
+
+  condList <- lapply(indices, function(x) condNum[x])
+
+  simpRES <- lapply(indices, function(x)
+    alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = TRUE),
+           refCol = which(condNum[x] == ref_cond)))
+
+  refPos <- which(uCond == ref_cond)
+  suCond <- uCond[-refPos]
+  lrs <- t(mapply(function(x, y) x[[2]]$Estimate[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrs) <- paste0("Est_avg_fc", suCond)
+  lrVars <- t(mapply(function(x, y) x[[2]]$Variance[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrVars) <- paste0("Var_Cond", suCond)
+  lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+  lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+
+  avgLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+                         stringsAsFactors = F)
+
+  #Now get the proportions
+  lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrs) <- paste0("Est_avg_Prop", c(ref_cond, suCond))
+  lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrVars) <- paste0("Var_Cond", c(ref_cond, suCond))
+  lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrLL95) <- paste0("LL95_Cond", c(ref_cond, suCond))
+  lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrUL95) <- paste0("UL95_Cond", c(ref_cond, suCond))
+
+  avgPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+                        stringsAsFactors = F)
+
+
+  #redo with population level tables
+  uBio <- levels(factor(oneDat$condID))
+  condNum <- getCond(uBio, bio = FALSE)
+  condNames <- getName(uBio)
+
+  refC <- dat[[1]][1, "tag1"]
+
+  nCond <- length(unique(condNum))
+  uCond <- unique(condNum)
+  uCond <- uCond[order(uCond)]
+
+  nProts <- length(unique(condNames))
+
+  indices <- lapply(1:nProts, function(x)
+    which(condNames == levels(factor(condNames))[x]))
+
+  condList <- lapply(indices, function(x) condNum[x])
+
+  simpRES <- lapply(indices, function(x)
+    alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = FALSE),
+           refCol = which(condNum[x] == ref_cond)))
+
+  refPos <- which(uCond == ref_cond)
+  suCond <- uCond[-refPos]
+  lrs <- t(mapply(function(x, y) x[[2]]$Estimate[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrs) <- paste0("Est_pop_fc", suCond)
+  lrVars <- t(mapply(function(x, y) x[[2]]$Variance[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrVars) <- paste0("Var_Cond", suCond)
+  lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+  lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[partShift(refPos, match(suCond, y))], simpRES, condList))
+  colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+
+  popLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+                         stringsAsFactors = F)
+
+  #Now get the proportions
+  lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrs) <- paste0("Est_pop_Prop", c(ref_cond, suCond))
+  lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrVars) <- paste0("Var_Cond", c(ref_cond, suCond))
+  lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrLL95) <- paste0("LL95_Cond", c(ref_cond, suCond))
+  lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y))) - 1], simpRES, condList))
+  colnames(lrUL95) <- paste0("UL95_Cond", c(ref_cond, suCond))
+
+  popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+                        stringsAsFactors = F)
+
+}
 
 
 

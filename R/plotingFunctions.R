@@ -231,11 +231,28 @@ checkVariance <- function(results){
 #'   biological replicate.  This key should be taken from the
 #'   header information required to run the compBayes function.
 #'
-propPlot <- function(df, gene, condKey){
+propPlot <- function(df, gene = NULL, condKey, protName = NULL){
+  if(is.null(gene) & is.null(protName)){
+    stop("Please specify a gene or protein to plot")
+  }
+
   estIndex <- grep("Est" , colnames(df))
   ulIndex <- grep("UL95" , colnames(df))
   llIndex <- grep("LL95", colnames(df))
-  geneIndex <- grep(gene, df$Gene)
+
+  if(!is.null(protName)){
+    geneIndex <- match(protName, df$Protein)
+    plotName <- protName
+  }else{
+    geneIndex <- grep(gene, df$Gene)
+    plotName <- gene
+  }
+
+  if(length(geneIndex) > 1){
+     print("Warning: Gene name was not unique.  First discovered entry was plotted \n
+           Specify protein name to see a different plot")
+     geneIndex <- geneIndex[1]
+  }
 
   channel <- colnames(df)[estIndex]
   bioRep <- as.integer(substring(channel, regexpr("D", channel) + 1))
@@ -254,7 +271,7 @@ propPlot <- function(df, gene, condKey){
   newDat$Channel <- factor(newDat$Channel, levels = unique(newDat$Channel))
   newDat$Condition <- factor(newDat$Condition, levels = unique(newDat$Condition))
 
-  titleStr <- paste0("Proportion Plot for ", gene)
+  titleStr <- paste0("Proportion Plot for ", plotName)
   labelScheme <- ggplot2::labs(y = "Estimated Proportion", x = "Biological Replicate")
   ggplot2::ggplot(newDat, ggplot2::aes(y = Est, x = Channel, colour = Condition)) +
     labelScheme +
