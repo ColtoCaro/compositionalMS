@@ -8,6 +8,12 @@ This package is still under development and both the functions and output are su
 We apologize for the sorry state of the documentation and the numerous data fields that seemingly
 do nothing.  We're working on it.
 
+Quick start of using the package in R-Studio (or R terminal) can be begun via following commands:
+
+> library(devtools)
+> install_github('coltocaro/compMS')
+> library(compMS)
+
 The installation comes with the file, sampleDat.rda.  We recommend looking at this file to see how
  your data needs to be formatted.  An explanation of the data format can be seen by entering
 ?sampleDat into the R terminal (after installing and loading the package).
