@@ -5,11 +5,11 @@
 \title{Fitting a compositional Stan model}
 \usage{
 compBayes(dat, pp = 0.99, nCores = 1, iter = 2000, normalize = TRUE,
-  pop_sd = 1, ref_cond = NULL, simpleMod = FALSE)
+  pop_sd = 10, simpleMod = TRUE)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
-the included sample data \code{\link{ptmDat}}.  Both the reference channel
+the included sample data \code{\link{sampleDat}}.  Both the reference channel
  and the reference
 conditions will be defined from the first column of data. If multiple runs
 are to be analyzed at once then the dat object must be a list of
@@ -43,6 +43,16 @@ abundance is equivalent in each channel.  By default this value is true
 which results in each row of the matrix being perturbed by the inverse of
 the compositional mean.  Consequently the geometric means of each tag will
 be equivalent.}
+
+\item{pop_sd}{The prior standard deviation of the population level variance.}
+
+\item{simpleMod}{A boolean variable that determines whether or not a population
+level model will be fit.  In a simple model only relative abuandace parameters
+that define average log-ratios within sample groups will be estimated.  The
+population level model estimates parameters for each biological replicate along
+with population level effects.  Average sample parameters are also estimated
+as many experiments do not have sufficient sample size to make use of the full
+population level model.}
 }
 \description{
 This function runs the main code for fitting an appropriate compositonal

@@ -2,7 +2,9 @@
 
 export(catterPlot)
 export(compBayes)
+export(contrastEst)
 export(precisionPlot)
+export(propPlot)
 import(Rcpp)
 import(bayesplot)
 import(methods)

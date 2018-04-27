@@ -83,11 +83,11 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
 
   condBio <- paste(df[1, value_index], df[2, value_index])
   #create set of columns to be averaged into one reference
-  if(simpleMod){
+  #if(simpleMod){
     ref_index <- which(df[1, value_index] == as.numeric(df[1, value_index][1]))
-  }else{
-    ref_index <- which(condBio == condBio[1])
-  }
+  #}else{
+  #  ref_index <- which(condBio == condBio[1])
+  #}
   normal_index <- setdiff(1:length(value_index), ref_index)
 
   lRes <- logRatio(nMat, ref_index)
@@ -285,7 +285,7 @@ makeMat <- function(vec, model, bio = FALSE, useCov = FALSE, avgCond = FALSE){
 }
 
 #function to apply alr inverse to a matrix
-alrInv <- function(mat, refCol = NULL){
+alrInv <- function(mat, refCol = NULL, justSimp = FALSE){
 
 if(length(refCol) == 0){
   lrMat <- mat
@@ -310,7 +310,11 @@ if(length(refCol) == 0){
 
   df <- data.frame(Estimate = simpMeans, Variance = simpVar, simpInt)
 
-  list(df, lrDf)
+  if(justSimp){
+    res <- simplex
+  }else{res <- list(df, lrDf)}
+
+  res
 }
 
 #Function to shift indices above a certain reference point
@@ -321,4 +325,80 @@ partShift <- function(refPos, vec){
   shifted <- c(vec[belowI], vec[aboveI] - 1)
   shifted
 }
+
+
+#Summarize the posterior of a simplex
+summSimp <- function(simp, conds, obsConds, refCond, pName){
+
+  refPos <- which(conds == refCond) #position of reference in complete list
+  suCond <- conds[-refPos]
+
+  lrs <- matrix(NA, nrow = 1, ncol = length(suCond))
+  colnames(lrs) <- paste0("Est_avg_fc", suCond)
+
+  lrVars <- matrix(NA, nrow = 1, ncol = length(suCond))
+  colnames(lrVars) <- paste0("Var_Cond", suCond)
+
+  lrLL95 <- matrix(NA, nrow = 1, ncol = length(suCond))
+  colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+
+  lrUL95 <- matrix(NA, nrow = 1, ncol = length(suCond))
+  colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+
+  #exit if reference was not observed
+  if((refCond %in% obsConds == FALSE)){
+    return(data.frame(Protein = pName, lrs, lrVars, lrLL95, lrUL95,
+                                    stringsAsFactors = F))
+  }
+
+  oRefPos <- which(obsConds == refCond) # position of reference in observed conditions
+  lrMat <- log2(simp[ , -oRefPos]) - log2(simp[ , oRefPos])
+
+  obsPos <- which(suCond %in% obsConds)
+
+  lrs[obsPos] <- apply(lrMat, 2, mean)
+
+  lrVars[obsPos] <- apply(lrMat, 2, var)
+
+  lrLL95[obsPos] <- apply(lrMat, 2, function(x) quantile(x, probs = .025))
+
+  lrUL95[obsPos] <- apply(lrMat, 2, function(x) quantile(x, probs = .975))
+
+
+  avgLrTab <- data.frame(Protein = pName, lrs, lrVars, lrLL95, lrUL95,
+                         stringsAsFactors = F)
+
+  avgLrTab
+
+}
+
+
+#Summarize a contrast
+contSimp <- function(simp, conds, obsConds, cont, pName){
+
+  #Figure out if the contrast can be made
+  obsBool <- (conds %in% obsConds)
+  validCont <- identical(cont, cont*obsBool)
+  if(!validCont){
+    return(data.frame(Protein = pName, Cont_Est = NA, Cont_Var = NA,
+                      Cont_LL95 = NA, Cont_UL95 = NA,
+                      stringsAsFactors = F))
+  }
+
+  #map from full conditions to observed
+  newCont <- cont[obsBool]
+  contrastChain <- log2(simp) %*% newCont
+
+  Cont_Est = mean(contrastChain)
+  Cont_Var = var(contrastChain)
+  Cont_LL95 = quantile(contrastChain, probs = .025)
+  Cont_UL95 = quantile(contrastChain, probs = .975)
+
+  avgLrTab <- data.frame(Protein = pName, Cont_Est, Cont_Var, Cont_LL95,
+                         Cont_UL95, stringsAsFactors = F)
+
+  avgLrTab
+
+}
+
 
