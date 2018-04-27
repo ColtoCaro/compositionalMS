@@ -470,7 +470,7 @@ compBayes <- function(dat,
 #'   the number of parameters.  If this is not specified then by default
 #'   tables for all possible pairwise comparisons will be generated.
 #'
-contrastEst <- function(res, contrastMat = NULL){
+contrastEst <- function(res, contrastMat = NULL, useCov = FALSE){
   #How many conditions are there?
   lrIndex <- grep("Est", colnames(res[[3]]))
   condIndex <- grep("Est", colnames(res[[4]]))
