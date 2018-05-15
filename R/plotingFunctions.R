@@ -28,13 +28,13 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
   }else{
     tempTab <- RES[[5]]
   }
-  meltEst <- melt(tempTab[ , c(2, grep("Est", colnames(tempTab)))],
+  meltEst <- melt(tempTab[ , c(grep("Protein", colnames(tempTab)), grep("Est", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "mean")
   meltEst <- meltEst[order(meltEst$Protein), ]
-  meltLL <- melt(tempTab[ , c(2, grep("LL", colnames(tempTab)))],
+  meltLL <- melt(tempTab[ , c(grep("Protein", colnames(tempTab)), grep("LL", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "LL95")
   meltLL <- meltLL[order(meltLL$Protein), ]
-  meltUL <- melt(tempTab[ , c(2, grep("UL", colnames(tempTab)))],
+  meltUL <- melt(tempTab[ , c(grep("Protein", colnames(tempTab)), grep("UL", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "UL95")
   meltUL <- meltUL[order(meltUL$Protein), ]
 
@@ -113,10 +113,10 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALS
   }else{
     tempTab <- RES[[5]]
   }
-  meltEst <- melt(tempTab[ , c(2, grep("Est", colnames(tempTab)))],
+  meltEst <- melt(tempTab[ , c(grep("Protein", colnames(tempTab)), grep("Est", colnames(tempTab)))],
                   id.vars = "Protein", variable.name = "condition", value.name = "mean")
   meltEst <- meltEst[order(meltEst$Protein), ]
-  meltVar <- melt(tempTab[ , c(2, grep("Var", colnames(tempTab)))],
+  meltVar <- melt(tempTab[ , c(grep("Protein", colnames(tempTab)), grep("Var", colnames(tempTab)))],
                  id.vars = "Protein", variable.name = "condition", value.name = "var")
   meltVar <- meltVar[order(meltVar$Protein), ]
 

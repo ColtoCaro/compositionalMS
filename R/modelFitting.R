@@ -441,6 +441,7 @@ compBayes <- function(dat,
   RES[[4]] <- avgPTab
   RES[[5]] <- popLrTab
   RES[[6]] <- popPTab
+  RES[[7]] <- oneDat$condID
 
   #add Gene back in
   if(!is.null(avgLrTab)){
@@ -470,7 +471,7 @@ compBayes <- function(dat,
 #'   the number of parameters.  If this is not specified then by default
 #'   tables for all possible pairwise comparisons will be generated.
 #'
-contrastEst <- function(res, contrastMat = NULL, useCov = FALSE){
+contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL){
   #How many conditions are there?
   lrIndex <- grep("Est", colnames(res[[3]]))
   condIndex <- grep("Est", colnames(res[[4]]))
@@ -495,7 +496,6 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE){
     }
 
 
-
   lrCond <- as.integer(substring(colnames(res[[3]])[lrIndex],
                                      regexpr("fc" , colnames(res[[3]])[lrIndex]) + 2))
   fullCond <- as.integer(substring(colnames(res[[4]])[condIndex],
@@ -505,14 +505,26 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE){
   #Need to find the parameter index for each change
   startPos <- c(0, cumsum(apply(res[[3]][ , lrIndex], 1, function(x) sum(!is.na(x))))) + 1
 
+  if(is.null(stanKey)){
+   stop("Please enter a key to match proteins with Stan variables")
   indices <- list()
-  for(i in 1:(nProts)){
+    for(i in 1:(nProts)){
       indices[[i]] <- startPos[i]:(startPos[i + 1] - 1)
+    }
+  }else{
+    uBio <- levels(factor(stanKey))
+    condNum <- getCond(uBio, bio = FALSE)
+    condNames <- getName(uBio)
+
+    indices <- lapply(1:nProts, function(x)
+      which(condNames == levels(factor(condNames))[x]))
+
+    condList <- lapply(indices, function(x) condNum[x])
   }
 
   #Find set of observed conditions for each protein
-  condList <- lapply(1:nProts, function(x)
-    fullCond[which(!is.na(res[[4]])[x, condIndex])])
+  #condList <- lapply(1:nProts, function(x)
+  #  fullCond[which(!is.na(res[[4]])[x, condIndex])])
 
   #make simplexes
   if(simpleMod){
@@ -531,11 +543,13 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE){
     newList <- lapply(1:nProts, function(x)
       summSimp(avgSimp[[x]], fullCond, condList[[x]], lrCond[j], protNames[x]))
     avgLrTab <- do.call(rbind, newList)
+    avgLrTab <- data.frame(Gene = res[[3]]$Gene, avgLrTab)
 
     if(simpleMod == FALSE){
       newList <- lapply(1:nProts, function(x)
         summSimp(popSimp[[x]], fullCond, condList[[x]], lrCond[j], protNames[x]))
       popLrTab <- do.call(rbind, newList)
+      popLrTab <- data.frame(Gene = res[[3]]$Gene, popLrTab)
     }else{
       popLrTab <- NULL
     }
@@ -554,12 +568,13 @@ if(is.null(contrastMat)){
     tempList <- lapply(1:nProts, function(x)
       contSimp(avgSimp[[x]], fullCond, condList[[x]], contrastMat[k, ], protNames[x]))
     avgCont <- do.call(rbind, tempList)
-
+    avgCont <- data.frame(Gene = res[[3]]$Gene, avgCont)
 
     if(simpleMod == FALSE){
       tempList <- lapply(1:nProts, function(x)
         contSimp(popSimp[[x]], fullCond, condList[[x]], contrastMat[k, ], protNames[x]))
       popCont <- do.call(rbind, tempList)
+      popCont <- data.frame(Gene = res[[3]]$Gene, popCont)
     }else{
       popCont <- NULL
     }

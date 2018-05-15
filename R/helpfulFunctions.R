@@ -351,10 +351,12 @@ summSimp <- function(simp, conds, obsConds, refCond, pName){
                                     stringsAsFactors = F))
   }
 
-  oRefPos <- which(obsConds == refCond) # position of reference in observed conditions
-  lrMat <- log2(simp[ , -oRefPos]) - log2(simp[ , oRefPos])
+  oRefPos <- which(obsConds == refCond)  # position of reference in observed vector
+  lrMat <- log2(simp[ , -(oRefPos + 1)]) - log2(simp[ , (oRefPos + 1)]) #add 1 since simplex has an extra first column
 
-  obsPos <- which(suCond %in% obsConds)
+  colConds <- c(1, obsConds[-oRefPos]) #mapping from lrMat to suCond
+
+  obsPos <- match(colConds, suCond)
 
   lrs[obsPos] <- apply(lrMat, 2, mean)
 
@@ -377,7 +379,7 @@ summSimp <- function(simp, conds, obsConds, refCond, pName){
 contSimp <- function(simp, conds, obsConds, cont, pName){
 
   #Figure out if the contrast can be made
-  obsBool <- (conds %in% obsConds)
+  obsBool <- (conds %in% c(1, obsConds))
   validCont <- identical(cont, cont*obsBool)
   if(!validCont){
     return(data.frame(Protein = pName, Cont_Est = NA, Cont_Var = NA,
@@ -386,7 +388,7 @@ contSimp <- function(simp, conds, obsConds, cont, pName){
   }
 
   #map from full conditions to observed
-  newCont <- cont[obsBool]
+  newCont <- cont[c(1, obsConds)]
   contrastChain <- log2(simp) %*% newCont
 
   Cont_Est = mean(contrastChain)
