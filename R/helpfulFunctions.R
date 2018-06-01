@@ -388,7 +388,7 @@ contSimp <- function(simp, conds, obsConds, cont, pName){
   }
 
   #map from full conditions to observed
-  newCont <- cont[c(1, obsConds)]
+  newCont <- cont[match(c(1, obsConds), conds)]
   contrastChain <- log2(simp) %*% newCont
 
   Cont_Est = mean(contrastChain)
