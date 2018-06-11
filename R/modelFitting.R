@@ -476,6 +476,11 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
   lrIndex <- grep("Est", colnames(res[[3]]))
   condIndex <- grep("Est", colnames(res[[4]]))
   nCond <- length(condIndex)
+  # If there's only 2 conditions, no extra comparisons can be made, no need to proceed 
+  if(nCond == 2){
+    stop("Only 2 conditions detected, no extra comparisons to be made.")
+  }
+ 
   protNames <- res[[3]]$Protein
   nProts <- length(protNames)
 
