@@ -208,7 +208,7 @@ clrInv <- function(vec){
 #Function to normalize the data
 
 cNorm <- function(mat, subIndex = NULL){
-  #takes a compostion matrix and subracts out the mean
+  #takes a compostion matrix and subtracts out the mean
   mat[mat < 1] <- 1
   clrMat <- t(apply(mat, 1, clr))
 
