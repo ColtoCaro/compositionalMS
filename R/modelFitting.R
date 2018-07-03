@@ -215,8 +215,10 @@ compBayes <- function(dat,
   #create summary tables
 
   #simple case
+  # if number of biological replicates equals number of conditions
+  # or if simple model was set to TRUE
   if((n_b == n_c) | simpleMod){
-
+  
       uBio <- levels(factor(oneDat$condID))
       condNum <- getCond(uBio, bio = FALSE)
       condNames <- getName(uBio)
