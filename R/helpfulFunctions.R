@@ -71,7 +71,7 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
   nMat <- as.matrix(do.call(cbind, normed))
   }else{
-    nMat[nMat < 1] <- 1
+    nMat[nMat == 0] <- 1
   }
 
   #new paradigm.  Force the population model
