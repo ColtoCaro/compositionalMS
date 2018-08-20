@@ -666,7 +666,7 @@ public:
 
                     for (int i = 1; i <= n_c; ++i) {
 
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {
 
@@ -685,7 +685,7 @@ public:
                     for (int i = 1; i <= n_b; ++i) {
 
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {
 
@@ -706,7 +706,7 @@ public:
 
                     for (int i = 1; i <= n_c; ++i) {
 
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {
 
@@ -725,7 +725,7 @@ public:
                     for (int i = 1; i <= n_b; ++i) {
 
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {
 

@@ -746,7 +746,7 @@ public:
                     for (int i = 1; i <= n_c; ++i) {
 
                         current_statement_begin__ = 111;
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                     }
                     current_statement_begin__ = 113;
                     for (int i = 1; i <= N_; ++i) {
@@ -774,7 +774,7 @@ public:
                         current_statement_begin__ = 129;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
                         current_statement_begin__ = 130;
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
                     current_statement_begin__ = 132;
                     for (int i = 1; i <= N_; ++i) {
@@ -804,7 +804,7 @@ public:
                     for (int i = 1; i <= n_c; ++i) {
 
                         current_statement_begin__ = 152;
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                     }
                     current_statement_begin__ = 154;
                     for (int i = 1; i <= N_; ++i) {
@@ -832,7 +832,7 @@ public:
                         current_statement_begin__ = 170;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
                         current_statement_begin__ = 171;
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 1, 1));
+                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
                     current_statement_begin__ = 174;
                     for (int i = 1; i <= N_; ++i) {

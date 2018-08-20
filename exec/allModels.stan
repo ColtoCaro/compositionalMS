@@ -108,7 +108,7 @@ if(useCov > 0){
   if(simpleMod == 1){
 
    for(i in 1:n_c){
-      sigma_raw[i] ~ inv_gamma(1, 1) ;
+      sigma_raw[i] ~ inv_gamma(2, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
@@ -127,7 +127,7 @@ if(useCov > 0){
     for(i in 1:n_b){
       //beta_rawb[i] ~ normal(0, 10) ;
       beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
-      sigma_rawb[i] ~ inv_gamma(1, 1) ;
+      sigma_rawb[i] ~ inv_gamma(2, 1) ;
     }
     for(i in 1:N_){
       if(ptm[i] == 0){
@@ -149,7 +149,7 @@ if(useCov > 0){
  if(bioInd == 0){
 
   for(i in 1:n_c){
-     sigma_raw[i] ~ inv_gamma(1, 1) ;
+     sigma_raw[i] ~ inv_gamma(2, 1) ;
    }
  for(i in 1:N_){
    if(ptm[i] == 0){
@@ -168,7 +168,7 @@ if(useCov > 0){
   if(bioInd > 0){
     for(i in 1:(n_b)){
       beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
-      sigma_rawb[i] ~ inv_gamma(1, 1) ;
+      sigma_rawb[i] ~ inv_gamma(2, 1) ;
     }
 
     for(i in 1:N_){
