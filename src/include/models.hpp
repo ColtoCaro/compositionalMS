@@ -27,7 +27,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_allModels");
-    reader.add_event(220, 220, "end", "model_allModels");
+    reader.add_event(225, 225, "end", "model_allModels");
     return reader;
 }
 
@@ -40,6 +40,7 @@ private:
     int n_p;
     int n_ptm;
     vector<int> n_nc;
+    vector<int> n_pep;
     int max_nc;
     vector<int> condID;
     vector<int> bioID;
@@ -126,6 +127,16 @@ public:
             size_t n_nc_limit_0__ = n_c;
             for (size_t i_0__ = 0; i_0__ < n_nc_limit_0__; ++i_0__) {
                 n_nc[i_0__] = vals_i__[pos__++];
+            }
+            validate_non_negative_index("n_pep", "n_b", n_b);
+            context__.validate_dims("data initialization", "n_pep", "int", context__.to_vec(n_b));
+            validate_non_negative_index("n_pep", "n_b", n_b);
+            n_pep = std::vector<int>(n_b,int(0));
+            vals_i__ = context__.vals_i("n_pep");
+            pos__ = 0;
+            size_t n_pep_limit_0__ = n_b;
+            for (size_t i_0__ = 0; i_0__ < n_pep_limit_0__; ++i_0__) {
+                n_pep[i_0__] = vals_i__[pos__++];
             }
             context__.validate_dims("data initialization", "max_nc", "int", context__.to_vec());
             max_nc = int(0);
@@ -243,6 +254,9 @@ public:
             for (int k0__ = 0; k0__ < n_c; ++k0__) {
                 check_greater_or_equal(function__,"n_nc[k0__]",n_nc[k0__],0);
             }
+            for (int k0__ = 0; k0__ < n_b; ++k0__) {
+                check_greater_or_equal(function__,"n_pep[k0__]",n_pep[k0__],0);
+            }
             check_greater_or_equal(function__,"max_nc",max_nc,0);
             for (int k0__ = 0; k0__ < N_; ++k0__) {
                 check_greater_or_equal(function__,"condID[k0__]",condID[k0__],0);
@@ -289,8 +303,8 @@ public:
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            validate_non_negative_index("beta", "n_c", n_c);
-            num_params_r__ += n_c;
+            validate_non_negative_index("beta", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
+            num_params_r__ += (n_c * (1 - bioInd));
             validate_non_negative_index("beta_b", "(n_b * bioInd)", (n_b * bioInd));
             num_params_r__ += (n_b * bioInd);
             validate_non_negative_index("alpha", "n_p", n_p);
@@ -328,12 +342,12 @@ public:
             throw std::runtime_error("variable beta missing");
         vals_r__ = context__.vals_r("beta");
         pos__ = 0U;
-        validate_non_negative_index("beta", "n_c", n_c);
-        context__.validate_dims("initialization", "beta", "double", context__.to_vec(n_c));
-        std::vector<double> beta(n_c,double(0));
-        for (int i0__ = 0U; i0__ < n_c; ++i0__)
+        validate_non_negative_index("beta", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
+        context__.validate_dims("initialization", "beta", "double", context__.to_vec((n_c * (1 - bioInd))));
+        std::vector<double> beta((n_c * (1 - bioInd)),double(0));
+        for (int i0__ = 0U; i0__ < (n_c * (1 - bioInd)); ++i0__)
             beta[i0__] = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < n_c; ++i0__)
+        for (int i0__ = 0U; i0__ < (n_c * (1 - bioInd)); ++i0__)
             try {
             writer__.scalar_unconstrain(beta[i0__]);
         } catch (const std::exception& e) { 
@@ -481,7 +495,7 @@ public:
             stan::io::reader<T__> in__(params_r__,params_i__);
 
             vector<T__> beta;
-            size_t dim_beta_0__ = n_c;
+            size_t dim_beta_0__ = (n_c * (1 - bioInd));
             beta.reserve(dim_beta_0__);
             for (size_t k_0__ = 0; k_0__ < dim_beta_0__; ++k_0__) {
                 if (jacobian__)
@@ -588,7 +602,13 @@ public:
 
                 for (int i = 1; i <= n_b; ++i) {
 
-                    stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), scale);
+                    } else {
+
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    }
                 }
             }
             if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
@@ -648,7 +668,6 @@ public:
             // model body
 
             lp_accum__.add(normal_log<propto__>(scale, 0, 5));
-            lp_accum__.add(normal_log<propto__>(beta, 0, 10));
             if (as_bool(logical_gt(n_ptm,0))) {
 
                 for (int i = 1; i <= n_ptm; ++i) {
@@ -684,7 +703,7 @@ public:
 
                     for (int i = 1; i <= n_b; ++i) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
+                        lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
                     for (int i = 1; i <= N_; ++i) {
@@ -786,7 +805,7 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
-        dims__.push_back(n_c);
+        dims__.push_back((n_c * (1 - bioInd)));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((n_b * bioInd));
@@ -839,7 +858,7 @@ public:
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
         vector<double> beta;
-        size_t dim_beta_0__ = n_c;
+        size_t dim_beta_0__ = (n_c * (1 - bioInd));
         for (size_t k_0__ = 0; k_0__ < dim_beta_0__; ++k_0__) {
             beta.push_back(in__.scalar_constrain());
         }
@@ -874,7 +893,7 @@ public:
         for (size_t k_0__ = 0; k_0__ < dim_delta_0__; ++k_0__) {
             delta.push_back(in__.scalar_lb_constrain(0));
         }
-            for (int k_0__ = 0; k_0__ < n_c; ++k_0__) {
+            for (int k_0__ = 0; k_0__ < (n_c * (1 - bioInd)); ++k_0__) {
             vars__.push_back(beta[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < (n_b * bioInd); ++k_0__) {
@@ -936,7 +955,13 @@ public:
 
                 for (int i = 1; i <= n_b; ++i) {
 
-                    stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), scale);
+                    } else {
+
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    }
                 }
             }
             if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
@@ -1051,7 +1076,7 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "beta" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1125,7 +1150,7 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= n_c; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "beta" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());

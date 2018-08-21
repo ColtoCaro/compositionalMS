@@ -8,6 +8,7 @@ data{
   int<lower=0> n_p ; // number of ptm peptides (0 if not a ptm experiment)
   int<lower=0> n_ptm ; // number of ptm's
   int<lower=0> n_nc[n_c] ; //number of bio id's within each condition
+  int<lower=0> n_pep[n_b] ; //number of peptides per each biorep
   int<lower=0> max_nc ; //maximum number of bioReps
 
   int<lower=0, upper=n_c> condID[N_] ; //ID for condition*prot
@@ -36,7 +37,7 @@ transformed data{
 }
 
 parameters{
-  real beta[n_c] ;
+  real beta[n_c * (1 - bioInd)] ;
   real beta_b[n_b * (bioInd)] ;
 
   real alpha[n_p] ; // ptm means
@@ -64,8 +65,12 @@ if(bioInd == 0){
 
 if(bioInd == 1){
   for(i in 1:n_b){
-    sigmab[i] = scale*sigma_rawb[i] ;
-    //beta_b[i] =  beta[bioToCond[i]] + beta_rawb[i] ;
+    if(n_pep[n_b] == 1){
+      sigmab[i] = scale ;
+    }else{
+      sigmab[i] = scale*sigma_rawb[i] ;
+      //beta_b[i] =  beta[bioToCond[i]] + beta_rawb[i] ;
+    }
   }
 }
 
@@ -90,7 +95,7 @@ if(useCov > 0){
  model{
   //first set parameters that apply to all models
   scale ~ normal(0, 5) ;
-  beta ~ normal(0, 10) ;
+  //beta ~ normal(0, 10) ;  Simple model has been deprecated
 
   //set ptm distributions
   if(n_ptm > 0){
@@ -125,8 +130,8 @@ if(useCov > 0){
   if(bioInd > 0){
 //    tau ~ normal(0, 5) ;
     for(i in 1:n_b){
-      //beta_rawb[i] ~ normal(0, 10) ;
-      beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
+      beta_b[i] ~ normal(0, 10) ;
+      //beta_b[i] ~ normal(beta[bioToCond[i]], pop_sd) ;
       sigma_rawb[i] ~ inv_gamma(2, 1) ;
     }
     for(i in 1:N_){

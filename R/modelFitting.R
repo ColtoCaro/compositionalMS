@@ -59,7 +59,7 @@ compBayes <- function(dat,
                      iter = 2000,
                      normalize = TRUE,
                      pop_sd = 10,
-                     simpleMod = TRUE
+                     simpleMod = FALSE
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
@@ -165,6 +165,7 @@ compBayes <- function(dat,
   }else{
     n_b <- length(unique(oneDat$bioID))
     bioID <- as.integer(factor(oneDat$bioID))
+    n_pep <- table(bioID)
     #make a mapping for use in a heierarchical model (not yet implemented)
     bioMap <- oneDat$condID[match(levels(factor(oneDat$bioID)),
                                   oneDat$bioID)]
@@ -218,7 +219,7 @@ compBayes <- function(dat,
   # if number of biological replicates equals number of conditions
   # or if simple model was set to TRUE
   if((n_b == n_c) | simpleMod){
-  
+
       uBio <- levels(factor(oneDat$condID))
       condNum <- getCond(uBio, bio = FALSE)
       condNames <- getName(uBio)
@@ -313,6 +314,24 @@ compBayes <- function(dat,
   bioDf <- data.frame(Protein = levels(factor(condNames)), proportions, pVars, pLL95, pUL95,
                        stringsAsFactors = F)
 
+  #Now do fcBioTab
+  uCond <- unique(condNum)
+  uCond <- uCond[order(uCond)]
+
+  lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(uCond, y)], simpRES, condList))
+  colnames(lrs) <- paste0("Est_Fc_BioID", uCond)
+  pVars <- t(mapply(function(x, y) x[[2]]$Variance[match(uCond, y)], simpRES, condList))
+  colnames(pVars) <- paste0("Var_BioID", uCond)
+  pLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(uCond, y)], simpRES, condList))
+  colnames(pLL95) <- paste0("LL95_BioID", uCond)
+  pUL95 <- t(mapply(function(x, y) x[[2]]$UL95[match(uCond, y)], simpRES, condList))
+  colnames(pUL95) <- paste0("UL95_BioID", uCond)
+
+  fcBioTab <- data.frame(Protein = levels(factor(condNames)), lrs, pVars, pLL95, pUL95,
+                      stringsAsFactors = F)
+
+
+
   #make avgCond log-ratio tables
 
   uBio <- levels(factor(oneDat$condID))
@@ -375,63 +394,63 @@ compBayes <- function(dat,
 
 
     #redo with population level tables
-  uBio <- levels(factor(oneDat$condID))
-  condNum <- getCond(uBio, bio = FALSE)
-  condNames <- getName(uBio)
-
-  refC <- dat[[1]][1, "tag1"]
-
-  nCond <- length(unique(condNum))
-  uCond <- unique(c(refC, unique(condNum)))
-  uCond <- uCond[order(uCond)]
-
-  nProts <- length(unique(condNames))
-
-  indices <- lapply(1:nProts, function(x)
-    which(condNames == levels(factor(condNames))[x]))
-
-  condList <- lapply(indices, function(x) condNum[x])
-
-  simpRES <- lapply(indices, function(x)
-    alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = FALSE)))
-
-
-  refPos <- which(uCond == refC)
-  suCond <- uCond[-refPos]
-  if(length(suCond) == 1){
-    lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-    colnames(lrs) <- paste0("Est_avg_fc", suCond)
-    lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-    colnames(lrVars) <- paste0("Var_Cond", suCond)
-    lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-    colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-    lrUL95 <- as.matrix(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-    colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  }else{
-    lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-    colnames(lrs) <- paste0("Est_avg_fc", suCond)
-    lrVars <- t(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-    colnames(lrVars) <- paste0("Var_Cond", suCond)
-    lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-    colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-    lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-    colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  }
-  popLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-                         stringsAsFactors = F)
-
-  #Now get the proportions
-  lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  colnames(lrs) <- paste0("Est_avg_Prop", uCond)
-  lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  colnames(lrVars) <- paste0("Var_Cond", uCond)
-  lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  colnames(lrLL95) <- paste0("LL95_Cond", uCond)
-  lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  colnames(lrUL95) <- paste0("UL95_Cond", uCond)
-
-  popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-                        stringsAsFactors = F)
+  # uBio <- levels(factor(oneDat$condID))
+  # condNum <- getCond(uBio, bio = FALSE)
+  # condNames <- getName(uBio)
+  #
+  # refC <- dat[[1]][1, "tag1"]
+  #
+  # nCond <- length(unique(condNum))
+  # uCond <- unique(c(refC, unique(condNum)))
+  # uCond <- uCond[order(uCond)]
+  #
+  # nProts <- length(unique(condNames))
+  #
+  # indices <- lapply(1:nProts, function(x)
+  #   which(condNames == levels(factor(condNames))[x]))
+  #
+  # condList <- lapply(indices, function(x) condNum[x])
+  #
+  # simpRES <- lapply(indices, function(x)
+  #   alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = FALSE)))
+  #
+  #
+  # refPos <- which(uCond == refC)
+  # suCond <- uCond[-refPos]
+  # if(length(suCond) == 1){
+  #   lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
+  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
+  #   lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
+  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
+  #   lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
+  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+  #   lrUL95 <- as.matrix(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
+  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+  # }else{
+  #   lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
+  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
+  #   lrVars <- t(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
+  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
+  #   lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
+  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+  #   lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
+  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+  # }
+  # popLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+  #                        stringsAsFactors = F)
+  #
+  # #Now get the proportions
+  # lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
+  # colnames(lrs) <- paste0("Est_avg_Prop", uCond)
+  # lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
+  # colnames(lrVars) <- paste0("Var_Cond", uCond)
+  # lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+  # colnames(lrLL95) <- paste0("LL95_Cond", uCond)
+  # lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
+  # colnames(lrUL95) <- paste0("UL95_Cond", uCond)
+  #
+  # popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
+  #                       stringsAsFactors = F)
 
 
   } #end else (not simple case)
@@ -441,8 +460,8 @@ compBayes <- function(dat,
   RES[[2]] <- bioDf
   RES[[3]] <- avgLrTab
   RES[[4]] <- avgPTab
-  RES[[5]] <- popLrTab
-  RES[[6]] <- popPTab
+  RES[[5]] <- fcBioTab
+  RES[[6]] <- avgPTab #Remove when cleared in downstream processing
   RES[[7]] <- oneDat$condID
 
   #add Gene back in
@@ -478,11 +497,11 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
   lrIndex <- grep("Est", colnames(res[[3]]))
   condIndex <- grep("Est", colnames(res[[4]]))
   nCond <- length(condIndex)
-  # If there's only 2 conditions, no extra comparisons can be made, no need to proceed 
+  # If there's only 2 conditions, no extra comparisons can be made, no need to proceed
   if(nCond == 2){
     stop("Only 2 conditions detected, no extra comparisons to be made.")
   }
- 
+
   protNames <- res[[3]]$Protein
   nProts <- length(protNames)
 
