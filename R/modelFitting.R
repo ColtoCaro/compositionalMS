@@ -514,9 +514,9 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
 
   #determine model structure
 
-  #Is it a population level model?
+  #Is it a population level model? -  Answer is now NO
   if(is.null(res[[2]])){
-    simpleMod = TRUE
+    simpleMod = FALSE
   }else{
       simpleMod = FALSE
     }
