@@ -48,6 +48,12 @@
 #'   with population level effects.  Average sample parameters are also estimated
 #'   as many experiments do not have sufficient sample size to make use of the full
 #'   population level model.
+#' @param bridge If bridge == TRUE then the first column will be treated as the
+#'   reference for the entire experiment.  If the condition number repeats, these
+#'   entries will be collapsed into a single reference channel.  When bridge is false
+#'   this collapse will prevent estimation of the individual collapsed channels which
+#'   are necessary for viewing proportion plots.  In this case a second model will be
+#'   fit for the sole purpose of visualizing the behavior of individual replicates.
 #'
 #' @details There are many details.  This will be filled out later.
 #'
@@ -59,7 +65,8 @@ compBayes <- function(dat,
                      iter = 2000,
                      normalize = TRUE,
                      pop_sd = 10,
-                     simpleMod = FALSE
+                     simpleMod = FALSE,
+                     bridge = TRUE
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
@@ -87,6 +94,19 @@ compBayes <- function(dat,
   #determine how many redundancies are being used
   maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
 
+
+  #setup two runs of the function if bridge == FALSE
+  if(bridge == FALSE){
+    models = 2
+    simpleMod == TRUE
+    }
+
+  for(modelN in 1:models){
+
+  #If this is the second time through, set bioReps to conditions
+  if(modelN == T){
+    dat <- lapply(dat, function(x) within(x, x[1, ] <- x[2, ]))
+  }
 
   readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], plexNumber = x, normalize = normalize,
@@ -455,14 +475,23 @@ compBayes <- function(dat,
 
   } #end else (not simple case)
 
+
   RES <- list()
+
+  if(modelN == 1){
   RES[[1]] <- model
   RES[[2]] <- bioDf
   RES[[3]] <- avgLrTab
   RES[[4]] <- avgPTab
   RES[[5]] <- fcBioTab
-  RES[[6]] <- avgPTab #Remove when cleared in downstream processing
+  RES[[6]] <- NULL  #This used to be for population models
   RES[[7]] <- oneDat$condID
+  }else{
+    RES[[2]] <- avgLrTab
+    RES[[5]] <- avgPTab
+  }
+
+  }  #End modelN for-loop that fits 2 simple models
 
   #add Gene back in
   if(!is.null(avgLrTab)){
@@ -473,6 +502,7 @@ compBayes <- function(dat,
   Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
   gRES <- lapply(RES, function(x) if(is.data.frame(x)){
     data.frame(Gene, x)}else{x})
+
 
   gRES
 } #end of compBayes function
