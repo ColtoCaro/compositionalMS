@@ -560,8 +560,8 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
     avgSimp <- lapply(indices, function(x)
       alrInv(makeMat(x, res[[1]], bio = FALSE, useCov, avgCond = TRUE), justSimp = TRUE))
 
-    popSimp <- lapply(indices, function(x)
-      alrInv(makeMat(x, res[[1]], bio = FALSE, useCov, avgCond = FALSE), justSimp = TRUE))
+    #popSimp <- lapply(indices, function(x)
+    #  alrInv(makeMat(x, res[[1]], bio = FALSE, useCov, avgCond = FALSE), justSimp = TRUE))
   }
 
   newRef <- list()
@@ -571,14 +571,14 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
     avgLrTab <- do.call(rbind, newList)
     avgLrTab <- data.frame(Gene = res[[3]]$Gene, avgLrTab)
 
-    if(simpleMod == FALSE){
-      newList <- lapply(1:nProts, function(x)
-        summSimp(popSimp[[x]], fullCond, condList[[x]], lrCond[j], protNames[x]))
-      popLrTab <- do.call(rbind, newList)
-      popLrTab <- data.frame(Gene = res[[3]]$Gene, popLrTab)
-    }else{
+    #if(simpleMod == FALSE){
+     # newList <- lapply(1:nProts, function(x)
+      #  summSimp(popSimp[[x]], fullCond, condList[[x]], lrCond[j], protNames[x]))
+    #   popLrTab <- do.call(rbind, newList)
+    #   popLrTab <- data.frame(Gene = res[[3]]$Gene, popLrTab)
+    # }else{
       popLrTab <- NULL
-    }
+    #}
 
     newRef[[j]] <- list(avgLrTab, popLrTab)
   }
@@ -596,14 +596,14 @@ if(is.null(contrastMat)){
     avgCont <- do.call(rbind, tempList)
     avgCont <- data.frame(Gene = res[[3]]$Gene, avgCont)
 
-    if(simpleMod == FALSE){
-      tempList <- lapply(1:nProts, function(x)
-        contSimp(popSimp[[x]], fullCond, condList[[x]], contrastMat[k, ], protNames[x]))
-      popCont <- do.call(rbind, tempList)
-      popCont <- data.frame(Gene = res[[3]]$Gene, popCont)
-    }else{
+    # if(simpleMod == FALSE){
+    #   tempList <- lapply(1:nProts, function(x)
+    #     contSimp(popSimp[[x]], fullCond, condList[[x]], contrastMat[k, ], protNames[x]))
+    #   popCont <- do.call(rbind, tempList)
+    #   popCont <- data.frame(Gene = res[[3]]$Gene, popCont)
+    # }else{
       popCont <- NULL
-    }
+    #}
 
     contRes[[k]] <- list(avgCont, popCont)
   }
