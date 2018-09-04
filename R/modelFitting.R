@@ -97,8 +97,10 @@ compBayes <- function(dat,
 
   #setup two runs of the function if bridge == FALSE
   if(bridge == FALSE){
-    models = 2
+    models <- 2
     simpleMod == TRUE
+  }else{
+      models <- 1
     }
 
   for(modelN in 1:models){
