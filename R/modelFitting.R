@@ -97,13 +97,13 @@ compBayes <- function(dat,
 
   #setup two runs of the function if bridge == FALSE
   if(bridge == FALSE){
-    models <- 2
+    model_number <- 2
     simpleMod == TRUE
   }else{
-      models <- 1
+      model_number <- 1
     }
 
-  for(modelN in 1:models){
+  for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
   if(modelN == T){
