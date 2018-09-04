@@ -106,7 +106,7 @@ compBayes <- function(dat,
   for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
-  if(modelN == T){
+  if(modelN == 2){
     dat <- lapply(dat, function(x) within(x, x[1, ] <- x[2, ]))
   }
 
