@@ -482,16 +482,18 @@ compBayes <- function(dat,
   } #end else (not simple case)
 
 
-  RES <- list()
+
 
   if(modelN == 1){
-  RES[[1]] <- model
-  RES[[2]] <- bioDf
-  RES[[3]] <- avgLrTab
-  RES[[4]] <- avgPTab
-  RES[[5]] <- fcBioTab
-  RES[[6]] <- NULL  #This used to be for population models
-  RES[[7]] <- oneDat$condID
+    RES <- list()
+
+    RES[[1]] <- model
+    RES[[2]] <- bioDf
+    RES[[3]] <- avgLrTab
+    RES[[4]] <- avgPTab
+    RES[[5]] <- fcBioTab
+    RES[[6]] <- NULL  #This used to be for population models
+    RES[[7]] <- oneDat$condID
   }else{
     RES[[2]] <- avgLrTab
     RES[[5]] <- avgPTab
