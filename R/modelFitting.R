@@ -54,6 +54,8 @@
 #'   this collapse will prevent estimation of the individual collapsed channels which
 #'   are necessary for viewing proportion plots.  In this case a second model will be
 #'   fit for the sole purpose of visualizing the behavior of individual replicates.
+#' @param adapt_delta The target proposal acceptance rate that determines step
+#'   size in a Stan model.
 #'
 #' @details There are many details.  This will be filled out later.
 #'
@@ -66,7 +68,8 @@ compBayes <- function(dat,
                      normalize = TRUE,
                      pop_sd = 10,
                      simpleMod = FALSE,
-                     bridge = TRUE
+                     bridge = TRUE,
+                     adapt_delta = .9
                      ){
 
   #Put single dataframe into a list so that we will always work with a list of dataframes
@@ -232,7 +235,8 @@ compBayes <- function(dat,
    #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
 
   sMod <- compMS:::stanmodels$allModels
-  model <- rstan::sampling(sMod, cores = nCores, iter = iter)
+  model <- rstan::sampling(sMod, cores = nCores, iter = iter,
+                           control = list(adapt_delta = adapt_delta))
 
 
   #create summary tables
