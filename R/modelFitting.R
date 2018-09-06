@@ -101,7 +101,7 @@ compBayes <- function(dat,
   #setup two runs of the function if bridge == FALSE
   if(bridge == FALSE){
     model_number <- 2
-    simpleMod == TRUE
+    simpleMod <- TRUE
   }else{
       model_number <- 1
     }
@@ -110,7 +110,10 @@ compBayes <- function(dat,
 
   #If this is the second time through, set bioReps to conditions
   if(modelN == 2){
-    dat <- lapply(dat, function(x) within(x, x[1, ] <- x[2, ]))
+    dat <- lapply(dat, function(x){
+      x[1, ] <- x[2, ]
+      x
+      })
   }
 
   readyDat <- lapply(1:length(dat), function(x)
@@ -495,8 +498,8 @@ compBayes <- function(dat,
     RES[[6]] <- NULL  #This used to be for population models
     RES[[7]] <- oneDat$condID
   }else{
-    RES[[2]] <- avgLrTab
-    RES[[5]] <- avgPTab
+    RES[[2]] <- avgPTab
+    RES[[5]] <- avgLrTab
   }
 
   }  #End modelN for-loop that fits 2 simple models
