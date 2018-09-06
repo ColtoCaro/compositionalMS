@@ -388,7 +388,7 @@ compBayes <- function(dat,
   suCond <- uCond[-refPos]
   if(length(suCond) == 1){
     lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-    colnames(lrs) <- paste0("Est_fc", suCond)
+    colnames(lrs) <- paste0("Est_Fc", suCond)
     lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
     colnames(lrVars) <- paste0("Var_", suCond)
     lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
@@ -397,7 +397,7 @@ compBayes <- function(dat,
     colnames(lrUL95) <- paste0("UL95_", suCond)
   }else{
     lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-    colnames(lrs) <- paste0("Est_fc", suCond)
+    colnames(lrs) <- paste0("Est_Fc", suCond)
     lrVars <- t(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
     colnames(lrVars) <- paste0("Var_", suCond)
     lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
