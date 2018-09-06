@@ -309,6 +309,7 @@ compBayes <- function(dat,
 
 
       bioDf <- NULL
+      fcBioTab <- NULL
       popLrTab <- NULL
       popPTab  <- NULL
 
