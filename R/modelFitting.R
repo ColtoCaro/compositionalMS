@@ -72,6 +72,10 @@ compBayes <- function(dat,
                      adapt_delta = .9
                      ){
 
+  #Force the new setup with two simple runs
+  simpleMod <- TRUE
+  bridge <- FALSE
+
   #Put single dataframe into a list so that we will always work with a list of dataframes
   if(is.data.frame(dat)){dat <- list(dat)}
 
