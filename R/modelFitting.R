@@ -562,9 +562,9 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
 
   #Is it a population level model? -  Answer is now NO
   if(is.null(res[[2]])){
-    simpleMod = FALSE
+    simpleMod = TRUE
   }else{
-      simpleMod = FALSE
+      simpleMod = TRUE
     }
 
 
