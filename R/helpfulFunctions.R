@@ -334,16 +334,16 @@ summSimp <- function(simp, conds, obsConds, refCond, pName){
   suCond <- conds[-refPos]
 
   lrs <- matrix(NA, nrow = 1, ncol = length(suCond))
-  colnames(lrs) <- paste0("Est_avg_fc", suCond)
+  colnames(lrs) <- paste0("Est_Fc", suCond)
 
   lrVars <- matrix(NA, nrow = 1, ncol = length(suCond))
-  colnames(lrVars) <- paste0("Var_Cond", suCond)
+  colnames(lrVars) <- paste0("Var_", suCond)
 
   lrLL95 <- matrix(NA, nrow = 1, ncol = length(suCond))
-  colnames(lrLL95) <- paste0("LL95_Cond", suCond)
+  colnames(lrLL95) <- paste0("LL95_", suCond)
 
   lrUL95 <- matrix(NA, nrow = 1, ncol = length(suCond))
-  colnames(lrUL95) <- paste0("UL95_Cond", suCond)
+  colnames(lrUL95) <- paste0("UL95_", suCond)
 
   #exit if reference was not observed
   if((refCond %in% obsConds == FALSE)){
