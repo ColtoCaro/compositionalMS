@@ -569,7 +569,7 @@ contrastEst <- function(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
 
 
   lrCond <- as.integer(substring(colnames(res[[3]])[lrIndex],
-                                     regexpr("fc" , colnames(res[[3]])[lrIndex]) + 2))
+                                     regexpr("Fc" , colnames(res[[3]])[lrIndex]) + 2))
   fullCond <- as.integer(substring(colnames(res[[4]])[condIndex],
                                  regexpr("op" , colnames(res[[4]])[condIndex]) + 2))
   refCond <- setdiff(fullCond, lrCond)
