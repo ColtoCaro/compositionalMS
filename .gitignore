@@ -4,3 +4,4 @@
 *.o
 *.so
 .DS_Store
+inst/doc
