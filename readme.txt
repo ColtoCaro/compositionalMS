@@ -17,7 +17,8 @@ Quick start of using the package in R-Studio (or R terminal) can be begun via fo
 WARNING:  rstan can be tricky to install on many systems.  See this thread,
 https://discourse.mc-stan.org/t/rstan-install-problem-on-mac-nojave/6022
 from the Stan Forums on some of the difficulties with Stan 2.17.4 (these problems should
-be resolved with Version 2.18.1)
+be resolved with Version 2.18.1).  Often entering Sys.setenv(USE_CXX14=1) is enough to fix
+the problem.
 
 The installation comes with the file, sampleDat.rda.  We recommend looking at this file to see how
  your data needs to be formatted.  An explanation of the data format can be seen by entering

@@ -2,7 +2,7 @@
 title: "compositionalMS"
 author: "Jonathon O'Brien"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: pdf_document
 bibliography: compBib.bib
 vignette: >
   %\VignetteIndexEntry{compositionalMS}

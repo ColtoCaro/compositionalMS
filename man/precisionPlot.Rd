@@ -4,7 +4,8 @@
 \alias{precisionPlot}
 \title{Precision plot}
 \usage{
-precisionPlot(RES, byCond = FALSE, nullSet = c(-1, 1), avgCond = FALSE)
+precisionPlot(RES, byCond = FALSE, nullSet = c(-1, 1),
+  avgCond = FALSE)
 }
 \arguments{
 \item{RES}{A results list generated from the function

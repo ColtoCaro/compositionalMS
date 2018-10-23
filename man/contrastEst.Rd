@@ -4,7 +4,7 @@
 \alias{contrastEst}
 \title{Changing the comparisons of interest}
 \usage{
-contrastEst(res, contrastMat = NULL)
+contrastEst(res, contrastMat = NULL, useCov = FALSE, stanKey = NULL)
 }
 \arguments{
 \item{res}{The results object to be altered.}

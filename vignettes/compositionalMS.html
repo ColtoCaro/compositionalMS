@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Jonathon O’Brien" />
+
+<meta name="date" content="2018-10-22" />
+
+<title>compositionalMS</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">compositionalMS</h1>
+<h4 class="author"><em>Jonathon O’Brien</em></h4>
+<h4 class="date"><em>2018-10-22</em></h4>
+
+
+
+<p>The compositionalMS package performs analyses on TMT/iTRAQ data under the assumption that all of the relevant quantitative information is captured in the signal proportions <span class="citation">(O’Brien et al. 2018)</span>. The study of constrained data is the primary focus of compositional data analysis <span class="citation">(Aitchison 1986)</span> and the models used in this software are based on prinicples from this field.</p>
+<p>A <span class="math inline">\(D\)</span> dimensional composition is defined as any vector <span class="math inline">\(\bf{x}\)</span> of non-negative elements <span class="math inline">\(x_{1}, ..., x_{D}\)</span> such that <span class="math inline">\(x_{1} + ... + x_{D} = K\)</span>.</p>
+<p>The closure of a composition is the function that converts a composition into a set of proportions <span class="math display">\[
+cl(\bf{x}) = \frac{x_{1}}{K}, ..., \frac{x_{D}}{K}
+\]</span></p>
+<div id="normalization" class="section level2">
+<h2>Normalization</h2>
+<div id="row-normalization" class="section level3">
+<h3>Row Normalization</h3>
+<p>The models used in this software anticipate singal-to-noise (SN) ratios, which are theoretically greater than or equal to one. This is important because the mathematical foundation of compositional data analysis does not allow components to take a value of zero. While SN ratios should not be less than one, various software packages will occasionally estimate signals below the noise. Accordingly, the first step in our normalization is to replace all SN values which are less than one with a 1.</p>
+<p>Each scan is then reduced to its proportional information through the additive log-ratio (ALR) transformation which maps a D dimensional simplex into a vector in <span class="math inline">\(\mathbb{R}^{D-1}\)</span>.</p>
+<p><span class="math display">\[
+alr(\bf{x}) = \bf{y} = log_2(\frac{x_{2}}{x_{1}}), ..., log_2(\frac{x_{D}}{x_{1}})
+\]</span> Notice that the ALR is typically defined with the natural logarithm, but we have defined it here as a log base 2 transformation to match the conventional log-ratio scale used throughout the field of proteomics.</p>
+<p>A transformation back into a the simplex (contrained to one), can be achieved with the ALR inverse <span class="math display">\[
+alr^{-1}(\bf{y}) = cl(2^{0}, 2^{y_{1}}, ... 2^{y_{D-1}})
+\]</span></p>
+<p>The first component in the ALR transformation plays a special role as a common reference for all of the log-ratios. Our program treats whatever condition is provided in the first column as the reference. In experiments that include a bridge channel it is natural to use the bridge as the reference. When a bridge is not present, or in any case where the first condition has more than one replicate, all columns belonging to that first condition are collapsed into one column by taking the geometric mean. Notice that converting each scan into additive log-ratios with respect to a bridge channel provides a solution to the cross-plex normalization problem.</p>
+</div>
+<div id="column-normalization" class="section level3">
+<h3>Column Normalization</h3>
+<p>In a mass spectrometry proteomics experiment it is common to assume that the average protein abundance across samples should be equivalent. Typically normalization is done by finding multiplicative factors such that the mean (or sum) of each column is forced to be equivalent. This should compensate for pipetting errors, variation in precipitation and other factors that systematically shift the abundance of all proteins in a sample.</p>
+<p>If the function parameters include ‘normalize = TRUE’ then a similar normalization occurs that is slightly modified to use operations defined in compositional data analysis. Specifically, each column is multiplied so that the geometric means of the columns will be equivalent.</p>
+<p>Column and row normalized matrices containing proportions are stored for each plex. These are the values that are plotted when clicking on a specific biological replicate. They should be interpreted as the proportion of signal in the relevant plex that belonged to the peptide shown.</p>
+</div>
+</div>
+<div id="model-specification" class="section level2">
+<h2>Model Specification</h2>
+<p>Stastical modeling is performed on the normalized, ALR transformed data. The model is defined as follows:</p>
+<p><span class="math display">\[
+y_{ijk} \sim N(\beta_{ij}, \sigma_{ij})\\
+\beta_{ij} \sim N(0, 10) \\
+\sigma_{ij} \sim InverseGamma(2, \tau)\\
+\tau \sim halfNormal(0,5)\\
+\]</span> where <span class="math inline">\(y_{ijk}\)</span> is the additive log-ratio, from the reference condition, of the <span class="math inline">\(k\)</span>’th petpide <span class="math inline">\((k = 1,..., n_{ij})\)</span> nested within the <span class="math inline">\(i\)</span>’th protein <span class="math inline">\((i = 1,..., N)\)</span> in the <span class="math inline">\(j\)</span>’th condition <span class="math inline">\((j = 1,...,M)\)</span>. <span class="math inline">\(\beta_{ij}\)</span> represents the log-ratio (fold-change) of the <span class="math inline">\(i\)</span>’th protein from the reference to the <span class="math inline">\(j\)</span>’th condition. <span class="math inline">\(\sigma_{ij}\)</span> is the prior standard deviation of the <span class="math inline">\(ij\)</span>’th protein fold-change and it is modeled to come from a distribution of errors centered at <span class="math inline">\(\tau\)</span>. This yields a <a href="http://mc-stan.org/users/documentation/case-studies/pool-binary-trials.html">partially pooled variance estimate</a> for each protein fold-change, which provides an effective solution for estimating the variance of proteins with only a small number of observations.</p>
+<p>The prior distribution <span class="math inline">\(\beta_{ij} \sim N(0, 10)\)</span> was selected to be weakly informative. The sampling is efficient since it does not have to consider impossible outcomes, but the prior will have virtually zero effect on the posterior estimate since a Gaussian distribution centered at zero with a standard deviation of 10 covers a range of values greatly exceeding the dynamic range of a TMT proteomics experiment (even infinite changes usually appear to have log2 fold-changes less than 6 or 7 <span class="citation">(O’Brien et al. 2018)</span>). Similarly, <span class="math inline">\(\tau\)</span>, which represents the average experimental error, has a half-normal prior distribution that far exceeeds the full range of plausible experimental error while preventing model instability caused by sampling unrealistic values. We use an inverse-gamma distribution with shape parameter of 2 in order to create a prior that enables stable sampling while covering all of the realistic possibile errors for an experiment with values that tend fall exclusively within (-10, 10). The shape parameter of 2 prevents sampling of errors near zero which are unrealistic and can result in unstable sampling, it also has the convienient property that the scale parameter, <span class="math inline">\(\tau\)</span> reprensents the mean of the distribution. Some of the properties of this prior distribution have been previously explored <span class="citation">(Chung et al. 2013)</span>.</p>
+<p>Partial pooling of the variance parameters results in estimates that converge to the within group (protein/condition combination) variance estimate as the number of observations increases. As the number of observations converges to zero the estimate is pulled towards the overall experimental error, <span class="math inline">\(\tau\)</span>. When there is only one observation we have noticed some instability in these estimates. For this reason we have programmed the model to directly use <span class="math inline">\(\tau\)</span> as the standard deviation for proteins with only a single peptide.</p>
+<p>This Bayesian model is fit with the Stan programming languange <span class="citation">(Carpenter et al. 2017)</span>. The reported estimate and variance for each protein are calculated as the mean and variance of the relevant posterior distribution.</p>
+</div>
+<div id="second-model" class="section level2">
+<h2>Second Model</h2>
+<p>The above model provides estimates of log-fold changes for each protein from a reference to each condition in the experiment. Each of these estimates has variability from both within-sample peptide level variance and between sample variation across replicates. In many experimental designs the variation between biological replicates can large and separating out this source of heterogeneity can be highly informative. For this reason, by default, we fit two models. The above model which estimates log2 fold-changes between conditions and another which estimates log2 fold-changes between biological replicates. Estimates from the condition model are shown in the Precicion Plots, while Proportion Plots are generated by taking the <span class="math inline">\(ALR^{-1}\)</span> of the posterior distributions from the model that estimates changes for each biological replicate.</p>
+<p>It should be noted that when analyzing <span class="math inline">\(D\)</span> dimensional compositions, the covariance matrices are degenerate because there are only <span class="math inline">\(D-1\)</span> degrees of freedom. Consequently, variance estimates for the proportions obtained on each of <span class="math inline">\(D\)</span> biological replicates should be interpreted with caution. For each of the <span class="math inline">\(D-1\)</span> replicates that had a posterior distributions in log-ratio space, the variance estimates come from a 1-1 transformation of the posterior distribution and should be reliable. However, it is difficult to interpret the credible intervals on the new variables (usually proteins from the bridge channel). We considered dropping this interval from the plots, however we have found that variation in the bridge across plexes can result in larger than usual credible intervals. While these do not have the same interpretation as the other replicates, they can still be informative.</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-Aitchison1986">
+<p>Aitchison, John. 1986. <em>The Statistical Analysis of Compositional Data</em>. Chapman; Hall.</p>
+</div>
+<div id="ref-Carpenter2017">
+<p>Carpenter, Bob, Andrew Gelman, Matthew D. Hoffman, Daniel Lee, Ben Goodrich, Michael Betancourt, Marcus Brubaker, Jiqiang Guo, Peter Li, and Allen Riddell. 2017. “Stan : A Probabilistic Programming Language.” <em>Journal of Statistical Software</em> 76 (1): 1–32. doi:<a href="https://doi.org/10.18637/jss.v076.i01">10.18637/jss.v076.i01</a>.</p>
+</div>
+<div id="ref-Chung2013">
+<p>Chung, Yeojin, Sophia Rabe-Hesketh, Vincent Dorie, Andrew Gelman, and Jingchen Liu. 2013. “A Nondegenerate Penalized Likelihood Estimator for Variance Parameters in Multilevel Models.” <em>Psychometrika</em>. doi:<a href="https://doi.org/10.1007/s11336-013-9328-2">10.1007/s11336-013-9328-2</a>.</p>
+</div>
+<div id="ref-OBrien2018">
+<p>O’Brien, Jonathon J., Jeremy D. O’Connell, Joao A. Paulo, Sanjukta Thakurta, Christopher M. Rose, Michael P. Weekes, Edward L. Huttlin, and Steven P. Gygi. 2018. “Compositional Proteomics: Effects of Spatial Constraints on Protein Quantification Utilizing Isobaric Tags.” <em>Journal of Proteome Research</em> 17 (1). American Chemical Society: 590–99. doi:<a href="https://doi.org/10.1021/acs.jproteome.7b00699">10.1021/acs.jproteome.7b00699</a>.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

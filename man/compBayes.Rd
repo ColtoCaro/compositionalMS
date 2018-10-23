@@ -4,8 +4,9 @@
 \alias{compBayes}
 \title{Fitting a compositional Stan model}
 \usage{
-compBayes(dat, pp = 0.99, nCores = 1, iter = 2000, normalize = TRUE,
-  pop_sd = 10, simpleMod = TRUE)
+compBayes(dat, pp = 0.99, nCores = 1, iter = 2000,
+  normalize = TRUE, pop_sd = 10, simpleMod = FALSE, bridge = TRUE,
+  adapt_delta = 0.9)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -53,6 +54,16 @@ population level model estimates parameters for each biological replicate along
 with population level effects.  Average sample parameters are also estimated
 as many experiments do not have sufficient sample size to make use of the full
 population level model.}
+
+\item{bridge}{If bridge == TRUE then the first column will be treated as the
+reference for the entire experiment.  If the condition number repeats, these
+entries will be collapsed into a single reference channel.  When bridge is false
+this collapse will prevent estimation of the individual collapsed channels which
+are necessary for viewing proportion plots.  In this case a second model will be
+fit for the sole purpose of visualizing the behavior of individual replicates.}
+
+\item{adapt_delta}{The target proposal acceptance rate that determines step
+size in a Stan model.}
 }
 \description{
 This function runs the main code for fitting an appropriate compositonal
