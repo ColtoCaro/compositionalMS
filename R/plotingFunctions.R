@@ -107,7 +107,7 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 #'   parameter, however with very small sample sizes this plot may not be useful.
 #'
 precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE, ptm = FALSE){
-  if(ptm = FALSE){
+  if(ptm == FALSE){
   if(avgCond){
     tempTab <- RES[[3]]
   }else{
