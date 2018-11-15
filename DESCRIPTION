@@ -1,7 +1,7 @@
 Package: compMS
 Type: Package
 Title: Bayesian Compositional Proteomics Modeling via Stan
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Date: 2017-03-15
 Authors@R: c(person("Jonathon", "O'Brien", email = "obrienj@hms.harvard.edu",
     role = c("cre", "aut")))
