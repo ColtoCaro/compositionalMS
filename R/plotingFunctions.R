@@ -106,8 +106,8 @@ catterPlot <- function(RES, byCond = FALSE, plotAll = FALSE, avgCond = FALSE){
 #'   within sample parameters.  The default is to use the population level
 #'   parameter, however with very small sample sizes this plot may not be useful.
 #'
-precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE){
-
+precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALSE, ptm = FALSE){
+  if(ptm = FALSE){
   if(avgCond){
     tempTab <- RES[[3]]
   }else{
@@ -120,6 +120,16 @@ precisionPlot <- function(RES, byCond = FALSE, nullSet = c(-1,1), avgCond = FALS
                  id.vars = "Protein", variable.name = "condition", value.name = "var")
   meltVar <- meltVar[order(meltVar$Protein), ]
 
+  }else{
+    tempTab <- RES[[9]]
+
+    meltEst <- melt(tempTab[ , c(grep("Peptide", colnames(tempTab)), grep("Est", colnames(tempTab)))],
+                    id.vars = "Peptide", variable.name = "condition", value.name = "mean")
+    meltEst <- meltEst[order(meltEst$Peptide), ]
+    meltVar <- melt(tempTab[ , c(grep("Peptide", colnames(tempTab)), grep("Var", colnames(tempTab)))],
+                    id.vars = "Peptide", variable.name = "condition", value.name = "var")
+    meltVar <- meltVar[order(meltVar$Peptide), ]
+  }
 
   bigDf <- data.frame(meltEst, var = meltVar$var)
 

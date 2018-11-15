@@ -113,12 +113,13 @@ compBayes <- function(dat,
   for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
-  if(modelN == 2){
-    dat <- lapply(dat, function(x){
-      x[1, ] <- x[2, ]
-      x
-      })
-  }
+  #if(modelN == 2){
+  #   dat <- lapply(dat, function(x){
+  #     x[1, ] <- x[2, ]
+  #     x
+  #     })
+  #   ptmTemp <- oneDat$ptmID #save this from the first model
+  # }
 
   readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], plexNumber = x, normalize = normalize,
@@ -128,19 +129,28 @@ compBayes <- function(dat,
   #set data variables
   #Do ptms first since it might change the dimensions of the data
   N_ <- nrow(oneDat)
-  sumPtm <- sum(unlist(lapply(dat, function(x) (x[3, 1] == 1))))
-  if(sumPtm == 0){
+  #count the plexes with PTMs
+  sumPtm <- sum(unlist(lapply(dat, function(x) (sum(x[3, grep("tag", colnames(x))]) > 0))))
+
+  #If this is the second time through, set bioReps to conditions
+  #First time through, remove PTMs
+  if(modelN ==2){
+    oneDat$condID <- oneDat$bioID
+  }else{
+    if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
+  }
+
+  if(sumPtm == 0 | modelN == 1){
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
     ptmPep <- rep(0,N_)
   }else{
-    stop("You have requested a PTM analysis.  This feature is currently
-         under development.")
     #find and remove ptm data with no corresponding protein data
     globalProts <- unique(oneDat$bioID[oneDat$ptm == 0])
     ptmProts <- unique(oneDat$bioID[oneDat$ptm > 0])
     orphanProts <- setdiff(ptmProts, globalProts)
+
     if(length(orphanProts > 0)){
       #remove orphan prots from ptm data
       ptmIndex <- which(oneDat$ptm > 0)
@@ -149,15 +159,21 @@ compBayes <- function(dat,
       oneDat <- oneDat[-bad, ]
       wText <- paste(length(orphanIndex), "PTM data points were removed because they had no corresponding protein level measurements")
       warning(wText)
+      #temporary reduction for estimating only PTMs
+        globOnly <- setdiff(globalProts, ptmProts)
+        globIndex <- which(oneDat$bioID %in% globOnly)
+        oneDat <- oneDat[-globIndex, ]
     }
 
     nonPtms <- which(oneDat$ptm == 0)
-    ptmName <- levels(factor(oneDat[-nonPtms , ]$ptmID))
+    ptmDat <- oneDat[-nonPtms, ]
+    ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
-    n_ptm <- length(unique(oneDat[-nonPtms , ]$ptm))
+    n_ptm <- length(unique(ptmDat$ptm))
+
     ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0, nrow(oneDat))
-    ptmPep[-nonPtms] <- as.integer(factor(oneDat[-nonPtms , ]$ptmID))
+    ptmPep[which(oneDat$ptm > 0)] <- as.integer(factor(ptmDat$ptmID))
 
   } # end actions for ptm experiments
 
@@ -238,8 +254,8 @@ compBayes <- function(dat,
     print(summaryStr)
 
   #local call for testing
- # model <- stan(file="~/Documents/compMS/exec/allModels.stan",
-   #             iter = 2000, cores = 4, control = list(adapt_delta = .8))
+  #model <- stan(file="exec/allModels.stan",
+   #             iter = 2000, cores = 4, control = list(adapt_delta = .9))
 
   sMod <- compMS:::stanmodels$allModels
   model <- rstan::sampling(sMod, cores = nCores, iter = iter,
@@ -489,7 +505,15 @@ compBayes <- function(dat,
 
   } #end else (not simple case)
 
-
+  if(sumPtm > 0){
+    ptmTabs <- getPtms(model, ptmDat, dat[[1]][1, "tag1"])
+    ptmLr <- ptmTabs[[1]]
+    ptmProp <- ptmTabs[[2]]
+  }else{
+    ptmLr <- NULL
+    ptmProp <- NULL
+    ptmDat <- NULL
+  }
 
 
   if(modelN == 1){
@@ -505,6 +529,9 @@ compBayes <- function(dat,
   }else{
     RES[[2]] <- avgPTab
     RES[[5]] <- avgLrTab
+    RES[[8]] <- ptmDat
+    RES[[9]] <- ptmLr
+    RES[[10]] <- ptmProp
   }
 
   }  #End modelN for-loop that fits 2 simple models
@@ -516,9 +543,12 @@ compBayes <- function(dat,
       tempTab <- bioDf
     }
   Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
-  gRES <- lapply(RES, function(x) if(is.data.frame(x)){
-    data.frame(Gene, x)}else{x})
-
+  gRES <- RES
+  for(i in 2:5){
+    if(is.data.frame(RES[[i]])){
+      gRES[[i]] <- data.frame(Gene, RES[[i]])
+    }
+  }
 
   gRES
 } #end of compBayes function

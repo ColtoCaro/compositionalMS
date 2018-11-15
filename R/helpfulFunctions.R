@@ -54,9 +54,9 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   # if(df[2, 1] == 0){
   #   df[2, ][] <- 0
   # }
-  if(df[3, 1] == 0){
-    df[3, ][] <- 0
-  }
+  #if(df[3, 1] == 0){
+  #  df[3, ][] <- 0
+  #}
 
   n_ <- nrow(df)
 
@@ -404,3 +404,32 @@ contSimp <- function(simp, conds, obsConds, cont, pName){
 }
 
 
+#aggregate repeat peptides to maximum
+#expects standard column format of a single plex with no header
+takeMax <- function(df){
+  df <- df[order(df$Protein, df$Peptide), ]
+  pepId <- paste(df$Protein, df$Peptide)
+  rowN <- 1:length(pepId)
+  uPepId <- unique(pepId)
+  valCols <- grep("tag", colnames(df))
+
+  ssn <- apply(df[ , valCols], 1, sum)
+  tempDf <- cbind(df, ssn, pepId, rowN)
+
+  pepCount <- table(pepId)
+
+  manyPeps <- attr(pepCount, "dimnames")[[1]][which(pepCount > 1)]
+  manyIndex <- which(pepId %in% manyPeps)
+  oneIndex <- setdiff(rowN, manyIndex)
+
+  manyDf <- tempDf[manyIndex, ]
+  uMult <- unique(manyDf$pepId)
+
+  pepList <- by(manyDf, factor(manyDf$pepId), function(x) x[ , ])
+  maxIndex <- sapply(pepList, function(x) x[which.max(x$ssn), "rowN"])
+
+  newDf <- df[c(oneIndex, maxIndex), ]
+  newDf <- newDf[order(newDf$Protein, newDf$Peptide), ]
+
+  newDf
+}

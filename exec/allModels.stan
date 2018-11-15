@@ -100,7 +100,7 @@ if(useCov > 0){
   //set ptm distributions
   if(n_ptm > 0){
     for(i in 1:n_ptm){
-      xi[i] ~ cauchy(0, 5) ;
+      xi[i] ~ normal(0, 5) ;
     }
     for(i in 1:n_p){
       alpha[i] ~ normal(0, 10) ;
@@ -111,7 +111,7 @@ if(useCov > 0){
   if(useCov == 0){
   // base model
   if(simpleMod == 1){
-
+   beta ~ normal(0, 10) ;
    for(i in 1:n_c){
       sigma_raw[i] ~ inv_gamma(2, 1) ;
     }

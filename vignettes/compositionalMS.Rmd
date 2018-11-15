@@ -60,11 +60,14 @@ Column and row normalized matrices containing proportions are stored for each pl
 Stastical modeling is performed on the normalized, ALR transformed data.  The model is defined as follows:
 
 $$
-y_{ijk} \sim N(\beta_{ij}, \sigma_{ij})\\
-\beta_{ij} \sim N(0, 10) \\
-\sigma_{ij} \sim InverseGamma(2, \tau)\\
-\tau \sim halfNormal(0,5)\\
+\begin{aligned}
+y_{ijk} &\sim N(\beta_{ij}, \sigma_{ij})\\
+\beta_{ij} &\sim N(0, 10) \\
+\sigma_{ij} &\sim InverseGamma(2, \tau)\\
+\tau &\sim halfNormal(0,5)\\
+\end{aligned}
 $$
+
 where $y_{ijk}$ is the additive log-ratio, from the reference condition, of the $k$'th petpide $(k = 1,..., n_{ij})$ nested within the $i$'th protein $(i = 1,..., N)$ in the $j$'th condition $(j = 1,...,M)$.  $\beta_{ij}$ represents the log-ratio (fold-change) of the $i$'th protein from the reference to the $j$'th condition.  $\sigma_{ij}$ is the prior standard deviation of the $ij$'th protein fold-change and it is modeled to come from a distribution of errors centered at $\tau$.  This yields a [partially pooled variance estimate](http://mc-stan.org/users/documentation/case-studies/pool-binary-trials.html) for each protein fold-change, which provides an effective solution for estimating the variance of proteins with only a small number of observations. 
 
 The prior distribution $\beta_{ij} \sim N(0, 10)$ was selected to be weakly informative.  The sampling is efficient since it does not have to consider impossible outcomes, but the prior will have virtually zero effect on the posterior estimate since a Gaussian distribution centered at zero with a standard deviation of 10 covers a range of values greatly exceeding the dynamic range of a TMT proteomics experiment (even infinite changes usually appear to have log2 fold-changes less than 6 or 7 [@OBrien2018]).  Similarly, $\tau$, which represents the average experimental error, has a half-normal prior distribution that far exceeeds the full range of plausible experimental error while preventing model instability caused by sampling unrealistic values.  We use an inverse-gamma distribution with shape parameter of 2 in order to create a prior that enables stable sampling while covering all of the realistic possibile errors for an experiment with values that tend fall exclusively within (-10, 10).  The shape parameter of 2 prevents sampling of errors near zero which are unrealistic and can result in unstable sampling, it also has the convienient property that the scale parameter, $\tau$ reprensents the mean of the distribution.  Some of the properties of this prior distribution have been previously explored [@Chung2013].
