@@ -270,7 +270,11 @@ compBayes <- function(dat,
   if((n_b == n_c) | simpleMod){
 
       uBio <- levels(factor(oneDat$condID))
-      condNum <- getCond(uBio, bio = FALSE)
+      if(modelN == 1){
+        condNum <- getCond(uBio, bio = FALSE)
+      }else{
+        condNum <- getCond(uBio, bio = TRUE)
+      }
       condNames <- getName(uBio)
 
       refC <- dat[[1]][1, "tag1"]
