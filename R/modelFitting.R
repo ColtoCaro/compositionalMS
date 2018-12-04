@@ -186,6 +186,7 @@ compBayes <- function(dat,
                         name = levels(factor(oneDat$condID)))
   condID <- as.integer(factor(oneDat$condID))
 
+
   #Create a tag by varCat variable which determines vc's
   if(maxRedun == 0){
     tagID <- as.integer(factor(oneDat$tag_plex))
@@ -210,6 +211,7 @@ compBayes <- function(dat,
     condToBio <- matrix(0, nrow = n_c, ncol = 1)
     n_nc <- rep(0, n_c)
     max_nc <- 0
+    n_pep <- table(condID)
   }else{
     n_b <- length(unique(oneDat$bioID))
     bioID <- as.integer(factor(oneDat$bioID))

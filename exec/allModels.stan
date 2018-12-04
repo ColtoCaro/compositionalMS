@@ -59,7 +59,12 @@ transformed parameters{
 //create the real variance parameters
 if(bioInd == 0){
   for(i in 1:n_c){
-    sigma[i] = scale*sigma_raw[i] ;
+    if(n_pep[n_c] == 1){
+      sigma[i] = scale ;
+    }else{
+      sigma[i] = scale*sigma_raw[i] ;
+    }
+
   }
 }
 
