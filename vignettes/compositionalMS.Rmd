@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The compositionalMS package performs analyses on TMT/iTRAQ data under the assumption that all of the relevant quantitative information is captured in the signal proportions [@OBrien2018].  The study of constrained data is the primary focus of compositional data analysis [@Aitchison1986] and the models used in this software are based on prinicples from this field.
+The compositionalMS package performs analyses on TMT/iTRAQ data under the assumption that all of the relevant quantitative information is captured in the signal proportions [@OBrien2018].  The study of constrained data is the primary focus of compositional data analysis [@Aitchison1986] and the models used in this software are based on principles from this field.
 
 A $D$ dimensional composition is defined as any vector $\bf{x}$ of non-negative elements $x_{1}, ..., x_{D}$ such that $x_{1} + ... + x_{D} = K$.  
 
@@ -30,7 +30,7 @@ $$
 
 ### Row Normalization
 
-The models used in this software anticipate singal-to-noise (SN) ratios, which are theoretically greater than or equal to one.  This is important because the mathematical foundation of compositional data analysis does not allow components to take a value of zero.  While SN ratios should not be less than one, various software packages will occasionally estimate signals below the noise.  Accordingly, the first step in our normalization is to replace all SN values which are less than one with a 1.  
+The models used in this software anticipate signal-to-noise (SN) ratios, which are theoretically greater than or equal to one.  This is important because the mathematical foundation of compositional data analysis does not allow components to take a value of zero.  While SN ratios should not be less than one, various software packages will occasionally estimate signals below the noise.  Accordingly, the first step in our normalization is to replace all SN values which are less than one with a 1.  
 
 Each scan is then reduced to its proportional information through the additive log-ratio (ALR) transformation which maps a D dimensional simplex into a vector in $\mathbb{R}^{D-1}$.  
 
@@ -40,7 +40,7 @@ alr(\bf{x}) = \bf{y} = log_2(\frac{x_{2}}{x_{1}}), ..., log_2(\frac{x_{D}}{x_{1}
 $$
 Notice that the ALR is typically defined with the natural logarithm, but we have defined it here as a log base 2 transformation to match the conventional log-ratio scale used throughout the field of proteomics.
 
-A transformation back into a the simplex (contrained to one), can be achieved with the ALR inverse
+A transformation back into a the simplex (constrained to one), can be achieved with the ALR inverse
 $$
 alr^{-1}(\bf{y}) = cl(2^{0}, 2^{y_{1}}, ... 2^{y_{D-1}})
 $$
@@ -57,7 +57,7 @@ Column and row normalized matrices containing proportions are stored for each pl
 
 ## Model Specification
 
-Stastical modeling is performed on the normalized, ALR transformed data.  The model is defined as follows:
+Statistical modeling is performed on the normalized, ALR transformed data.  The model is defined as follows:
 
 $$
 \begin{aligned}
@@ -68,13 +68,13 @@ y_{ijk} &\sim N(\beta_{ij}, \sigma_{ij})\\
 \end{aligned}
 $$
 
-where $y_{ijk}$ is the additive log-ratio, from the reference condition, of the $k$'th petpide $(k = 1,..., n_{ij})$ nested within the $i$'th protein $(i = 1,..., N)$ in the $j$'th condition $(j = 1,...,M)$.  $\beta_{ij}$ represents the log-ratio (fold-change) of the $i$'th protein from the reference to the $j$'th condition.  $\sigma_{ij}$ is the prior standard deviation of the $ij$'th protein fold-change and it is modeled to come from a distribution of errors centered at $\tau$.  This yields a [partially pooled variance estimate](http://mc-stan.org/users/documentation/case-studies/pool-binary-trials.html) for each protein fold-change, which provides an effective solution for estimating the variance of proteins with only a small number of observations. 
+where $y_{ijk}$ is the additive log-ratio, from the reference condition, of the $k$'th peptide $(k = 1,..., n_{ij})$ nested within the $i$'th protein $(i = 1,..., N)$ in the $j$'th condition $(j = 1,...,M)$.  $\beta_{ij}$ represents the log-ratio (fold-change) of the $i$'th protein from the reference to the $j$'th condition.  $\sigma_{ij}$ is the prior standard deviation of the $ij$'th protein fold-change and it is modeled to come from a distribution of errors centered at $\tau$.  This yields a [partially pooled variance estimate](http://mc-stan.org/users/documentation/case-studies/pool-binary-trials.html) for each protein fold-change, which provides an effective solution for estimating the variance of proteins with only a small number of observations. 
 
-The prior distribution $\beta_{ij} \sim N(0, 10)$ was selected to be weakly informative.  The sampling is efficient since it does not have to consider impossible outcomes, but the prior will have virtually zero effect on the posterior estimate since a Gaussian distribution centered at zero with a standard deviation of 10 covers a range of values greatly exceeding the dynamic range of a TMT proteomics experiment (even infinite changes usually appear to have log2 fold-changes less than 6 or 7 [@OBrien2018]).  Similarly, $\tau$, which represents the average experimental error, has a half-normal prior distribution that far exceeeds the full range of plausible experimental error while preventing model instability caused by sampling unrealistic values.  We use an inverse-gamma distribution with shape parameter of 2 in order to create a prior that enables stable sampling while covering all of the realistic possibile errors for an experiment with values that tend fall exclusively within (-10, 10).  The shape parameter of 2 prevents sampling of errors near zero which are unrealistic and can result in unstable sampling, it also has the convienient property that the scale parameter, $\tau$ reprensents the mean of the distribution.  Some of the properties of this prior distribution have been previously explored [@Chung2013].
+The prior distribution $\beta_{ij} \sim N(0, 10)$ was selected to be weakly informative.  The sampling is efficient since it does not have to consider impossible outcomes, but the prior will have virtually zero effect on the posterior estimate since a Gaussian distribution centered at zero with a standard deviation of 10 covers a range of values greatly exceeding the dynamic range of a TMT proteomics experiment (even infinite changes usually appear to have log2 fold-changes less than 6 or 7 [@OBrien2018]).  Similarly, $\tau$, which represents the average experimental error, has a half-normal prior distribution that far exceeds the full range of plausible experimental error while preventing model instability caused by sampling unrealistic values.  We use an inverse-gamma distribution with shape parameter of 2 in order to create a prior that enables stable sampling while covering all of the realistic possible errors for an experiment with values that tend fall exclusively within (-10, 10).  The shape parameter of 2 prevents sampling of errors near zero which are unrealistic and can result in unstable sampling, it also has the convenient property that the scale parameter, $\tau$ represents the mean of the distribution.  Some of the properties of this prior distribution have been previously explored [@Chung2013].
 
 Partial pooling of the variance parameters results in estimates that converge to the within group (protein/condition combination) variance estimate as the number of observations increases.  As the number of observations converges to zero the estimate is pulled towards the overall experimental error, $\tau$.  When there is only one observation we have noticed some instability in these estimates.  For this reason we have programmed the model to directly use $\tau$ as the standard deviation for proteins with only a single peptide. 
 
-This Bayesian model is fit with the Stan programming languange [@Carpenter2017]. The reported estimate and variance for each protein are calculated as the mean and variance of the relevant posterior distribution.  
+This Bayesian model is fit with the Stan programming language [@Carpenter2017]. The reported estimate and variance for each protein are calculated as the mean and variance of the relevant posterior distribution.  
 
 ##Second Model
 The above model provides estimates of log-fold changes for each protein from a reference to each condition in the experiment.  Each of these estimates has variability from both within-sample peptide level variance and between sample variation across replicates.  In many experimental designs the variation between biological replicates can be large and separating out this source of heterogeneity can be highly informative.  For this reason, by default, we fit two models.  The above model which estimates log2 fold-changes between conditions and another which estimates log2 fold-changes between biological replicates.  Estimates from the condition model are shown in the Precision Plots, while Proportion Plots are generated by taking the $ALR^{-1}$ of the posterior distributions from the model that estimates changes for each biological replicate.
