@@ -352,7 +352,7 @@ summSimp <- function(simp, conds, obsConds, refCond, pName){
   }
 
   oRefPos <- which(obsConds == refCond)  # position of reference in observed vector
-  lrMat <- log2(simp[ , -(oRefPos + 1), drop = FALSE]) - log2(simp[ , (oRefPos + 1), drop = FALSE]) #add 1 since simplex has an extra first column
+  lrMat <- log2(simp[ , -(oRefPos + 1), drop = FALSE]) - log2(simp[ , (oRefPos + 1)]) #add 1 since simplex has an extra first column
 
   colConds <- c(1, obsConds[-oRefPos]) #mapping from lrMat to suCond
 
