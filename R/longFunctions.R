@@ -1,6 +1,20 @@
 #Functions to help with longitudinal analysis
 
-
+#' Fitting a compositional Stan model
+#'
+#' This function runs the main code for fitting a model that compares more
+#' than one curve through time.
+#'
+#' @export
+#' @param tempDat The data to be analyzed
+#' @param timeDegree either 1, 2 or 3 for linear, quadratic or cubic models
+#' @param fullTimes A vector specifying all of the times found in the study
+#' @param useW A boolean that determines whether or not the posterior variance of
+#'   each protein estimate should be used to weight the observations
+#' @param refCat A string that specifies the reference category
+#' @param groupByGene A boolean that specifies whether timepoints are grouped
+#'   by genes or proteins
+#'
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
                   refCat = NULL, groupByGene = FALSE){
 
@@ -132,3 +146,8 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
   finalDf
 }
+
+
+
+
+
