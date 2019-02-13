@@ -69,7 +69,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     minT <- min(catTime)
     boolT <- (obsTimes >= minT) & (obsTimes <= maxT)
     smalltime <- obsTimes[boolT]
-    times[c_] <- smalltime
+    times[[c_]] <- smalltime
   }
 
   #Now get predictions and p-values for each protein
@@ -100,7 +100,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
       timeTests[[t_]] <- lht(fullMod, timeStr)$`Pr(>F)`[2]
     }
 
-    #Now exctract and store the predicted values
+    #Now extract and store the predicted values
     newDfs <- list()
     if(timeDegree == 1){
       newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Category = uCats[x]))
