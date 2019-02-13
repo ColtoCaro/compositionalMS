@@ -4,6 +4,7 @@
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
                   refCat = NULL, groupByGene = FALSE){
 
+
   if(groupByGene){
     uProt <- unique(tempDat$Gene)
     #Model always uses Protein column
@@ -16,7 +17,8 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   }
 
   nProt <- length(uProt)
-  times <- unique(tempDat$Time)
+  obsTimes <- unique(tempDat$Time)
+
 
   degVec <- as.character(1:timeDegree)
   degVec[1] <- ""
@@ -44,6 +46,17 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     fullMod <- lm(fmla, data = tempDat)
   }
 
+
+  #create list of times within observed ranges
+  times <- list()
+  for(c_ in 1:length(uCats)){
+    catTime <- unique(tempDat[which(tempDat$Category == uCats[c_]), "Time"])
+    maxT <- max(catTime)
+    minT <- min(catTime)
+    boolT <- (obsTimes >= minT) & (obsTimes <= maxT)
+    smalltime <- obsTimes[boolT]
+    times[c_] <- smalltime
+  }
 
   #Now get predictions and p-values for each protein
   pRes <- list()
@@ -76,13 +89,15 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     #Now exctract and store the predicted values
     newDfs <- list()
     if(timeDegree == 1){
-      newDfs <- lapply(uCats, function(x) data.frame(Protein = uProt[index], Time = times, Category = x))
+      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Category = uCats[x]))
     }
     if(timeDegree == 2){
-      newDfs <- lapply(uCats, function(x) data.frame(Protein = uProt[index], Time = times, Time2 = times^2, Category = x))
+      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Time2 = times[[x]]^2,
+                                                               Category = uCats[x]))
     }
     if(timeDegree == 3){
-      newDfs <- lapply(uCats, function(x) data.frame(Protein = uProt[index], Time = times, Time2 = times^2, Time3 = times^3, Category = x))
+      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Time2 = times[[x]]^2,
+                                                               Time3 = times[[x]]^3, Category = uCats[x]))
     }
 
     catPreds <- lapply(newDfs, function(x) predict(fullMod, x))
@@ -90,11 +105,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     catRes <- list()
     catRes[[1]] <- data.frame(Gene = tempDat$Gene[match(uProt[index], tempDat$Protein)],
                               Protein = savedProts[match(uProt[index], tempDat$Protein)],
-                              matrix(catPreds[[1]][match(fullTimes, times)], nrow = 1), timeTests[[1]])
+                              matrix(catPreds[[1]][match(fullTimes, times[[1]])], nrow = 1), timeTests[[1]])
     colnames(catRes[[1]]) <- c("Gene", "Protein", paste(uCats[1], paste0("Time", fullTimes)), paste(uCats[1], "Pval-Time"))
 
     for(t_ in 2:length(uCats)){
-      catRes[[t_]] <- data.frame(matrix(catPreds[[t_]][match(fullTimes, times)], nrow = 1), timeTests[[t_]], catTests[[t_ - 1]])
+      catRes[[t_]] <- data.frame(matrix(catPreds[[t_]][match(fullTimes, times[[t_]])], nrow = 1), timeTests[[t_]], catTests[[t_ - 1]])
       colnames(catRes[[t_]]) <- c(paste(uCats[t_], paste0("Time", fullTimes)), paste(uCats[t_], "Pval-Time"), paste0("Pval-", uCats[t_]))
     }
 
