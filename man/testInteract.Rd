@@ -2,7 +2,8 @@
 % Please edit documentation in R/longFunctions.R
 \name{testInteract}
 \alias{testInteract}
-\title{Fitting a compositional Stan model}
+\title{This function runs the main code for fitting a model that compares more
+than one curve through time.}
 \usage{
 testInteract(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   refCat = NULL, groupByGene = FALSE)
