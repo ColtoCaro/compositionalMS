@@ -102,8 +102,11 @@ compBayes <- function(dat,
   maxRedun <- max(unlist(lapply(dat, function(x) max(x[1, "varCat"]))))
 
 
-  #setup two runs of the function if bridge == FALSE
-  if(bridge == FALSE){
+  #setup two runs of the function if conds == bioreps
+  condVec <- sapply(dat, function(x) x[1, grep("tag", colnames(x))])
+  bioVec <- sapply(dat, function(x) x[2, grep("tag", colnames(x))])
+
+  if(condVec != bioVec){
     model_number <- 2
     simpleMod <- TRUE
   }else{
