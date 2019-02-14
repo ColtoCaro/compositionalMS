@@ -103,8 +103,8 @@ compBayes <- function(dat,
 
 
   #setup two runs of the function if conds == bioreps
-  condVec <- sapply(dat, function(x) x[1, grep("tag", colnames(x))])
-  bioVec <- sapply(dat, function(x) x[2, grep("tag", colnames(x))])
+  condVec <- unlist(lapply(dat, function(x) x[1, grep("tag", colnames(x))]))
+  bioVec <- unlist(lapply(dat, function(x) x[2, grep("tag", colnames(x))]))
 
   if(condVec != bioVec){
     model_number <- 2
