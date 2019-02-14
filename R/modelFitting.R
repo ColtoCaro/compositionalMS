@@ -116,13 +116,13 @@ compBayes <- function(dat,
   for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
-  #if(modelN == 2){
-  #   dat <- lapply(dat, function(x){
-  #     x[1, ] <- x[2, ]
-  #     x
-  #     })
-  #   ptmTemp <- oneDat$ptmID #save this from the first model
-  # }
+  if(modelN == 2){
+    dat <- lapply(dat, function(x){
+      x[1, ] <- x[2, ]
+      x
+      })
+    ptmTemp <- oneDat$ptmID #save this from the first model
+  }
 
   readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], plexNumber = x, normalize = normalize,
