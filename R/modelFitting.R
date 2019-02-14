@@ -106,7 +106,7 @@ compBayes <- function(dat,
   condVec <- unlist(lapply(dat, function(x) x[1, grep("tag", colnames(x))]))
   bioVec <- unlist(lapply(dat, function(x) x[2, grep("tag", colnames(x))]))
 
-  if(condVec != bioVec){
+  if(sum(condVec == bioVec) < length(condVec)){
     model_number <- 2
     simpleMod <- TRUE
   }else{
