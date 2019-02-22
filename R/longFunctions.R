@@ -118,11 +118,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     catRes[[1]] <- data.frame(Gene = tempDat$Gene[match(uProt[index], tempDat$Protein)],
                               Protein = savedProts[match(uProt[index], tempDat$Protein)],
                               matrix(catPreds[[1]][match(fullTimes, times[[1]])], nrow = 1), timeTests[[1]])
-    colnames(catRes[[1]]) <- c("Gene", "Protein", paste(uCats[1], paste0("Time", fullTimes)), paste(uCats[1], "Pval-Time"))
+    colnames(catRes[[1]]) <- c("Gene", "Protein", paste("category:",uCats[1], paste0("Time", fullTimes)), paste("category:",uCats[1], "Pval-Time"))
 
     for(t_ in 2:length(uCats)){
       catRes[[t_]] <- data.frame(matrix(catPreds[[t_]][match(fullTimes, times[[t_]])], nrow = 1), timeTests[[t_]], catTests[[t_ - 1]])
-      colnames(catRes[[t_]]) <- c(paste(uCats[t_], paste0("Time", fullTimes)), paste(uCats[t_], "Pval-Time"), paste0("Pval-", uCats[t_]))
+      colnames(catRes[[t_]]) <- c(paste("category:",uCats[t_], paste0("Time", fullTimes)), paste("category:", uCats[t_], "Pval-Time"), paste0("Pval-", uCats[t_]))
     }
 
     pRes[[index]] <- do.call(cbind, catRes)
@@ -194,7 +194,7 @@ test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE)
     if(timeDegree == 3){
       newDf <- data.frame(Protein = uProt[index], Time = times, Time2 = times^2, Time3 = times^3)
     }
-    
+
     mFit <- predict(fullMod, newDf)
     protList <- list(as.character(uProt[index]), c(mFit[match(fullTimes, times)], pVal))
     names(protList[[2]]) <- c(paste0("Time", fullTimes), "pVal")
