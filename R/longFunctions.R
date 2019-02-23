@@ -197,13 +197,18 @@ test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE)
 
     mFit <- predict(fullMod, newDf)
     protList <- list(as.character(uProt[index]), c(mFit[match(fullTimes, times)], pVal))
-    names(protList[[2]]) <- c(paste0("Time", fullTimes), "pVal")
+    names(protList[[2]]) <- c(paste0("Time", fullTimes), "Pval")
     pList[[index]] <- protList
   } # end protein loop
 
   resNames <- unlist(lapply(pList, function(x) x[[1]]))
   resVals <- do.call(rbind, lapply(pList, function(x) x[[2]]))
   resDf <- data.frame(Protein = resNames, resVals)
+
+  pIndex <- grep("Pval", colnames(resDf))
+  Qvals <- p.adjust(resDf[ , pIndex], method = "fdr")
+
+  resDf$Qval <- Qvals
 
   resDf
 }
