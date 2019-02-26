@@ -209,6 +209,7 @@ test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE)
   Qvals <- p.adjust(resDf[ , pIndex], method = "fdr")
 
   resDf$Qval <- Qvals
+  gRes <- data.frame(Gene = tempDat$Gene[match(resDf$Protein, tempDat$Protein)], resDf)
 
-  resDf
+  gRes
 }
