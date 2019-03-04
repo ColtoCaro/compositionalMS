@@ -6,7 +6,7 @@
 than one curve through time.}
 \usage{
 testInteract(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
-  refCat = NULL, groupByGene = FALSE)
+  refCat = NULL, groupByGene = FALSE, randEffect = 0)
 }
 \arguments{
 \item{tempDat}{The data to be analyzed}
@@ -22,6 +22,9 @@ each protein estimate should be used to weight the observations}
 
 \item{groupByGene}{A boolean that specifies whether timepoints are grouped
 by genes or proteins}
+
+\item{randEffect}{takes 0 for no random effects. 1 for a random intercept
+and 2 for a random slope and intercepts model}
 }
 \description{
 This function runs the main code for fitting a model that compares more

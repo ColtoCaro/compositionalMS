@@ -12,11 +12,13 @@
 #' @param refCat A string that specifies the reference category
 #' @param groupByGene A boolean that specifies whether timepoints are grouped
 #'   by genes or proteins
+#' @param randEffect takes 0 for no random effects. 1 for a random intercept
+#'   and 2 for a random slope and intercepts model
 #'
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
-                  refCat = NULL, groupByGene = FALSE){
+                  refCat = NULL, groupByGene = FALSE, randEffect = 0){
 
-
+  #Establish relevant grouping
   if(groupByGene){
     uProt <- unique(tempDat$Gene)
     #Model always uses Protein column
@@ -28,20 +30,80 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     savedProts <- tempDat$Protein
   }
 
+  #extract dimensions of the data
   nProt <- length(uProt)
   obsTimes <- unique(tempDat$Time)
 
+  #Determine model details and adjust entries based on the column names
+  randIndex <- grep("randInt_", colnames(tempDat))
+  if(length(randIndex > 0)){
+    if(length(randIndex) > 1){stop("Only one random intercept is allowed")}
+    mixedMod <- TRUE
+    #concatenate protein and random ID
+    tempDat$Random <- paste0(tempDat$Protein, tempDat[ , randIndex])
+  }else{
+    mixedMod <- FALSE
+  }
+
+  contIndex <- grep("contCovar_", colnames(tempDat))
+  if(length(contIndex > 0)){
+    contCovar <- TRUE
+    #center the continuous variables
+    for(i in 1:length(contIndex)){
+      varMean <- mean(tempDat[ , contIndex[i]], na.rm = TRUE)
+      tempDat[ , contIndex[i]] <- tempDat[ , contIndex[i]] - varMean
+    }
+  }else{
+    contCovar <- FALSE
+  }
+
+  catCovarIndex <- grep("catCovar_", colnames(tempDat))
+  if(length(catCovarIndex > 0)){
+    catCovar <- TRUE
+    #make vector of references
+    refList <- list()
+    #make sure these variables are treated as factors
+    for(i in 1:length(catCovarIndex)){
+      tempDat[ , catCovarIndex[i]] <- factor(tempDat[ , catCovarIndex[i]])
+      refList[[i]] <- levels(tempDat[ , catCovarIndex[i]])[1]
+    }
+    catRefs <- unlist(refList)
+  }else{
+    catCovar <- FALSE
+  }
+
+
+  #Create model formula
+  #First consider the baseline covariates
+  if(catCovar + contCovar > 0){
+    baseString <- paste(paste0(" + Protein:", colnames(tempDat)[c(contIndex, catCovarIndex)]), collapse = "")
+  }else(
+    baseString <- ""
+  )
 
   degVec <- as.character(1:timeDegree)
   degVec[1] <- ""
 
-  #fmla <- as.formula(paste("FC ~ 0 + Gene + Gene:Species + Gene:Time + Gene:Time2 +
-   #                        Gene:Species:Time + Gene:Species:Time2 "))
+  if(randEffect == 0){
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+  }
+  if(randEffect == 1){
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+    fmla <- paste(fmla, " + (1 | ", colnames(tempDat)[randIndex], ")")
+  }
+  if(randEffect == 2){
+    degVec <- degVec[1] #force only linear slopes if random slopes are being fit to each ID
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+    fmla <- paste(fmla, " + (1 + Time | ", colnames(tempDat)[randIndex], ")")
+  }
 
-  fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category + ",
-                           paste0("Protein:", paste0("Time", degVec), collapse = " + "),
-                            "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
-
+  #Set reference category
   if(!is.null(refCat)){
     tempDat$Category <- factor(tempDat$Category)
     tempDat$Category <- relevel(tempDat$Category, ref = refCat)
@@ -51,13 +113,21 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
   uCats <- levels(tempDat$Category)
 
-  #Create strings that define the model
-  if(useW){
-    fullMod <- lm(fmla, weights = w_, data = tempDat)
+  #Fit the model
+  if(randEffect == 0){
+    if(useW){
+      fullMod <- lm(fmla, weights = w_, data = tempDat)
+    }else{
+      fullMod <- lm(fmla, data = tempDat)
+    }
   }else{
-    fullMod <- lm(fmla, data = tempDat)
+    if(useW){
+      fullMod <- lmer(fmla, weights = w_, data = tempDat)
+    }else{
+      fullMod <- lmer(fmla, data = tempDat)
+    }
   }
-
+  modSumm <- summary(fullMod)
 
   #create list of times within observed ranges
   times <- list()
@@ -76,8 +146,6 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   for(index in 1:nProt){
     #Implement F test for time effect
     #Create strings that define the hypothesis tests
-
-
 
     timeTests <- list()
     catTests <- list()
@@ -100,17 +168,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
     #Now extract and store the predicted values
     newDfs <- list()
-    if(timeDegree == 1){
-      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Category = uCats[x]))
-    }
-    if(timeDegree == 2){
-      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Time2 = times[[x]]^2,
-                                                               Category = uCats[x]))
-    }
-    if(timeDegree == 3){
-      newDfs <- lapply(1:length(uCats), function(x) data.frame(Protein = uProt[index], Time = times[[x]], Time2 = times[[x]]^2,
-                                                               Time3 = times[[x]]^3, Category = uCats[x]))
-    }
+
+    newDfs <- lapply(1:length(uCats), function(x)
+        makePredDat(prot = uProt[index], timeVec = times[[x]], category = uCats[x],
+                    header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs))
+
 
     catPreds <- lapply(newDfs, function(x) predict(fullMod, x))
 
@@ -127,9 +189,49 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
     pRes[[index]] <- do.call(cbind, catRes)
 
+
+    #Now add point estimates, standard errors and pVals for each baseline covariate
+    if(contCovar + baseCovar > 0){
+    baseRes <- list()
+    if(contCovar){
+      for(k in 1:length(contIndex)){
+        paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[contIndex[k]])
+        tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
+                            confint(fullMod, paramStr)), nrow = 1)
+        colnames(tempRes) <- paste0(c("Estimate_", "Pval_", "LL_", "UL_"), colnames(tempDat)[contIndex[k]])
+        baseRes[[k]] <- tempRes
+      }
+    }
+
+    if(catCovar){
+      for(k in 1:length(catCovarIndex)){
+        catLevel <- levels(tempDat[ , catCovarIndex[k]])
+        for(l in 1:(length(catLevel) - 1)){
+          levelName <- catLevel[l + 1]
+          paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[catCovarIndex[k]],
+                             levelName)
+        }
+        tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
+                            confint(fullMod, paramStr)), nrow = 1)
+        colnames(tempRes) <- paste0(c("Estimate_", "Pval_", "LL_", "UL_"), catLevel[l + 1])
+        baseRes[[k]] <- tempRes
+      }
+    }
+
+    baseDf <- do.call(cbind, baseRes)
+    pRes[[index]] <- cbind(pRes[[index]], baseDf)
+
+    }#End addition of baseline covariate results
+
+
   }#end Gene loop
 
   resDf <- do.call(rbind, pRes)
+
+  #Now add columns for random effects
+  if(randEffect > 0){
+    resDf <- cbind(resDf, ranef(fullMod))
+  }
 
   #Now add columns with q values
   #first find the p-values
@@ -144,6 +246,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
   finalDf
 }
+
 
 #' This function runs the main code for fitting a model that looks at the
 #' overall (single curve) effect through time.

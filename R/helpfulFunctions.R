@@ -433,3 +433,48 @@ takeMax <- function(df){
 
   newDf
 }
+
+#function to generate a dataframe for model predictions
+makePredDat <- function(prot, timeVec, category, header, timeDegree, catRefs){
+  #header is a vector of column names found in the data
+  #timeDegree = 1, 2, or 3, specifying a linear, quadratic or cubic model
+  #catRefs is a vector containing the reference levels of each baseline categorical covariate
+
+  if(timeDegree == 1){
+    newDf <- data.frame(Protein = prot, Time = timeVec, Category = category)
+  }
+  if(timeDegree == 2){
+    newDf <- data.frame(Protein = prot, Time = timeVec, Time2 = timeVec^2,
+                                                             Category = category)
+  }
+  if(timeDegree == 3){
+    newDf <- data.frame(Protein = prot, Time = timeVec, Time2 = timeVec^2,
+                                                             Time3 = timeVec^3, Category = category)
+  }
+
+  #now add baseline covariates
+  contIndex <- grep("contCovar_", header)
+  catCovarIndex <- grep("catCovar_", header)
+
+  if(length(contIndex) > 0){
+    tempVars <- matrix(0, nrow = nrow(newDfs), ncol = length(contIndex))
+    colnames(tempVars) <- header[contIndex]
+    newDf <- cbind(newDf, tempVars)
+  }
+
+  if(length(catCovarIndex) > 0){
+    catCols <- list()
+    for(i in 1:length(catCovarIndex)){
+      refVec <- data.frame(TempName = rep(catRefs[i], nrow(newDf)))
+      colnames(refVec) <- header[catCovarIndex[i]]
+      catCols[[i]] <- refVec
+    }
+
+    newDf <- data.frame(newDf, do.call(cbind, catCols))
+  }
+
+  newDf
+}
+
+
+
