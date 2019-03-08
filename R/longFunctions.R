@@ -35,7 +35,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   obsTimes <- unique(tempDat$Time)
 
   #Determine model details and adjust entries based on the column names
-  randIndex <- grep("randInt_", colnames(tempDat))
+  randIndex <- grep("Random Effect", colnames(tempDat))
   if(length(randIndex > 0)){
     if(length(randIndex) > 1){stop("Only one random intercept is allowed")}
     mixedMod <- TRUE
@@ -45,7 +45,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     mixedMod <- FALSE
   }
 
-  contIndex <- grep("contCovar_", colnames(tempDat))
+  contIndex <- grep("Continuous_Covariate", colnames(tempDat))
   if(length(contIndex > 0)){
     contCovar <- TRUE
     #center the continuous variables
@@ -57,7 +57,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     contCovar <- FALSE
   }
 
-  catCovarIndex <- grep("catCovar_", colnames(tempDat))
+  catCovarIndex <- grep("Categorical_Covariate", colnames(tempDat))
   if(length(catCovarIndex > 0)){
     catCovar <- TRUE
     #make vector of references
