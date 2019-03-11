@@ -7,6 +7,7 @@
 #' @param tempDat The data to be analyzed
 #' @param timeDegree either 1, 2 or 3 for linear, quadratic or cubic models
 #' @param fullTimes A vector specifying all of the times found in the study
+#' @param fullCats A vector specifying all of the categories found in the study
 #' @param useW A boolean that determines whether or not the posterior variance of
 #'   each protein estimate should be used to weight the observations
 #' @param refCat A string that specifies the reference category
@@ -15,24 +16,28 @@
 #' @param randEffect takes 0 for no random effects. 1 for a random intercept
 #'   and 2 for a random slope and intercepts model
 #'
-testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
+testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
                   refCat = NULL, groupByGene = FALSE, randEffect = 0){
 
-  #Establish relevant grouping
+  #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
-    uProt <- unique(tempDat$Gene)
     #Model always uses Protein column
     #Replace column and save the protein names for later
     savedProts <- tempDat$Protein
     tempDat$Protein <- tempDat$Gene
+    tempDat <- tempDat[order(tempDat$Protein), ]
+    uProt <- unique(tempDat$Gene)
   }else{
-    uProt <- unique(tempDat$Protein)
     savedProts <- tempDat$Protein
+    tempDat <- tempDat[order(tempDat$Protein), ]
+    uProt <- unique(tempDat$Protein)
   }
 
   #extract dimensions of the data
   nProt <- length(uProt)
   obsTimes <- unique(tempDat$Time)
+
+
 
   #Determine model details and adjust entries based on the column names
   randIndex <- grep("randInt_", colnames(tempDat))
@@ -66,11 +71,14 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
     for(i in 1:length(catCovarIndex)){
       tempDat[ , catCovarIndex[i]] <- factor(tempDat[ , catCovarIndex[i]])
       refList[[i]] <- levels(tempDat[ , catCovarIndex[i]])[1]
+      levelList[[i]] <- levels(tempDat[ , catCovarIndex[i]])
     }
     catRefs <- unlist(refList)
   }else{
     catCovar <- FALSE
+    catRefs <- NULL
   }
+
 
 
   #Create model formula
@@ -113,6 +121,34 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
   uCats <- levels(tempDat$Category)
 
+  #create results matrix
+  #rows = nProt.  cols = fulltimes*fullCats + 2*fullCats + levels(catCovar) + length(contIndex)
+  nPreds <- length(fullTimes) * length(fullCats)
+  nTests <- 2 * length(fullCats)
+  nCovars <- 2 * (length(contIndex) + totalLevels - length(catCovarIndex)) #estimate and pVal for each
+
+  tempNames <- paste0(rep(paste0("category:", fullCats), each = length(fullTimes) + 2),
+                            c(paste0(":Time", fullTimes),"Pval-Time", "Pval-Category"))
+
+  if(catCovar){
+    baseCatNames <- unlist(lapply(levelList, function(x) x[-1]))
+    catColNames <- paste0(c("Est_","LL_", "UL_", "pVal_"), rep(baseCatNames, each = 4))
+  }else{
+    catColNames <- NULL
+  }
+
+  if(contCovar){
+    baseContNames <- substring(colnames(tempDat)[contIndex], 11)
+    contColNames <- paste0(c("Est_", "LL_", "UL_", "pVal_"), rep(baseContNames, each = 4))
+  }else{
+    contColNames <- NULL
+  }
+
+  tempNames <- c(tempNames, catColNames, contColNames)
+  resMat <- matrix(NA, nrow = nProt, ncol = length(tempNames))
+  colnames(resMat) <- tempNames
+
+
   #Fit the model
   if(randEffect == 0){
     if(useW){
@@ -129,21 +165,27 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   }
   modSumm <- summary(fullMod)
 
-  #create list of times within observed ranges
-  times <- list()
-  for(c_ in 1:length(uCats)){
-    catTime <- unique(tempDat[which(tempDat$Category == uCats[c_]), "Time"])
-    maxT <- max(catTime)
-    minT <- min(catTime)
-    boolT <- (obsTimes >= minT) & (obsTimes <= maxT)
-    smalltime <- obsTimes[boolT]
-    times[[c_]] <- smalltime
-  }
 
-  #Now get predictions and p-values for each protein
+  #The model fit may contain aliased variables
+  #Prior to hypothesis testing, we need to know what Categories
+  #are present for each protein
+  obsCats <- by(tempDat, tempDat$Protein, FUN = function(x) which(fullCats %in% unique(x$Category)))
+  refPos <- which(fullCats == refCat)
+
+
+  ###############Now get predictions and p-values for each protein##############
   pRes <- list()
 
   for(index in 1:nProt){
+    #First make sure the reference was observed in this protein
+    if(!(refPos %in% obsCats[[index]])){
+      pRes[[index]] <- NA
+      next
+    }else{
+      refI <- which(obsCats[[index]] == refPos)
+      dropRef <- obsCats[[index]][-refI]
+    }
+
     #Implement F test for time effect
     #Create strings that define the hypothesis tests
 
@@ -152,46 +194,64 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 
     #Test for an overall time effect in the baseline condition
     timeStr <-  paste0("Protein", uProt[index], paste0(":Time", degVec), " = 0")
-    timeTests[[1]] <-  lht(fullMod, timeStr)$`Pr(>F)`[2]
+    timeTests[[1]] <-  lht(fullMod, timeStr, singular.ok= T)$`Pr(>F)`[2]
 
+    if(length(dropRef) > 0){
 
-    for(t_ in 2:length(uCats)){
-      #Test for any difference between refCat and category t_
-      catStr <-  paste0("Protein", uProt[index], ":Category", uCats[t_], c("", paste0(":Time", degVec)), " = 0")
-      catTests[[t_ - 1]] <- lht(fullMod, catStr)$`Pr(>F)`[2]
+      for(t_ in 1:length(dropRef)){
+        #Test for any difference between refCat and category t_
+        catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
+        catTests[[t_]] <- lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2]
 
-      #Test for an overall time effect in condition t_
-      timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
-                        "Protein", uProt[index], ":Category", uCats[t_], paste0(":Time", degVec)," = 0")
-      timeTests[[t_]] <- lht(fullMod, timeStr)$`Pr(>F)`[2]
+        #Test for an overall time effect in condition t_
+        timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
+                          "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
+        timeTests[[t_ + 1]] <- lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2]
+      }#end condition loop
+
+    }#end "if" more than one condition
+
+    #Figure out which times to predict
+    #create list of times within observed ranges
+    times <- list()
+    protDat <- tempDat[which(tempDat$Protein == uProt[index]), ]
+    for(c_ in 1:length(obsCats[[index]])){
+      catTime <- unique(protDat[which(protDat$Category == fullCats[obsCats[[index]][c_]]), "Time"])
+      maxT <- max(catTime)
+      minT <- min(catTime)
+      boolT <- (fullTimes >= minT) & (fullTimes <= maxT)
+      smalltime <- obsTimes[boolT]
+      times[[c_]] <- smalltime
     }
 
     #Now extract and store the predicted values
     newDfs <- list()
 
-    newDfs <- lapply(1:length(uCats), function(x)
-        makePredDat(prot = uProt[index], timeVec = times[[x]], category = uCats[x],
+    newDfs <- lapply(1:length(obsCats[[index]]), function(x)
+        makePredDat(prot = uProt[index], timeVec = times[[x]], category = fullCats[obsCats[[index]][x]],
                     header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs))
 
 
-    catPreds <- lapply(newDfs, function(x) predict(fullMod, x))
+    catPreds <- lapply(newDfs, function(x) suppressWarnings(predict(fullMod, x)))
 
     catRes <- list()
-    catRes[[1]] <- data.frame(Gene = tempDat$Gene[match(uProt[index], tempDat$Protein)],
-                              Protein = savedProts[match(uProt[index], tempDat$Protein)],
-                              matrix(catPreds[[1]][match(fullTimes, times[[1]])], nrow = 1), timeTests[[1]])
-    colnames(catRes[[1]]) <- c("Gene", "Protein", paste("category:",uCats[1], paste0("Time", fullTimes)), paste("category:",uCats[1], "Pval-Time"))
+    catRes[[1]] <- data.frame(matrix(catPreds[[refI]][match(fullTimes, times[[refI]])], nrow = 1), timeTests[[1]])
+    colnames(catRes[[1]]) <- c(paste0("category:", refCat, paste0(":Time", fullTimes)), paste0("category:", refCat, "Pval-Time"))
 
-    for(t_ in 2:length(uCats)){
-      catRes[[t_]] <- data.frame(matrix(catPreds[[t_]][match(fullTimes, times[[t_]])], nrow = 1), timeTests[[t_]], catTests[[t_ - 1]])
-      colnames(catRes[[t_]]) <- c(paste("category:",uCats[t_], paste0("Time", fullTimes)), paste("category:", uCats[t_], "Pval-Time"), paste0("Pval-", uCats[t_]))
+    if(length(dropRef) > 0){
+      for(t_ in 1:length(dropRef)){
+        catRes[[t_ + 1]] <- data.frame(matrix(catPreds[[dropRef[t_]]][match(fullTimes, times[[dropRef[t_]]])], nrow = 1),
+                                       timeTests[[t_ + 1]], catTests[[t_]])
+        colnames(catRes[[t_ + 1]]) <- c(paste0("category:", fullCats[dropRef[t_]], paste0(":Time", fullTimes)),
+                                        paste0("category:", fullCats[dropRef[t_]], "Pval-Time"),
+                                        paste0("Pval-", fullCats[dropRef[t_]]))
+      }
     }
-
     pRes[[index]] <- do.call(cbind, catRes)
 
 
     #Now add point estimates, standard errors and pVals for each baseline covariate
-    if(contCovar + baseCovar > 0){
+    if(contCovar + catCovar > 0){
     baseRes <- list()
     if(contCovar){
       for(k in 1:length(contIndex)){
@@ -227,6 +287,8 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
   }#end Gene loop
 
   resDf <- do.call(rbind, pRes)
+  #add identifiers
+  resDf <- data.frame(Gene = unique(tempDat$Gene),Protein = unique(savedProts), resDf)
 
   #Now add columns for random effects
   if(randEffect > 0){
