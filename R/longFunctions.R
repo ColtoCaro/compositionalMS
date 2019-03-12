@@ -40,7 +40,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
 
   #Determine model details and adjust entries based on the column names
-  randIndex <- grep("Random Effect", colnames(tempDat))
+  randIndex <- grep("Random_Effect", colnames(tempDat))
   if(length(randIndex > 0)){
     if(length(randIndex) > 1){stop("Only one random intercept is allowed")}
     mixedMod <- TRUE
@@ -132,21 +132,20 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
   if(catCovar){
     baseCatNames <- unlist(lapply(levelList, function(x) x[-1]))
-    catColNames <- paste0(c("Est_","LL_", "UL_", "pVal_"), rep(baseCatNames, each = 4))
+    catColNames <- paste0(c("Est_", "pVal_", "LL_", "UL_"), rep(baseCatNames, each = 4))
   }else{
     catColNames <- NULL
   }
 
   if(contCovar){
     baseContNames <- substring(colnames(tempDat)[contIndex], 11)
-    contColNames <- paste0(c("Est_", "LL_", "UL_", "pVal_"), rep(baseContNames, each = 4))
+    contColNames <- paste0(c("Est_", "pVal_", "LL_", "UL_"), rep(baseContNames, each = 4))
   }else{
     contColNames <- NULL
   }
 
   tempNames <- c(tempNames, catColNames, contColNames)
-  resMat <- matrix(NA, nrow = nProt, ncol = length(tempNames))
-  colnames(resMat) <- tempNames
+
 
 
   #Fit the model
@@ -174,12 +173,12 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
 
   ###############Now get predictions and p-values for each protein##############
-  pRes <- list()
+  resMat <- matrix(NA, nrow = nProt, ncol = length(tempNames))
+  colnames(resMat) <- tempNames
 
   for(index in 1:nProt){
     #First make sure the reference was observed in this protein
     if(!(refPos %in% obsCats[[index]])){
-      pRes[[index]] <- NA
       next
     }else{
       refI <- which(obsCats[[index]] == refPos)
@@ -234,66 +233,70 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
     catPreds <- lapply(newDfs, function(x) suppressWarnings(predict(fullMod, x)))
 
-    catRes <- list()
-    catRes[[1]] <- data.frame(matrix(catPreds[[refI]][match(fullTimes, times[[refI]])], nrow = 1), timeTests[[1]])
-    colnames(catRes[[1]]) <- c(paste0("category:", refCat, paste0(":Time", fullTimes)), paste0("category:", refCat, "Pval-Time"))
+    tempPred <- matrix(c(catPreds[[refI]][match(fullTimes, times[[refI]])], timeTests[[1]]), nrow = 1)
+    startPoint <- (refPos - 1) * (length(fullTimes) + 2) + 1
+    resMat[index, startPoint:(startPoint + ncol(tempPred) - 1)] <- tempPred
 
     if(length(dropRef) > 0){
       for(t_ in 1:length(dropRef)){
-        catRes[[t_ + 1]] <- data.frame(matrix(catPreds[[dropRef[t_]]][match(fullTimes, times[[dropRef[t_]]])], nrow = 1),
-                                       timeTests[[t_ + 1]], catTests[[t_]])
-        colnames(catRes[[t_ + 1]]) <- c(paste0("category:", fullCats[dropRef[t_]], paste0(":Time", fullTimes)),
-                                        paste0("category:", fullCats[dropRef[t_]], "Pval-Time"),
-                                        paste0("Pval-", fullCats[dropRef[t_]]))
+        tempPred <- matrix(c(catPreds[[dropRef[t_]]][match(fullTimes, times[[dropRef[t_]]])],
+                             timeTests[[t_ + 1]], catTests[[t_]]), nrow = 1)
+        startPoint <- (dropRef[t_] - 1) * (length(fullTimes) + 2) + 1
+        resMat[index, startPoint:(startPoint + ncol(tempPred) - 1)] <- tempPred
+
       }
     }
-    pRes[[index]] <- do.call(cbind, catRes)
 
 
     #Now add point estimates, standard errors and pVals for each baseline covariate
     if(contCovar + catCovar > 0){
-    baseRes <- list()
-    if(contCovar){
-      for(k in 1:length(contIndex)){
-        paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[contIndex[k]])
-        tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
-                            confint(fullMod, paramStr)), nrow = 1)
-        colnames(tempRes) <- paste0(c("Estimate_", "Pval_", "LL_", "UL_"), colnames(tempDat)[contIndex[k]])
-        baseRes[[k]] <- tempRes
-      }
-    }
+      #categorical comes before continuous in results table
+      if(catCovar){
+        startPoint <- (fullTimes + 2) * fullCats + 1
+        for(k in 1:length(catCovarIndex)){ #loop through categorical variables
+          catLevel <- levels(tempDat[ , catCovarIndex[k]])
+          for(l in 1:(length(catLevel) - 1)){ #loop through levels of each variable
+            levelName <- catLevel[l + 1]
+            paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[catCovarIndex[k]],
+                               levelName)
+            tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
+                                confint(fullMod, paramStr)), nrow = 1)
+            resMat[index, startPoint:(startPoint + 3)] <- tempRes
+            startPoint <- startPoint + 4
+          }
 
-    if(catCovar){
-      for(k in 1:length(catCovarIndex)){
-        catLevel <- levels(tempDat[ , catCovarIndex[k]])
-        for(l in 1:(length(catLevel) - 1)){
-          levelName <- catLevel[l + 1]
-          paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[catCovarIndex[k]],
-                             levelName)
         }
-        tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
-                            confint(fullMod, paramStr)), nrow = 1)
-        colnames(tempRes) <- paste0(c("Estimate_", "Pval_", "LL_", "UL_"), catLevel[l + 1])
-        baseRes[[k]] <- tempRes
+      }else{
+        startPoint <- (fullTimes + 2) * fullCats + 1 #pass start point to continuous covariate
       }
-    }
 
-    baseDf <- do.call(cbind, baseRes)
-    pRes[[index]] <- cbind(pRes[[index]], baseDf)
+      if(contCovar){
+        for(k in 1:length(contIndex)){
+          paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[contIndex[k]])
+          tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
+                              confint(fullMod, paramStr)), nrow = 1)
+          resMat[index, startPoint:(startPoint + 3)] <- tempRes
+          startPoint <- startPoint + 4
+        }
+      }
+
+
+
+      #baseDf <- do.call(cbind, baseRes)
+      #pRes[[index]] <- cbind(pRes[[index]], baseDf)
 
     }#End addition of baseline covariate results
 
 
   }#end Gene loop
 
-  resDf <- do.call(rbind, pRes)
   #add identifiers
-  resDf <- data.frame(Gene = unique(tempDat$Gene),Protein = unique(savedProts), resDf)
+  resDf <- data.frame(Gene = unique(tempDat$Gene),Protein = unique(savedProts), resMat)
 
-  #Now add columns for random effects
-  if(randEffect > 0){
-    resDf <- cbind(resDf, ranef(fullMod))
-  }
+  #Now add columns for random effects - ill conceived.  Return to this later
+#  if(randEffect > 0){
+ #   resDf <- cbind(resDf, ranef(fullMod))
+  #}
 
   #Now add columns with q values
   #first find the p-values
