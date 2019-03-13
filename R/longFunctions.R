@@ -73,11 +73,13 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       tempDat[ , catCovarIndex[i]] <- factor(tempDat[ , catCovarIndex[i]])
       refList[[i]] <- levels(tempDat[ , catCovarIndex[i]])[1]
       levelList[[i]] <- levels(tempDat[ , catCovarIndex[i]])
+      totalLevels <- sum(sapply(levelList, FUN = length))
     }
     catRefs <- unlist(refList)
   }else{
     catCovar <- FALSE
     catRefs <- NULL
+    totalLevels <- 0
   }
 
 
