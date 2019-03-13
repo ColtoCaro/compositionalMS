@@ -67,6 +67,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     catCovar <- TRUE
     #make vector of references
     refList <- list()
+    levelList <- list()
     #make sure these variables are treated as factors
     for(i in 1:length(catCovarIndex)){
       tempDat[ , catCovarIndex[i]] <- factor(tempDat[ , catCovarIndex[i]])
