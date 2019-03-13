@@ -256,7 +256,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     if(contCovar + catCovar > 0){
       #categorical comes before continuous in results table
       if(catCovar){
-        startPoint <- (fullTimes + 2) * fullCats + 1
+        startPoint <- (length(fullTimes) + 2) * length(fullCats) + 1
         for(k in 1:length(catCovarIndex)){ #loop through categorical variables
           catLevel <- levels(tempDat[ , catCovarIndex[k]])
           for(l in 1:(length(catLevel) - 1)){ #loop through levels of each variable
@@ -271,7 +271,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
         }
       }else{
-        startPoint <- (fullTimes + 2) * fullCats + 1 #pass start point to continuous covariate
+        startPoint <- (length(fullTimes) + 2) * length(fullCats) + 1 #pass start point to continuous covariate
       }
 
       if(contCovar){
