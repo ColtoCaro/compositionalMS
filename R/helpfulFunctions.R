@@ -453,8 +453,8 @@ makePredDat <- function(prot, timeVec, category, header, timeDegree, catRefs){
   }
 
   #now add baseline covariates
-  contIndex <- grep("contCovar_", header)
-  catCovarIndex <- grep("catCovar_", header)
+  contIndex <- grep("Continuous_Covariate", header)
+  catCovarIndex <- grep("Categorical_Covariate", header)
 
   if(length(contIndex) > 0){
     tempVars <- matrix(0, nrow = nrow(newDfs), ncol = length(contIndex))

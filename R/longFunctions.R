@@ -73,13 +73,13 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       tempDat[ , catCovarIndex[i]] <- factor(tempDat[ , catCovarIndex[i]])
       refList[[i]] <- levels(tempDat[ , catCovarIndex[i]])[1]
       levelList[[i]] <- levels(tempDat[ , catCovarIndex[i]])
-      totalLevels <- sum(sapply(levelList, FUN = length))
+      #totalLevels <- sum(sapply(levelList, FUN = length))
     }
     catRefs <- unlist(refList)
   }else{
     catCovar <- FALSE
     catRefs <- NULL
-    totalLevels <- 0
+    #totalLevels <- 0
   }
 
 
@@ -126,9 +126,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
   #create results matrix
   #rows = nProt.  cols = fulltimes*fullCats + 2*fullCats + levels(catCovar) + length(contIndex)
-  nPreds <- length(fullTimes) * length(fullCats)
-  nTests <- 2 * length(fullCats)
-  nCovars <- 2 * (length(contIndex) + totalLevels - length(catCovarIndex)) #estimate and pVal for each
+  #nPreds <- length(fullTimes) * length(fullCats)
+  #nTests <- 2 * length(fullCats)
+  #nCovars <- 2 * (length(contIndex) + totalLevels - length(catCovarIndex)) #estimate and pVal for each
+  #deprecated
 
   tempNames <- paste0(rep(paste0("category:", fullCats), each = length(fullTimes) + 2),
                             c(paste0(":Time", fullTimes),"Pval-Time", "Pval-Category"))
