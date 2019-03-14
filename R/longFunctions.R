@@ -195,6 +195,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     timeTests <- list()
     catTests <- list()
 
+
     #Test for an overall time effect in the baseline condition
     timeStr <-  paste0("Protein", uProt[index], paste0(":Time", degVec), " = 0")
     timeTests[[1]] <-  lht(fullMod, timeStr, singular.ok= T)$`Pr(>F)`[2]
@@ -204,15 +205,20 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
         catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
-        catTests[[t_]] <- lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2]
+        catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
 
         #Test for an overall time effect in condition t_
         timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
                           "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
-        timeTests[[t_ + 1]] <- lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2]
+        timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2])
       }#end condition loop
 
     }#end "if" more than one condition
+
+    #if any tests failed something weird happened with aliasing (skip this protein)
+    catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
+    timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
+    if(length(catError) + length(timeError) > 0){next}
 
     #Figure out which times to predict
     #create list of times within observed ranges
@@ -243,7 +249,9 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
     if(length(dropRef) > 0){
       for(t_ in 1:length(dropRef)){
-        tempPred <- matrix(c(catPreds[[dropRef[t_]]][match(fullTimes, times[[dropRef[t_]]])],
+        #need to map from dropRef to obsRef
+        obsPos <- which(obsCats[[index]] == dropRef[t_])
+        tempPred <- matrix(c(catPreds[[obsPos]][match(fullTimes, times[[obsPos]])],
                              timeTests[[t_ + 1]], catTests[[t_]]), nrow = 1)
         startPoint <- (dropRef[t_] - 1) * (length(fullTimes) + 2) + 1
         resMat[index, startPoint:(startPoint + ncol(tempPred) - 1)] <- tempPred
@@ -263,7 +271,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
             levelName <- catLevel[l + 1]
             paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[catCovarIndex[k]],
                                levelName)
-            tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
+            #Make sure this level exists in the model
+            coefIndex <- which(rownames(modSumm$coefficients) == paramStr)
+            if(length(coefIndex) == 0){next}
+            tempRes <- matrix(c(modSumm$coefficients[coefIndex, c(1,4)],
                                 confint(fullMod, paramStr)), nrow = 1)
             resMat[index, startPoint:(startPoint + 3)] <- tempRes
             startPoint <- startPoint + 4
