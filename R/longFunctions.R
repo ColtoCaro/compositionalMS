@@ -306,8 +306,13 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   }#end Gene loop
 
   #add identifiers
-  resDf <- data.frame(Gene = tempDat$Gene[match(unique(tempDat$Protein), tempDat$Protein)],
-                      Protein = unique(savedProts), resMat)
+  if(groupByGene){
+    resDf <- data.frame(Gene = tempDat$Gene[match(unique(tempDat$Protein), tempDat$Protein)],
+                        Protein = savedProts[match(unique(tempDat$Protein), savedProts)], resMat)
+  }else{
+    resDf <- data.frame(Gene = tempDat$Gene[match(unique(tempDat$Protein), tempDat$Protein)],
+                        Protein = unique(savedProts), resMat)
+  }
 
   #Now add columns for random effects - ill conceived.  Return to this later
 #  if(randEffect > 0){
