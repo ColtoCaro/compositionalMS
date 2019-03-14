@@ -87,7 +87,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Create model formula
   #First consider the baseline covariates
   if(catCovar + contCovar > 0){
-    baseString <- paste(paste0(" + Protein:", colnames(tempDat)[c(contIndex, catCovarIndex)]), collapse = "")
+    baseString <- paste(paste0(" + Protein_", colnames(tempDat)[c(contIndex, catCovarIndex)]), collapse = "")
   }else(
     baseString <- ""
   )
@@ -96,21 +96,21 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   degVec[1] <- ""
 
   if(randEffect == 0){
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
-                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
-                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein_Category", baseString, "+",
+                             paste0("Protein_", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein_Category_", paste0("Time", degVec), collapse = " + ")))
   }
   if(randEffect == 1){
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
-                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
-                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein_Category", baseString, "+",
+                             paste0("Protein_", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein_Category_", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 | ", colnames(tempDat)[randIndex], ")")
   }
   if(randEffect == 2){
     degVec <- degVec[1] #force only linear slopes if random slopes are being fit to each ID
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
-                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
-                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein_Category", baseString, "+",
+                             paste0("Protein_", paste0("Time", degVec), collapse = " + "),
+                             "+", paste0("Protein_Category_", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 + Time | ", colnames(tempDat)[randIndex], ")")
   }
 
@@ -131,8 +131,8 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #nCovars <- 2 * (length(contIndex) + totalLevels - length(catCovarIndex)) #estimate and pVal for each
   #deprecated
 
-  tempNames <- paste0(rep(paste0("category:", fullCats), each = length(fullTimes) + 2),
-                            c(paste0(":Time", fullTimes),"Pval-Time", "Pval-Category"))
+  tempNames <- paste0(rep(paste0("category_", fullCats), each = length(fullTimes) + 2),
+                            c(paste0("_Time", fullTimes),"Pval-Time", "Pval-Category"))
 
   if(catCovar){
     baseCatNames <- unlist(lapply(levelList, function(x) x[-1]))
@@ -197,19 +197,19 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
 
     #Test for an overall time effect in the baseline condition
-    timeStr <-  paste0("Protein", uProt[index], paste0(":Time", degVec), " = 0")
+    timeStr <-  paste0("Protein", uProt[index], paste0("_Time", degVec), " = 0")
     timeTests[[1]] <-  lht(fullMod, timeStr, singular.ok= T)$`Pr(>F)`[2]
 
     if(length(dropRef) > 0){
 
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
-        catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
+        catStr <-  paste0("Protein", uProt[index], "_Category", fullCats[dropRef[t_]], c("", paste0("_Time", degVec)), " = 0")
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
 
         #Test for an overall time effect in condition t_
-        timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
-                          "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
+        timeStr <- paste0("Protein", uProt[index], paste0("_Time", degVec), " + ",
+                          "Protein", uProt[index], "_Category", fullCats[dropRef[t_]], paste0("_Time", degVec)," = 0")
         timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2])
       }#end condition loop
 
@@ -269,7 +269,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
           catLevel <- levels(tempDat[ , catCovarIndex[k]])
           for(l in 1:(length(catLevel) - 1)){ #loop through levels of each variable
             levelName <- catLevel[l + 1]
-            paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[catCovarIndex[k]],
+            paramStr <- paste0("Protein", uProt[index], "_", colnames(tempDat)[catCovarIndex[k]],
                                levelName)
             #Make sure this level exists in the model
             coefIndex <- which(rownames(modSumm$coefficients) == paramStr)
@@ -287,7 +287,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
       if(contCovar){
         for(k in 1:length(contIndex)){
-          paramStr <- paste0("Protein", uProt[index], ":", colnames(tempDat)[contIndex[k]])
+          paramStr <- paste0("Protein", uProt[index], "_", colnames(tempDat)[contIndex[k]])
           tempRes <- matrix(c(modSumm$coefficients[paramStr, c(1,4)],
                               confint(fullMod, paramStr)), nrow = 1)
           resMat[index, startPoint:(startPoint + 3)] <- tempRes
@@ -371,7 +371,7 @@ test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE)
 
   for(index in 1:nProt){
     # Implement F test for time effect
-    testl <- lht(fullMod, paste(paste0("Protein", uProt[index], ":", paste0("Time", degVec), " = 0")))
+    testl <- lht(fullMod, paste(paste0("Protein", uProt[index], "_", paste0("Time", degVec), " = 0")))
     pVal <- testl$'Pr(>F)'[2]
     # Now extract and store the predicted values
     if(timeDegree == 1){
