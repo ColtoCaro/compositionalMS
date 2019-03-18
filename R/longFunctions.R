@@ -308,7 +308,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #add identifiers
   if(groupByGene){
     resDf <- data.frame(Gene = tempDat$Gene[match(unique(tempDat$Protein), tempDat$Protein)],
-                        Protein = savedProts[match(unique(tempDat$Protein), savedProts)], resMat)
+                        Protein = savedProts[match(unique(tempDat$Protein), tempDat$Protein)], resMat)
   }else{
     resDf <- data.frame(Gene = tempDat$Gene[match(unique(tempDat$Protein), tempDat$Protein)],
                         Protein = unique(savedProts), resMat)
