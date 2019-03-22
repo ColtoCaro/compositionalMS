@@ -226,10 +226,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     protDat <- tempDat[which(tempDat$Protein == uProt[index]), ]
     for(c_ in 1:length(obsCats[[index]])){
       catTime <- unique(protDat[which(protDat$Category == fullCats[obsCats[[index]][c_]]), "Time"])
+      #catTime is the actual times observed for this protein within this category
       maxT <- max(catTime)
       minT <- min(catTime)
       boolT <- (fullTimes >= minT) & (fullTimes <= maxT)
-      smalltime <- obsTimes[boolT]
+      smalltime <- fullTimes[boolT]
       times[[c_]] <- smalltime
     }
 
