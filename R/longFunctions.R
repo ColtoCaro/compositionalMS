@@ -225,7 +225,9 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     times <- list()
     protDat <- tempDat[which(tempDat$Protein == uProt[index]), ]
     for(c_ in 1:length(obsCats[[index]])){
-      catTime <- unique(protDat[which(protDat$Category == fullCats[obsCats[[index]][c_]]), "Time"])
+      catDat <- protDat[which(protDat$Category == fullCats[obsCats[[index]][c_]]), ]
+      catDat <- catDat[-is.na(catDat$FC), ] #Remove missing values
+      catTime <- unique(catDat[ , "Time"])
       #catTime is the actual times observed for this protein within this category
       maxT <- max(catTime)
       minT <- min(catTime)
