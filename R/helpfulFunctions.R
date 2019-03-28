@@ -457,7 +457,7 @@ makePredDat <- function(prot, timeVec, category, header, timeDegree, catRefs){
   catCovarIndex <- grep("Categorical_Covariate", header)
 
   if(length(contIndex) > 0){
-    tempVars <- matrix(0, nrow = nrow(newDfs), ncol = length(contIndex))
+    tempVars <- matrix(0, nrow = nrow(newDf), ncol = length(contIndex))
     colnames(tempVars) <- header[contIndex]
     newDf <- cbind(newDf, tempVars)
   }

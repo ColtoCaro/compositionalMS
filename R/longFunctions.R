@@ -142,7 +142,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   }
 
   if(contCovar){
-    baseContNames <- substring(colnames(tempDat)[contIndex], 11)
+    baseContNames <- substring(colnames(tempDat)[contIndex], 22)
     contColNames <- paste0(c("Est_", "pVal_", "LL_", "UL_"), rep(baseContNames, each = 4))
   }else{
     contColNames <- NULL
