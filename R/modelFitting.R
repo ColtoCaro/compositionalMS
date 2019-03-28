@@ -56,6 +56,10 @@
 #'   fit for the sole purpose of visualizing the behavior of individual replicates.
 #' @param adapt_delta The target proposal acceptance rate that determines step
 #'   size in a Stan model.
+#' @param varPool A variable that determines the structure of the variance parameters.
+#'   varPool = 0 denotes no pooling, i.e. a separate variance parameter for each protein.
+#'   varPool = 1 (default) generates partially pooled variance parameters and
+#'   varPool = 2 creates complete pooling, i.e. only one experimental error.
 #'
 #' @details There are many details.  This will be filled out later.
 #'
@@ -69,7 +73,8 @@ compBayes <- function(dat,
                      pop_sd = 10,
                      simpleMod = FALSE,
                      bridge = TRUE,
-                     adapt_delta = .9
+                     adapt_delta = .9,
+                     varPool = 1
                      ){
 
   #Force the new setup with two simple runs

@@ -27,7 +27,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_allModels");
-    reader.add_event(225, 225, "end", "model_allModels");
+    reader.add_event(263, 263, "end", "model_allModels");
     return reader;
 }
 
@@ -53,7 +53,10 @@ private:
     vector<double> lr;
     double pop_sd;
     int simpleMod;
+    int varPool;
     int bioInd;
+    int multVar;
+    int scaleInd;
 public:
     model_allModels(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -263,6 +266,12 @@ public:
             vals_i__ = context__.vals_i("simpleMod");
             pos__ = 0;
             simpleMod = vals_i__[pos__++];
+            current_statement_begin__ = 31;
+            context__.validate_dims("data initialization", "varPool", "int", context__.to_vec());
+            varPool = int(0);
+            vals_i__ = context__.vals_i("varPool");
+            pos__ = 0;
+            varPool = vals_i__[pos__++];
 
             // validate, data variables
             current_statement_begin__ = 4;
@@ -331,42 +340,63 @@ public:
             current_statement_begin__ = 30;
             check_greater_or_equal(function__,"simpleMod",simpleMod,0);
             check_less_or_equal(function__,"simpleMod",simpleMod,1);
+            current_statement_begin__ = 31;
+            check_greater_or_equal(function__,"varPool",varPool,0);
+            check_less_or_equal(function__,"varPool",varPool,2);
             // initialize data variables
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 36;
             bioInd = int(0);
             stan::math::fill(bioInd, std::numeric_limits<int>::min());
+            current_statement_begin__ = 37;
+            multVar = int(0);
+            stan::math::fill(multVar, std::numeric_limits<int>::min());
+            current_statement_begin__ = 38;
+            scaleInd = int(0);
+            stan::math::fill(scaleInd, std::numeric_limits<int>::min());
 
-            current_statement_begin__ = 36;
+            current_statement_begin__ = 39;
             stan::math::assign(bioInd, (logical_eq(simpleMod,1) ? 0 : 1 ));
+            current_statement_begin__ = 40;
+            stan::math::assign(multVar, (logical_eq(varPool,2) ? 0 : 1 ));
+            current_statement_begin__ = 41;
+            stan::math::assign(scaleInd, (logical_eq(varPool,1) ? 1 : 0 ));
 
             // validate transformed data
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 36;
             check_greater_or_equal(function__,"bioInd",bioInd,0);
+            current_statement_begin__ = 37;
+            check_greater_or_equal(function__,"multVar",multVar,0);
+            current_statement_begin__ = 38;
+            check_greater_or_equal(function__,"scaleInd",scaleInd,0);
 
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 40;
+            current_statement_begin__ = 45;
             validate_non_negative_index("beta", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
             num_params_r__ += (n_c * (1 - bioInd));
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 46;
             validate_non_negative_index("beta_b", "(n_b * bioInd)", (n_b * bioInd));
             num_params_r__ += (n_b * bioInd);
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 48;
             validate_non_negative_index("alpha", "n_p", n_p);
             num_params_r__ += n_p;
-            current_statement_begin__ = 45;
-            validate_non_negative_index("sigma_raw", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
-            num_params_r__ += (n_c * (1 - bioInd));
-            current_statement_begin__ = 46;
-            validate_non_negative_index("sigma_rawb", "(n_b * bioInd)", (n_b * bioInd));
-            num_params_r__ += (n_b * bioInd);
-            current_statement_begin__ = 47;
-            ++num_params_r__;
-            current_statement_begin__ = 49;
+            current_statement_begin__ = 50;
+            validate_non_negative_index("sigma_raw", "((n_c * (1 - bioInd)) * multVar)", ((n_c * (1 - bioInd)) * multVar));
+            num_params_r__ += ((n_c * (1 - bioInd)) * multVar);
+            current_statement_begin__ = 51;
+            validate_non_negative_index("sigma1", "(1 - multVar)", (1 - multVar));
+            num_params_r__ += (1 - multVar);
+            current_statement_begin__ = 53;
+            validate_non_negative_index("sigma_rawb", "((n_b * bioInd) * multVar)", ((n_b * bioInd) * multVar));
+            num_params_r__ += ((n_b * bioInd) * multVar);
+            current_statement_begin__ = 54;
+            validate_non_negative_index("scale", "scaleInd", scaleInd);
+            num_params_r__ += scaleInd;
+            current_statement_begin__ = 57;
             validate_non_negative_index("xi", "n_ptm", n_ptm);
             num_params_r__ += n_ptm;
-            current_statement_begin__ = 50;
+            current_statement_begin__ = 58;
             validate_non_negative_index("delta", "useCov", useCov);
             num_params_r__ += useCov;
         } catch (const std::exception& e) {
@@ -441,28 +471,44 @@ public:
             throw std::runtime_error("variable sigma_raw missing");
         vals_r__ = context__.vals_r("sigma_raw");
         pos__ = 0U;
-        validate_non_negative_index("sigma_raw", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
-        context__.validate_dims("initialization", "sigma_raw", "double", context__.to_vec((n_c * (1 - bioInd))));
-        std::vector<double> sigma_raw((n_c * (1 - bioInd)),double(0));
-        for (int i0__ = 0U; i0__ < (n_c * (1 - bioInd)); ++i0__)
+        validate_non_negative_index("sigma_raw", "((n_c * (1 - bioInd)) * multVar)", ((n_c * (1 - bioInd)) * multVar));
+        context__.validate_dims("initialization", "sigma_raw", "double", context__.to_vec(((n_c * (1 - bioInd)) * multVar)));
+        std::vector<double> sigma_raw(((n_c * (1 - bioInd)) * multVar),double(0));
+        for (int i0__ = 0U; i0__ < ((n_c * (1 - bioInd)) * multVar); ++i0__)
             sigma_raw[i0__] = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < (n_c * (1 - bioInd)); ++i0__)
+        for (int i0__ = 0U; i0__ < ((n_c * (1 - bioInd)) * multVar); ++i0__)
             try {
             writer__.scalar_lb_unconstrain(0,sigma_raw[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable sigma_raw: ") + e.what());
         }
 
+        if (!(context__.contains_r("sigma1")))
+            throw std::runtime_error("variable sigma1 missing");
+        vals_r__ = context__.vals_r("sigma1");
+        pos__ = 0U;
+        validate_non_negative_index("sigma1", "(1 - multVar)", (1 - multVar));
+        context__.validate_dims("initialization", "sigma1", "double", context__.to_vec((1 - multVar)));
+        std::vector<double> sigma1((1 - multVar),double(0));
+        for (int i0__ = 0U; i0__ < (1 - multVar); ++i0__)
+            sigma1[i0__] = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < (1 - multVar); ++i0__)
+            try {
+            writer__.scalar_lb_unconstrain(0,sigma1[i0__]);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma1: ") + e.what());
+        }
+
         if (!(context__.contains_r("sigma_rawb")))
             throw std::runtime_error("variable sigma_rawb missing");
         vals_r__ = context__.vals_r("sigma_rawb");
         pos__ = 0U;
-        validate_non_negative_index("sigma_rawb", "(n_b * bioInd)", (n_b * bioInd));
-        context__.validate_dims("initialization", "sigma_rawb", "double", context__.to_vec((n_b * bioInd)));
-        std::vector<double> sigma_rawb((n_b * bioInd),double(0));
-        for (int i0__ = 0U; i0__ < (n_b * bioInd); ++i0__)
+        validate_non_negative_index("sigma_rawb", "((n_b * bioInd) * multVar)", ((n_b * bioInd) * multVar));
+        context__.validate_dims("initialization", "sigma_rawb", "double", context__.to_vec(((n_b * bioInd) * multVar)));
+        std::vector<double> sigma_rawb(((n_b * bioInd) * multVar),double(0));
+        for (int i0__ = 0U; i0__ < ((n_b * bioInd) * multVar); ++i0__)
             sigma_rawb[i0__] = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < (n_b * bioInd); ++i0__)
+        for (int i0__ = 0U; i0__ < ((n_b * bioInd) * multVar); ++i0__)
             try {
             writer__.scalar_lb_unconstrain(0,sigma_rawb[i0__]);
         } catch (const std::exception& e) { 
@@ -473,11 +519,14 @@ public:
             throw std::runtime_error("variable scale missing");
         vals_r__ = context__.vals_r("scale");
         pos__ = 0U;
-        context__.validate_dims("initialization", "scale", "double", context__.to_vec());
-        double scale(0);
-        scale = vals_r__[pos__++];
-        try {
-            writer__.scalar_lb_unconstrain(0,scale);
+        validate_non_negative_index("scale", "scaleInd", scaleInd);
+        context__.validate_dims("initialization", "scale", "double", context__.to_vec(scaleInd));
+        std::vector<double> scale(scaleInd,double(0));
+        for (int i0__ = 0U; i0__ < scaleInd; ++i0__)
+            scale[i0__] = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < scaleInd; ++i0__)
+            try {
+            writer__.scalar_lb_unconstrain(0,scale[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable scale: ") + e.what());
         }
@@ -576,7 +625,7 @@ public:
             }
 
             vector<T__> sigma_raw;
-            size_t dim_sigma_raw_0__ = (n_c * (1 - bioInd));
+            size_t dim_sigma_raw_0__ = ((n_c * (1 - bioInd)) * multVar);
             sigma_raw.reserve(dim_sigma_raw_0__);
             for (size_t k_0__ = 0; k_0__ < dim_sigma_raw_0__; ++k_0__) {
                 if (jacobian__)
@@ -585,8 +634,18 @@ public:
                     sigma_raw.push_back(in__.scalar_lb_constrain(0));
             }
 
+            vector<T__> sigma1;
+            size_t dim_sigma1_0__ = (1 - multVar);
+            sigma1.reserve(dim_sigma1_0__);
+            for (size_t k_0__ = 0; k_0__ < dim_sigma1_0__; ++k_0__) {
+                if (jacobian__)
+                    sigma1.push_back(in__.scalar_lb_constrain(0,lp__));
+                else
+                    sigma1.push_back(in__.scalar_lb_constrain(0));
+            }
+
             vector<T__> sigma_rawb;
-            size_t dim_sigma_rawb_0__ = (n_b * bioInd);
+            size_t dim_sigma_rawb_0__ = ((n_b * bioInd) * multVar);
             sigma_rawb.reserve(dim_sigma_rawb_0__);
             for (size_t k_0__ = 0; k_0__ < dim_sigma_rawb_0__; ++k_0__) {
                 if (jacobian__)
@@ -595,12 +654,15 @@ public:
                     sigma_rawb.push_back(in__.scalar_lb_constrain(0));
             }
 
-            T__ scale;
-            (void) scale;  // dummy to suppress unused var warning
-            if (jacobian__)
-                scale = in__.scalar_lb_constrain(0,lp__);
-            else
-                scale = in__.scalar_lb_constrain(0);
+            vector<T__> scale;
+            size_t dim_scale_0__ = scaleInd;
+            scale.reserve(dim_scale_0__);
+            for (size_t k_0__ = 0; k_0__ < dim_scale_0__; ++k_0__) {
+                if (jacobian__)
+                    scale.push_back(in__.scalar_lb_constrain(0,lp__));
+                else
+                    scale.push_back(in__.scalar_lb_constrain(0));
+            }
 
             vector<T__> xi;
             size_t dim_xi_0__ = n_ptm;
@@ -624,73 +686,93 @@ public:
 
 
             // transformed parameters
-            current_statement_begin__ = 54;
+            current_statement_begin__ = 62;
             validate_non_negative_index("betaP_c", "(useCov * n_c)", (useCov * n_c));
             vector<T__> betaP_c((useCov * n_c));
             stan::math::initialize(betaP_c, DUMMY_VAR__);
             stan::math::fill(betaP_c,DUMMY_VAR__);
-            current_statement_begin__ = 55;
+            current_statement_begin__ = 63;
             validate_non_negative_index("betaP_b", "((useCov * n_b) * bioInd)", ((useCov * n_b) * bioInd));
             vector<T__> betaP_b(((useCov * n_b) * bioInd));
             stan::math::initialize(betaP_b, DUMMY_VAR__);
             stan::math::fill(betaP_b,DUMMY_VAR__);
-            current_statement_begin__ = 56;
-            validate_non_negative_index("sigma", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
-            vector<T__> sigma((n_c * (1 - bioInd)));
+            current_statement_begin__ = 64;
+            validate_non_negative_index("sigma", "((n_c * (1 - bioInd)) * multVar)", ((n_c * (1 - bioInd)) * multVar));
+            vector<T__> sigma(((n_c * (1 - bioInd)) * multVar));
             stan::math::initialize(sigma, DUMMY_VAR__);
             stan::math::fill(sigma,DUMMY_VAR__);
-            current_statement_begin__ = 57;
+            current_statement_begin__ = 65;
             validate_non_negative_index("sigmab", "(n_b * bioInd)", (n_b * bioInd));
             vector<T__> sigmab((n_b * bioInd));
             stan::math::initialize(sigmab, DUMMY_VAR__);
             stan::math::fill(sigmab,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 60;
+            current_statement_begin__ = 69;
             if (as_bool(logical_eq(bioInd,0))) {
 
-                current_statement_begin__ = 61;
-                for (int i = 1; i <= n_c; ++i) {
+                current_statement_begin__ = 70;
+                if (as_bool(logical_eq(multVar,1))) {
 
-                    current_statement_begin__ = 62;
-                    stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (scale * get_base1(sigma_raw,i,"sigma_raw",1)));
-                }
-            }
-            current_statement_begin__ = 66;
-            if (as_bool(logical_eq(bioInd,1))) {
+                    current_statement_begin__ = 71;
+                    for (int i = 1; i <= n_c; ++i) {
 
-                current_statement_begin__ = 67;
-                for (int i = 1; i <= n_b; ++i) {
+                        current_statement_begin__ = 72;
+                        if (as_bool(logical_eq(varPool,0))) {
 
-                    current_statement_begin__ = 68;
-                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+                            current_statement_begin__ = 73;
+                            stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (5 * get_base1(sigma_raw,i,"sigma_raw",1)));
+                        } else {
 
-                        current_statement_begin__ = 69;
-                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), scale);
-                    } else {
+                            current_statement_begin__ = 75;
+                            if (as_bool(logical_eq(get_base1(n_pep,n_c,"n_pep",1),1))) {
 
-                        current_statement_begin__ = 71;
-                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                                current_statement_begin__ = 76;
+                                stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), get_base1(scale,1,"scale",1));
+                            } else {
+
+                                current_statement_begin__ = 78;
+                                stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (get_base1(scale,1,"scale",1) * get_base1(sigma_raw,i,"sigma_raw",1)));
+                            }
+                        }
                     }
                 }
             }
-            current_statement_begin__ = 79;
-            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+            current_statement_begin__ = 86;
+            if (as_bool(logical_eq(bioInd,1))) {
 
-                current_statement_begin__ = 80;
+                current_statement_begin__ = 87;
                 for (int i = 1; i <= n_b; ++i) {
 
-                    current_statement_begin__ = 81;
+                    current_statement_begin__ = 88;
+                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+
+                        current_statement_begin__ = 89;
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), get_base1(scale,1,"scale",1));
+                    } else {
+
+                        current_statement_begin__ = 91;
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (get_base1(scale,1,"scale",1) * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    }
+                }
+            }
+            current_statement_begin__ = 99;
+            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+
+                current_statement_begin__ = 100;
+                for (int i = 1; i <= n_b; ++i) {
+
+                    current_statement_begin__ = 101;
                     stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
-            current_statement_begin__ = 86;
+            current_statement_begin__ = 106;
             if (as_bool(logical_gt(useCov,0))) {
 
-                current_statement_begin__ = 87;
+                current_statement_begin__ = 107;
                 for (int i = 1; i <= n_c; ++i) {
 
-                    current_statement_begin__ = 88;
+                    current_statement_begin__ = 108;
                     stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
@@ -710,7 +792,7 @@ public:
                     throw std::runtime_error(msg__.str());
                 }
             }
-            for (int i0__ = 0; i0__ < (n_c * (1 - bioInd)); ++i0__) {
+            for (int i0__ = 0; i0__ < ((n_c * (1 - bioInd)) * multVar); ++i0__) {
                 if (stan::math::is_uninitialized(sigma[i0__])) {
                     std::stringstream msg__;
                     msg__ << "Undefined transformed parameter: sigma" << '[' << i0__ << ']';
@@ -727,148 +809,178 @@ public:
 
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 54;
-            current_statement_begin__ = 55;
-            current_statement_begin__ = 56;
-            for (int k0__ = 0; k0__ < (n_c * (1 - bioInd)); ++k0__) {
+            current_statement_begin__ = 62;
+            current_statement_begin__ = 63;
+            current_statement_begin__ = 64;
+            for (int k0__ = 0; k0__ < ((n_c * (1 - bioInd)) * multVar); ++k0__) {
                 check_greater_or_equal(function__,"sigma[k0__]",sigma[k0__],0);
             }
-            current_statement_begin__ = 57;
+            current_statement_begin__ = 65;
             for (int k0__ = 0; k0__ < (n_b * bioInd); ++k0__) {
                 check_greater_or_equal(function__,"sigmab[k0__]",sigmab[k0__],0);
             }
 
             // model body
 
-            current_statement_begin__ = 97;
-            lp_accum__.add(normal_log<propto__>(scale, 0, 5));
-            current_statement_begin__ = 101;
+            current_statement_begin__ = 117;
+            if (as_bool(logical_eq(varPool,1))) {
+
+                current_statement_begin__ = 118;
+                lp_accum__.add(normal_log<propto__>(scale, 0, 5));
+            }
+            current_statement_begin__ = 124;
             if (as_bool(logical_gt(n_ptm,0))) {
 
-                current_statement_begin__ = 102;
+                current_statement_begin__ = 125;
                 for (int i = 1; i <= n_ptm; ++i) {
 
-                    current_statement_begin__ = 103;
-                    lp_accum__.add(cauchy_log<propto__>(get_base1(xi,i,"xi",1), 0, 5));
+                    current_statement_begin__ = 126;
+                    lp_accum__.add(normal_log<propto__>(get_base1(xi,i,"xi",1), 0, 5));
                 }
-                current_statement_begin__ = 105;
+                current_statement_begin__ = 128;
                 for (int i = 1; i <= n_p; ++i) {
 
-                    current_statement_begin__ = 106;
+                    current_statement_begin__ = 129;
                     lp_accum__.add(normal_log<propto__>(get_base1(alpha,i,"alpha",1), 0, 10));
                 }
             }
-            current_statement_begin__ = 111;
+            current_statement_begin__ = 134;
             if (as_bool(logical_eq(useCov,0))) {
 
-                current_statement_begin__ = 113;
+                current_statement_begin__ = 136;
                 if (as_bool(logical_eq(simpleMod,1))) {
 
-                    current_statement_begin__ = 115;
-                    for (int i = 1; i <= n_c; ++i) {
+                    current_statement_begin__ = 137;
+                    lp_accum__.add(normal_log<propto__>(beta, 0, 10));
+                    current_statement_begin__ = 138;
+                    if (as_bool(multVar)) {
 
-                        current_statement_begin__ = 116;
-                        lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
-                    }
-                    current_statement_begin__ = 118;
-                    for (int i = 1; i <= N_; ++i) {
+                        current_statement_begin__ = 139;
+                        for (int i = 1; i <= n_c; ++i) {
 
-                        current_statement_begin__ = 119;
-                        if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
-
-                            current_statement_begin__ = 120;
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
+                            current_statement_begin__ = 140;
+                            lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                         }
-                        current_statement_begin__ = 122;
-                        if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
+                        current_statement_begin__ = 142;
+                        for (int i = 1; i <= N_; ++i) {
 
-                            current_statement_begin__ = 123;
-                            lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
+                            current_statement_begin__ = 143;
+                            if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
+
+                                current_statement_begin__ = 144;
+                                lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
+                            }
+                            current_statement_begin__ = 146;
+                            if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
+
+                                current_statement_begin__ = 147;
+                                lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
+                            }
+                        }
+                    } else {
+
+                        current_statement_begin__ = 152;
+                        lp_accum__.add(inv_gamma_log<propto__>(sigma1, 2, 5));
+                        current_statement_begin__ = 154;
+                        for (int i = 1; i <= N_; ++i) {
+
+                            current_statement_begin__ = 155;
+                            if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
+
+                                current_statement_begin__ = 156;
+                                lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta,get_base1(condID,i,"condID",1),"beta",1), sigma1));
+                            }
+                            current_statement_begin__ = 158;
+                            if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
+
+                                current_statement_begin__ = 159;
+                                lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
+                            }
                         }
                     }
                 }
-                current_statement_begin__ = 130;
+                current_statement_begin__ = 168;
                 if (as_bool(logical_gt(bioInd,0))) {
 
-                    current_statement_begin__ = 132;
+                    current_statement_begin__ = 170;
                     for (int i = 1; i <= n_b; ++i) {
 
-                        current_statement_begin__ = 133;
+                        current_statement_begin__ = 171;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), 0, 10));
-                        current_statement_begin__ = 135;
+                        current_statement_begin__ = 173;
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
-                    current_statement_begin__ = 137;
+                    current_statement_begin__ = 175;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 138;
+                        current_statement_begin__ = 176;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 139;
+                            current_statement_begin__ = 177;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1), get_base1(sigmab,get_base1(bioID,i,"bioID",1),"sigmab",1)));
                         }
-                        current_statement_begin__ = 141;
+                        current_statement_begin__ = 179;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 142;
+                            current_statement_begin__ = 180;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
                         }
                     }
                 }
             }
-            current_statement_begin__ = 151;
+            current_statement_begin__ = 189;
             if (as_bool(logical_eq(useCov,1))) {
 
-                current_statement_begin__ = 154;
+                current_statement_begin__ = 192;
                 if (as_bool(logical_eq(bioInd,0))) {
 
-                    current_statement_begin__ = 156;
+                    current_statement_begin__ = 194;
                     for (int i = 1; i <= n_c; ++i) {
 
-                        current_statement_begin__ = 157;
+                        current_statement_begin__ = 195;
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_raw,i,"sigma_raw",1), 2, 1));
                     }
-                    current_statement_begin__ = 159;
+                    current_statement_begin__ = 197;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 160;
+                        current_statement_begin__ = 198;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 161;
+                            current_statement_begin__ = 199;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigma,get_base1(condID,i,"condID",1),"sigma",1)));
                         }
-                        current_statement_begin__ = 164;
+                        current_statement_begin__ = 202;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 165;
+                            current_statement_begin__ = 203;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta,get_base1(condID,i,"condID",1),"beta",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
                         }
                     }
                 }
-                current_statement_begin__ = 173;
+                current_statement_begin__ = 211;
                 if (as_bool(logical_gt(bioInd,0))) {
 
-                    current_statement_begin__ = 174;
+                    current_statement_begin__ = 212;
                     for (int i = 1; i <= n_b; ++i) {
 
-                        current_statement_begin__ = 175;
+                        current_statement_begin__ = 213;
                         lp_accum__.add(normal_log<propto__>(get_base1(beta_b,i,"beta_b",1), get_base1(beta,get_base1(bioToCond,i,"bioToCond",1),"beta",1), pop_sd));
-                        current_statement_begin__ = 176;
+                        current_statement_begin__ = 214;
                         lp_accum__.add(inv_gamma_log<propto__>(get_base1(sigma_rawb,i,"sigma_rawb",1), 2, 1));
                     }
-                    current_statement_begin__ = 179;
+                    current_statement_begin__ = 217;
                     for (int i = 1; i <= N_; ++i) {
 
-                        current_statement_begin__ = 180;
+                        current_statement_begin__ = 218;
                         if (as_bool(logical_eq(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 181;
+                            current_statement_begin__ = 219;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(beta_b,get_base1(bioID,i,"bioID",1),"beta_b",1) * (1 + (get_base1(covariate,i,"covariate",1) * get_base1(delta,useCov,"delta",1)))), get_base1(sigmab,get_base1(bioID,i,"bioID",1),"sigmab",1)));
                         }
-                        current_statement_begin__ = 184;
+                        current_statement_begin__ = 222;
                         if (as_bool(logical_gt(get_base1(ptm,i,"ptm",1),0))) {
 
-                            current_statement_begin__ = 185;
+                            current_statement_begin__ = 223;
                             lp_accum__.add(normal_log<propto__>(get_base1(lr,i,"lr",1), (get_base1(betaP_b,get_base1(bioID,i,"bioID",1),"betaP_b",1) + get_base1(alpha,get_base1(ptmPep,i,"ptmPep",1),"alpha",1)), get_base1(xi,get_base1(ptm,i,"ptm",1),"xi",1)));
                         }
                     }
@@ -904,6 +1016,7 @@ public:
         names__.push_back("beta_b");
         names__.push_back("alpha");
         names__.push_back("sigma_raw");
+        names__.push_back("sigma1");
         names__.push_back("sigma_rawb");
         names__.push_back("scale");
         names__.push_back("xi");
@@ -929,12 +1042,16 @@ public:
         dims__.push_back(n_p);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((n_c * (1 - bioInd)));
+        dims__.push_back(((n_c * (1 - bioInd)) * multVar));
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((n_b * bioInd));
+        dims__.push_back((1 - multVar));
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(((n_b * bioInd) * multVar));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(scaleInd);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(n_ptm);
@@ -949,7 +1066,7 @@ public:
         dims__.push_back(((useCov * n_b) * bioInd));
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((n_c * (1 - bioInd)));
+        dims__.push_back(((n_c * (1 - bioInd)) * multVar));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((n_b * bioInd));
@@ -988,16 +1105,25 @@ public:
             alpha.push_back(in__.scalar_constrain());
         }
         vector<double> sigma_raw;
-        size_t dim_sigma_raw_0__ = (n_c * (1 - bioInd));
+        size_t dim_sigma_raw_0__ = ((n_c * (1 - bioInd)) * multVar);
         for (size_t k_0__ = 0; k_0__ < dim_sigma_raw_0__; ++k_0__) {
             sigma_raw.push_back(in__.scalar_lb_constrain(0));
         }
+        vector<double> sigma1;
+        size_t dim_sigma1_0__ = (1 - multVar);
+        for (size_t k_0__ = 0; k_0__ < dim_sigma1_0__; ++k_0__) {
+            sigma1.push_back(in__.scalar_lb_constrain(0));
+        }
         vector<double> sigma_rawb;
-        size_t dim_sigma_rawb_0__ = (n_b * bioInd);
+        size_t dim_sigma_rawb_0__ = ((n_b * bioInd) * multVar);
         for (size_t k_0__ = 0; k_0__ < dim_sigma_rawb_0__; ++k_0__) {
             sigma_rawb.push_back(in__.scalar_lb_constrain(0));
         }
-        double scale = in__.scalar_lb_constrain(0);
+        vector<double> scale;
+        size_t dim_scale_0__ = scaleInd;
+        for (size_t k_0__ = 0; k_0__ < dim_scale_0__; ++k_0__) {
+            scale.push_back(in__.scalar_lb_constrain(0));
+        }
         vector<double> xi;
         size_t dim_xi_0__ = n_ptm;
         for (size_t k_0__ = 0; k_0__ < dim_xi_0__; ++k_0__) {
@@ -1017,13 +1143,18 @@ public:
             for (int k_0__ = 0; k_0__ < n_p; ++k_0__) {
             vars__.push_back(alpha[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (n_c * (1 - bioInd)); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             vars__.push_back(sigma_raw[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (n_b * bioInd); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < (1 - multVar); ++k_0__) {
+            vars__.push_back(sigma1[k_0__]);
+            }
+            for (int k_0__ = 0; k_0__ < ((n_b * bioInd) * multVar); ++k_0__) {
             vars__.push_back(sigma_rawb[k_0__]);
             }
-        vars__.push_back(scale);
+            for (int k_0__ = 0; k_0__ < scaleInd; ++k_0__) {
+            vars__.push_back(scale[k_0__]);
+            }
             for (int k_0__ = 0; k_0__ < n_ptm; ++k_0__) {
             vars__.push_back(xi[k_0__]);
             }
@@ -1041,85 +1172,105 @@ public:
         (void) DUMMY_VAR__;  // suppress unused var warning
 
         try {
-            current_statement_begin__ = 54;
+            current_statement_begin__ = 62;
             validate_non_negative_index("betaP_c", "(useCov * n_c)", (useCov * n_c));
             vector<double> betaP_c((useCov * n_c), 0.0);
             stan::math::initialize(betaP_c, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(betaP_c,DUMMY_VAR__);
-            current_statement_begin__ = 55;
+            current_statement_begin__ = 63;
             validate_non_negative_index("betaP_b", "((useCov * n_b) * bioInd)", ((useCov * n_b) * bioInd));
             vector<double> betaP_b(((useCov * n_b) * bioInd), 0.0);
             stan::math::initialize(betaP_b, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(betaP_b,DUMMY_VAR__);
-            current_statement_begin__ = 56;
-            validate_non_negative_index("sigma", "(n_c * (1 - bioInd))", (n_c * (1 - bioInd)));
-            vector<double> sigma((n_c * (1 - bioInd)), 0.0);
+            current_statement_begin__ = 64;
+            validate_non_negative_index("sigma", "((n_c * (1 - bioInd)) * multVar)", ((n_c * (1 - bioInd)) * multVar));
+            vector<double> sigma(((n_c * (1 - bioInd)) * multVar), 0.0);
             stan::math::initialize(sigma, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(sigma,DUMMY_VAR__);
-            current_statement_begin__ = 57;
+            current_statement_begin__ = 65;
             validate_non_negative_index("sigmab", "(n_b * bioInd)", (n_b * bioInd));
             vector<double> sigmab((n_b * bioInd), 0.0);
             stan::math::initialize(sigmab, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(sigmab,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 60;
+            current_statement_begin__ = 69;
             if (as_bool(logical_eq(bioInd,0))) {
 
-                current_statement_begin__ = 61;
-                for (int i = 1; i <= n_c; ++i) {
+                current_statement_begin__ = 70;
+                if (as_bool(logical_eq(multVar,1))) {
 
-                    current_statement_begin__ = 62;
-                    stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (scale * get_base1(sigma_raw,i,"sigma_raw",1)));
-                }
-            }
-            current_statement_begin__ = 66;
-            if (as_bool(logical_eq(bioInd,1))) {
+                    current_statement_begin__ = 71;
+                    for (int i = 1; i <= n_c; ++i) {
 
-                current_statement_begin__ = 67;
-                for (int i = 1; i <= n_b; ++i) {
+                        current_statement_begin__ = 72;
+                        if (as_bool(logical_eq(varPool,0))) {
 
-                    current_statement_begin__ = 68;
-                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+                            current_statement_begin__ = 73;
+                            stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (5 * get_base1(sigma_raw,i,"sigma_raw",1)));
+                        } else {
 
-                        current_statement_begin__ = 69;
-                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), scale);
-                    } else {
+                            current_statement_begin__ = 75;
+                            if (as_bool(logical_eq(get_base1(n_pep,n_c,"n_pep",1),1))) {
 
-                        current_statement_begin__ = 71;
-                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (scale * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                                current_statement_begin__ = 76;
+                                stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), get_base1(scale,1,"scale",1));
+                            } else {
+
+                                current_statement_begin__ = 78;
+                                stan::math::assign(get_base1_lhs(sigma,i,"sigma",1), (get_base1(scale,1,"scale",1) * get_base1(sigma_raw,i,"sigma_raw",1)));
+                            }
+                        }
                     }
                 }
             }
-            current_statement_begin__ = 79;
-            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+            current_statement_begin__ = 86;
+            if (as_bool(logical_eq(bioInd,1))) {
 
-                current_statement_begin__ = 80;
+                current_statement_begin__ = 87;
                 for (int i = 1; i <= n_b; ++i) {
 
-                    current_statement_begin__ = 81;
+                    current_statement_begin__ = 88;
+                    if (as_bool(logical_eq(get_base1(n_pep,n_b,"n_pep",1),1))) {
+
+                        current_statement_begin__ = 89;
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), get_base1(scale,1,"scale",1));
+                    } else {
+
+                        current_statement_begin__ = 91;
+                        stan::math::assign(get_base1_lhs(sigmab,i,"sigmab",1), (get_base1(scale,1,"scale",1) * get_base1(sigma_rawb,i,"sigma_rawb",1)));
+                    }
+                }
+            }
+            current_statement_begin__ = 99;
+            if (as_bool((primitive_value(logical_eq(bioInd,1)) && primitive_value(logical_gt(useCov,0))))) {
+
+                current_statement_begin__ = 100;
+                for (int i = 1; i <= n_b; ++i) {
+
+                    current_statement_begin__ = 101;
                     stan::math::assign(get_base1_lhs(betaP_b,i,"betaP_b",1), (get_base1(beta_b,i,"beta_b",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
-            current_statement_begin__ = 86;
+            current_statement_begin__ = 106;
             if (as_bool(logical_gt(useCov,0))) {
 
-                current_statement_begin__ = 87;
+                current_statement_begin__ = 107;
                 for (int i = 1; i <= n_c; ++i) {
 
-                    current_statement_begin__ = 88;
+                    current_statement_begin__ = 108;
                     stan::math::assign(get_base1_lhs(betaP_c,i,"betaP_c",1), (get_base1(beta,i,"beta",1) * (1 + get_base1(delta,useCov,"delta",1))));
                 }
             }
 
             // validate transformed parameters
-            current_statement_begin__ = 54;
-            current_statement_begin__ = 55;
-            current_statement_begin__ = 56;
-            for (int k0__ = 0; k0__ < (n_c * (1 - bioInd)); ++k0__) {
+            current_statement_begin__ = 62;
+            current_statement_begin__ = 63;
+            current_statement_begin__ = 64;
+            for (int k0__ = 0; k0__ < ((n_c * (1 - bioInd)) * multVar); ++k0__) {
                 check_greater_or_equal(function__,"sigma[k0__]",sigma[k0__],0);
             }
-            current_statement_begin__ = 57;
+            current_statement_begin__ = 65;
             for (int k0__ = 0; k0__ < (n_b * bioInd); ++k0__) {
                 check_greater_or_equal(function__,"sigmab[k0__]",sigmab[k0__],0);
             }
@@ -1131,7 +1282,7 @@ public:
             for (int k_0__ = 0; k_0__ < ((useCov * n_b) * bioInd); ++k_0__) {
             vars__.push_back(betaP_b[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (n_c * (1 - bioInd)); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             vars__.push_back(sigma[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < (n_b * bioInd); ++k_0__) {
@@ -1140,44 +1291,44 @@ public:
 
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 200;
+            current_statement_begin__ = 238;
             validate_non_negative_index("avgCond", "(n_c * bioInd)", (n_c * bioInd));
             vector<double> avgCond((n_c * bioInd), 0.0);
             stan::math::initialize(avgCond, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(avgCond,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 202;
+            current_statement_begin__ = 240;
             if (as_bool(logical_eq(bioInd,1))) {
 
-                current_statement_begin__ = 203;
+                current_statement_begin__ = 241;
                 if (as_bool(logical_eq(useCov,0))) {
 
-                    current_statement_begin__ = 204;
+                    current_statement_begin__ = 242;
                     for (int i = 1; i <= n_c; ++i) {
 
-                        current_statement_begin__ = 205;
+                        current_statement_begin__ = 243;
                         stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                        current_statement_begin__ = 206;
+                        current_statement_begin__ = 244;
                         for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
 
-                            current_statement_begin__ = 207;
+                            current_statement_begin__ = 245;
                             stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(beta_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"beta_b",1) / get_base1(n_nc,i,"n_nc",1))));
                         }
                     }
                 }
-                current_statement_begin__ = 212;
+                current_statement_begin__ = 250;
                 if (as_bool(logical_eq(useCov,1))) {
 
-                    current_statement_begin__ = 213;
+                    current_statement_begin__ = 251;
                     for (int i = 1; i <= n_c; ++i) {
 
-                        current_statement_begin__ = 214;
+                        current_statement_begin__ = 252;
                         stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), 0);
-                        current_statement_begin__ = 215;
+                        current_statement_begin__ = 253;
                         for (int j = 1; j <= get_base1(n_nc,i,"n_nc",1); ++j) {
 
-                            current_statement_begin__ = 216;
+                            current_statement_begin__ = 254;
                             stan::math::assign(get_base1_lhs(avgCond,i,"avgCond",1), (get_base1(avgCond,i,"avgCond",1) + (get_base1(betaP_b,get_base1(get_base1(condToBio,i,"condToBio",1),j,"condToBio",2),"betaP_b",1) / get_base1(n_nc,i,"n_nc",1))));
                         }
                     }
@@ -1185,7 +1336,7 @@ public:
             }
 
             // validate generated quantities
-            current_statement_begin__ = 200;
+            current_statement_begin__ = 238;
 
             // write generated quantities
             for (int k_0__ = 0; k_0__ < (n_c * bioInd); ++k_0__) {
@@ -1241,19 +1392,26 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_raw" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_b * bioInd); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (1 - multVar); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma1" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= ((n_b * bioInd) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_rawb" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "scale";
-        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= scaleInd; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "scale" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         for (int k_0__ = 1; k_0__ <= n_ptm; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "xi" << '.' << k_0__;
@@ -1276,7 +1434,7 @@ public:
             param_name_stream__ << "betaP_b" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1315,19 +1473,26 @@ public:
             param_name_stream__ << "alpha" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_raw" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_b * bioInd); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (1 - multVar); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma1" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= ((n_b * bioInd) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_rawb" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "scale";
-        param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= scaleInd; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "scale" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
         for (int k_0__ = 1; k_0__ <= n_ptm; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "xi" << '.' << k_0__;
@@ -1350,7 +1515,7 @@ public:
             param_name_stream__ << "betaP_b" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (n_c * (1 - bioInd)); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((n_c * (1 - bioInd)) * multVar); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());

@@ -6,7 +6,7 @@
 \usage{
 compBayes(dat, pp = 0.99, nCores = 1, iter = 2000,
   normalize = TRUE, pop_sd = 10, simpleMod = FALSE, bridge = TRUE,
-  adapt_delta = 0.9)
+  adapt_delta = 0.9, varPool = 1)
 }
 \arguments{
 \item{dat}{The data to be analyzed.  This data must be formatted as shown in
@@ -64,6 +64,11 @@ fit for the sole purpose of visualizing the behavior of individual replicates.}
 
 \item{adapt_delta}{The target proposal acceptance rate that determines step
 size in a Stan model.}
+
+\item{varPool}{A variable that determines the structure of the variance parameters.
+varPool = 0 denotes no pooling, i.e. a separate variance parameter for each protein.
+varPool = 1 (default) generates partially pooled variance parameters and
+varPool = 2 creates complete pooling, i.e. only one experimental error.}
 }
 \description{
 This function runs the main code for fitting an appropriate compositonal

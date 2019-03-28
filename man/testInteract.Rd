@@ -5,7 +5,7 @@
 \title{This function runs the main code for fitting a model that compares more
 than one curve through time.}
 \usage{
-testInteract(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
+testInteract(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
   refCat = NULL, groupByGene = FALSE, randEffect = 0)
 }
 \arguments{
@@ -14,6 +14,8 @@ testInteract(tempDat, timeDegree = 2, fullTimes, useW = TRUE,
 \item{timeDegree}{either 1, 2 or 3 for linear, quadratic or cubic models}
 
 \item{fullTimes}{A vector specifying all of the times found in the study}
+
+\item{fullCats}{A vector specifying all of the categories found in the study}
 
 \item{useW}{A boolean that determines whether or not the posterior variance of
 each protein estimate should be used to weight the observations}

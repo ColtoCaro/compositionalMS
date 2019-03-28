@@ -28,12 +28,17 @@ data{
 
   real<lower=0> pop_sd ; //user input population prior standard deviation
   int<lower=0, upper=1> simpleMod ;  //Indicator to use a simple model
+  int<lower=0, upper=2> varPool;  //Integer denoting variance pooling.  0 = none, 1 = partial, 2 = complete
 
 }
 
 transformed data{
   int<lower=0> bioInd ;
+  int<lower=0> multVar ;
+  int<lower=0> scaleInd ;
   bioInd = (simpleMod == 1) ? 0 : 1 ;
+  multVar = (varPool == 2) ? 0 : 1 ;  //indicator for multiple variance components
+  scaleInd = (varPool == 1) ? 1 : 0 ;  //indicator for multiple variance components
 }
 
 parameters{
@@ -42,9 +47,12 @@ parameters{
 
   real alpha[n_p] ; // ptm means
 
-  real<lower = 0> sigma_raw[n_c * (1 - bioInd)] ; // experimental error
-  real<lower = 0> sigma_rawb[n_b * bioInd] ; // experimental error
-  real<lower = 0> scale ; //heierarchical variance scale
+  real<lower = 0> sigma_raw[n_c * (1 - bioInd) * (multVar)] ; // experimental error
+  real<lower = 0> sigma1[(1 - multVar)] ; // experimental error
+
+  real<lower = 0> sigma_rawb[n_b * bioInd * multVar] ; // experimental error: deprecated
+  real<lower = 0> scale[scaleInd] ; //heierarchical variance scale
+
 //  real<lower = 0> tau[bioInd] ; //population level variance
   real<lower = 0> xi[n_ptm] ; // vc's for ptms
   real<lower = 0> delta[useCov] ; //slope multiplier
@@ -53,27 +61,34 @@ parameters{
 transformed parameters{
   real betaP_c[useCov*n_c] ;  //predicted protein level
   real betaP_b[useCov * n_b * bioInd] ;  //predicted protein level at pp
-  real<lower = 0> sigma[n_c * (1 - bioInd)] ;
+  real<lower = 0> sigma[n_c * (1 - bioInd) * multVar] ;
   real<lower = 0> sigmab[n_b * bioInd] ;
+  //real<lower = 0> sigma1[(1 - multVar)] ;
 
 //create the real variance parameters
 if(bioInd == 0){
-  for(i in 1:n_c){
-    if(n_pep[n_c] == 1){
-      sigma[i] = scale ;
-    }else{
-      sigma[i] = scale*sigma_raw[i] ;
-    }
+  if(multVar == 1){
+    for(i in 1:n_c){
+      if(varPool == 0){ //Fit variance with no pooling
+          sigma[i] = 5 * sigma_raw[i] ;
+        }else{ //Do partial pooling
+          if(n_pep[n_c] == 1){
+            sigma[i] = scale[1] ;
+          }else{
+            sigma[i] = scale[1]*sigma_raw[i] ;
+          }
+        }
+     }
+  }//End if(multVar) == 1
 
-  }
-}
+}//End if bioInd ==0
 
 if(bioInd == 1){
   for(i in 1:n_b){
     if(n_pep[n_b] == 1){
-      sigmab[i] = scale ;
+      sigmab[i] = scale[1] ;
     }else{
-      sigmab[i] = scale*sigma_rawb[i] ;
+      sigmab[i] = scale[1]*sigma_rawb[i] ;
       //beta_b[i] =  beta[bioToCond[i]] + beta_rawb[i] ;
     }
   }
@@ -99,7 +114,10 @@ if(useCov > 0){
 
  model{
   //first set parameters that apply to all models
-  scale ~ normal(0, 5) ;
+  if(varPool == 1){
+    scale ~ normal(0, 5) ;
+  }
+
   //beta ~ normal(0, 10) ;  Simple model has been deprecated
 
   //set ptm distributions
@@ -117,18 +135,33 @@ if(useCov > 0){
   // base model
   if(simpleMod == 1){
    beta ~ normal(0, 10) ;
-   for(i in 1:n_c){
-      sigma_raw[i] ~ inv_gamma(2, 1) ;
-    }
-    for(i in 1:N_){
-      if(ptm[i] == 0){
-      lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]]) ;
-      }
-      if(ptm[i] > 0){
-        lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
-          xi[ptm[i]]) ;
-      }
-    }
+   if(multVar){
+               for(i in 1:n_c){
+                 sigma_raw[i] ~ inv_gamma(2, 1) ;
+              }
+              for(i in 1:N_){
+                if(ptm[i] == 0){
+                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]]) ;
+                }
+                if(ptm[i] > 0){
+                  lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
+                    xi[ptm[i]]) ;
+                }
+              }
+   }else{
+          sigma1 ~ inv_gamma(2, 5) ;
+
+          for(i in 1:N_){
+            if(ptm[i] == 0){
+            lr[i] ~ normal(beta[condID[i]] , sigma1) ;
+            }
+            if(ptm[i] > 0){
+              lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
+                xi[ptm[i]]) ;
+            }
+          }
+   }
+
   } // end base model
 
  // bioRep model
