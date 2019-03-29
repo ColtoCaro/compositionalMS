@@ -136,14 +136,14 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
   if(catCovar){
     baseCatNames <- unlist(lapply(levelList, function(x) x[-1]))
-    catColNames <- paste0(c("Est_", "pVal_", "LL_", "UL_"), rep(baseCatNames, each = 4))
+    catColNames <- paste0(c("Est_", "Pval_", "LL_", "UL_"), rep(baseCatNames, each = 4))
   }else{
     catColNames <- NULL
   }
 
   if(contCovar){
     baseContNames <- substring(colnames(tempDat)[contIndex], 22)
-    contColNames <- paste0(c("Est_", "pVal_", "LL_", "UL_"), rep(baseContNames, each = 4))
+    contColNames <- paste0(c("Est_", "Pval_", "LL_", "UL_"), rep(baseContNames, each = 4))
   }else{
     contColNames <- NULL
   }
