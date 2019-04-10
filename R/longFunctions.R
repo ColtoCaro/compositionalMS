@@ -281,7 +281,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
                                levelName)
             #Make sure this level exists in the model
             coefIndex <- which(rownames(modSumm$coefficients) == paramStr)
-            if(length(coefIndex) == 0){next}
+            if(length(coefIndex) == 0){
+              
+              startPoint <- startPoint + 4
+              next
+                                      }
             tempRes <- matrix(c(modSumm$coefficients[coefIndex, c(1,4)],
                                 confint(fullMod, paramStr)), nrow = 1)
             resMat[index, startPoint:(startPoint + 3)] <- tempRes
