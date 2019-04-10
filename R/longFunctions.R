@@ -28,8 +28,9 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     tempDat <- tempDat[order(tempDat$Protein), ]
     uProt <- unique(tempDat$Gene)
   }else{
-    savedProts <- tempDat$Protein
+    
     tempDat <- tempDat[order(tempDat$Protein), ]
+    savedProts <- tempDat$Protein
     uProt <- unique(tempDat$Protein)
   }
 
