@@ -55,10 +55,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   if(length(contIndex > 0)){
     contCovar <- TRUE
     #center the continuous variables
-    for(i in 1:length(contIndex)){
-      varMean <- mean(tempDat[ , contIndex[i]], na.rm = TRUE)
-      tempDat[ , contIndex[i]] <- tempDat[ , contIndex[i]] - varMean
-    }
+    #for(i in 1:length(contIndex)){
+    #  varMean <- mean(tempDat[ , contIndex[i]], na.rm = TRUE)
+    #  tempDat[ , contIndex[i]] <- tempDat[ , contIndex[i]] - varMean
+    #}
   }else{
     contCovar <- FALSE
   }
