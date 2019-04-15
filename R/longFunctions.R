@@ -22,10 +22,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
     #Model always uses Protein column
-    #Replace column and save the protein names for later
+    tempDat <- tempDat[order(tempDat$Protein), ]
+    #Save the protein names for later, and replace column
     savedProts <- tempDat$Protein
     tempDat$Protein <- tempDat$Gene
-    tempDat <- tempDat[order(tempDat$Protein), ]
     uProt <- unique(tempDat$Gene)
   }else{
 
@@ -55,10 +55,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   if(length(contIndex > 0)){
     contCovar <- TRUE
     #center the continuous variables
-    for(i in 1:length(contIndex)){
-      varMean <- mean(tempDat[ , contIndex[i]], na.rm = TRUE)
-      tempDat[ , contIndex[i]] <- tempDat[ , contIndex[i]] - varMean
-    }
+    #for(i in 1:length(contIndex)){
+    #  varMean <- mean(tempDat[ , contIndex[i]], na.rm = TRUE)
+    #  tempDat[ , contIndex[i]] <- tempDat[ , contIndex[i]] - varMean
+    #}
   }else{
     contCovar <- FALSE
   }
