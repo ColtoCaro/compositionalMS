@@ -28,7 +28,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     tempDat <- tempDat[order(tempDat$Protein), ]
     uProt <- unique(tempDat$Gene)
   }else{
-    
+
     tempDat <- tempDat[order(tempDat$Protein), ]
     savedProts <- tempDat$Protein
     uProt <- unique(tempDat$Protein)
@@ -216,10 +216,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
     }#end "if" more than one condition
 
-    #if any tests failed something weird happened with aliasing (skip this protein)
-    catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
-    timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
-    if(length(catError) + length(timeError) > 0){next}
+    #if any tests failed something weird happened with aliasing
+    #catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
+    #timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
+    #if(length(catError) + length(timeError) > 0){next}
 
     #Figure out which times to predict
     #create list of times within observed ranges
@@ -282,7 +282,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
             #Make sure this level exists in the model
             coefIndex <- which(rownames(modSumm$coefficients) == paramStr)
             if(length(coefIndex) == 0){
-              
+
               startPoint <- startPoint + 4
               next
                                       }
