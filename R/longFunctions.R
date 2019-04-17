@@ -22,7 +22,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
     #Model always uses Protein column
-    tempDat <- tempDat[order(tempDat$Protein), ]
+    tempDat <- tempDat[order(tempDat$Gene), ]
     #Save the protein names for later, and replace column
     savedProts <- tempDat$Protein
     tempDat$Protein <- tempDat$Gene
