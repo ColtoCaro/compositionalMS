@@ -332,17 +332,18 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #}
 
   #Now add columns with q values
-  #first find the p-values
+  #first find the p-values                      
+  #pIndex <- grep("Pval", colnames(resDf))
+  #Qvals <- as.data.frame(lapply(resDf[ , pIndex], function(x) p.adjust(x, method = "fdr")))
+  #colnames(Qvals) <- gsub("Pval", "Qval", colnames(resDf)[pIndex])
+  #finalDf <- data.frame(resDf, Qvals)
 
-  pIndex <- grep("Pval", colnames(resDf))
-  Qvals <- as.data.frame(lapply(resDf[ , pIndex], function(x) p.adjust(x, method = "fdr")))
-  colnames(Qvals) <- gsub("Pval", "Qval", colnames(resDf)[pIndex])
-  finalDf <- data.frame(resDf, Qvals)
+  #newIndex <- c(seq_along(resDf), pIndex + 0.5)
+  #finalDf <- finalDf[ ,order(newIndex)]
 
-  newIndex <- c(seq_along(resDf), pIndex + 0.5)
-  finalDf <- finalDf[ ,order(newIndex)]
-
-  finalDf
+  #finalDf
+                       
+  resDf
 }
 
 
