@@ -206,12 +206,12 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
         catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
-        catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
+        catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
 
         #Test for an overall time effect in condition t_
         timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
                           "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
-        timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2])
+        timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
       }#end condition loop
 
     }#end "if" more than one condition
