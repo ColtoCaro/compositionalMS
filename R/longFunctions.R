@@ -217,9 +217,9 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     }#end "if" more than one condition
 
     #if any tests failed something weird happened with aliasing
-    #catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
-    #timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
-    #if(length(catError) + length(timeError) > 0){next}
+    catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
+    timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
+    if(length(catError) + length(timeError) > 0){next}
 
     #Figure out which times to predict
     #create list of times within observed ranges
