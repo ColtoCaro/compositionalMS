@@ -17,7 +17,7 @@
 #'   and 2 for a random slope and intercepts model
 #'
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
-                  refCat = NULL, groupByGene = FALSE, randEffect = 0){
+                  refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE){
 
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
@@ -206,6 +206,9 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
         catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
+        if(testBaseline == FALSE){
+          catStr <- catStr[-1] #allow baseline differences to remain in both models
+        }
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
 
         #Test for an overall time effect in condition t_
