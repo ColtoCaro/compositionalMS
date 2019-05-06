@@ -206,14 +206,12 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
         catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
-<<<<<<< HEAD
+
         if(testBaseline == FALSE){
           catStr <- catStr[-1] #allow baseline differences to remain in both models
         }
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
-=======
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
->>>>>>> 2d25b914ee3c189200005f449828d90440ab4e18
 
         #Test for an overall time effect in condition t_
         timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
@@ -339,7 +337,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #}
 
   #Now add columns with q values
-  #first find the p-values                      
+  #first find the p-values
   #pIndex <- grep("Pval", colnames(resDf))
   #Qvals <- as.data.frame(lapply(resDf[ , pIndex], function(x) p.adjust(x, method = "fdr")))
   #colnames(Qvals) <- gsub("Pval", "Qval", colnames(resDf)[pIndex])
@@ -349,7 +347,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #finalDf <- finalDf[ ,order(newIndex)]
 
   #finalDf
-                       
+
   resDf
 }
 
