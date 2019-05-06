@@ -22,7 +22,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
     #Model always uses Protein column
-    tempDat <- tempDat[order(tempDat$Protein), ]
+    tempDat <- tempDat[order(tempDat$Gene), ]
     #Save the protein names for later, and replace column
     savedProts <- tempDat$Protein
     tempDat$Protein <- tempDat$Gene
@@ -206,23 +206,27 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
         catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
+<<<<<<< HEAD
         if(testBaseline == FALSE){
           catStr <- catStr[-1] #allow baseline differences to remain in both models
         }
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
+=======
+        catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
+>>>>>>> 2d25b914ee3c189200005f449828d90440ab4e18
 
         #Test for an overall time effect in condition t_
         timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
                           "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
-        timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2])
+        timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
       }#end condition loop
 
     }#end "if" more than one condition
 
     #if any tests failed something weird happened with aliasing
-    #catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
-    #timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
-    #if(length(catError) + length(timeError) > 0){next}
+    catError <- unlist(lapply(catTests, function(x) attr(x, "class") == "try-error"))
+    timeError <- unlist(lapply(timeTests, function(x) attr(x, "class") == "try-error"))
+    if(length(catError) + length(timeError) > 0){next}
 
     #Figure out which times to predict
     #create list of times within observed ranges
@@ -335,17 +339,18 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #}
 
   #Now add columns with q values
-  #first find the p-values
+  #first find the p-values                      
+  #pIndex <- grep("Pval", colnames(resDf))
+  #Qvals <- as.data.frame(lapply(resDf[ , pIndex], function(x) p.adjust(x, method = "fdr")))
+  #colnames(Qvals) <- gsub("Pval", "Qval", colnames(resDf)[pIndex])
+  #finalDf <- data.frame(resDf, Qvals)
 
-  pIndex <- grep("Pval", colnames(resDf))
-  Qvals <- as.data.frame(lapply(resDf[ , pIndex], function(x) p.adjust(x, method = "fdr")))
-  colnames(Qvals) <- gsub("Pval", "Qval", colnames(resDf)[pIndex])
-  finalDf <- data.frame(resDf, Qvals)
+  #newIndex <- c(seq_along(resDf), pIndex + 0.5)
+  #finalDf <- finalDf[ ,order(newIndex)]
 
-  newIndex <- c(seq_along(resDf), pIndex + 0.5)
-  finalDf <- finalDf[ ,order(newIndex)]
-
-  finalDf
+  #finalDf
+                       
+  resDf
 }
 
 
