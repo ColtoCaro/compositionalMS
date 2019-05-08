@@ -179,7 +179,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
   ###############Now get predictions and p-values for each protein##############
   resMat <- matrix(NA, nrow = nProt, ncol = length(tempNames))
-  colnames(resMat) <- tempNames
+  colnames(resMat) <- gsub("\\:", "_", tempNames)
 
   for(index in 1:nProt){
     #First make sure the reference was observed in this protein
