@@ -211,7 +211,6 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
         if(testBaseline == FALSE){
           catStr <- catStr[-1] #allow baseline differences to remain in both models
         }
-        catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2])
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
 
         #Test for an overall time effect in condition t_
