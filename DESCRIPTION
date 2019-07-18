@@ -5,6 +5,8 @@ Version: 0.0.0.9001
 Date: 2017-03-15
 Authors@R: c(person("Jonathon", "O'Brien", email = "obrienj@hms.harvard.edu",
     role = c("cre", "aut")))
+Author: Jonathon OBrien
+Maintainer: Jonathon OBrien <obrienj@calicolabs.com>
 Description: Fits pre-compiled Bayesian models for isobaric tag mass
     spectrometry proteomics experiments.  Models take into account the 
     compositional nature of the data created by the constraints of automatic
