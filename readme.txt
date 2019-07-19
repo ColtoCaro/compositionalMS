@@ -1,3 +1,21 @@
+# Installation
+
+In R, you can use `dev_tools():`
+
+```
+devtools::install_github("https://github.com/ColtoCaro/compositionalMS" , INSTALL_opts="--no-staged-install")
+```
+
+Or, you can pull the source and install on a command line:
+
+```
+cd ~/workspace
+git clone git@github.com:ColtoCaro/compositionalMS
+R CMD INSTALL compositionalMS --no-staged-install
+```
+
+# Description
+
 A temporary guide for using the compMS package
 
 This package fits Bayesian compostional models to mass spectrometry proteomics data utilizing isobaric tags.
