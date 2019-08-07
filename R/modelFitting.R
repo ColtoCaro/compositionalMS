@@ -117,8 +117,8 @@ compBayes <- function(dat,
   }else{
       model_number <- 1
     }
-
   for(modelN in 1:model_number){
+  print(paste0('model fit round ', modelN))
 
   #If this is the second time through, set bioReps to conditions
   if(modelN == 2){
@@ -136,7 +136,7 @@ compBayes <- function(dat,
 
   #set data variables
   #Do ptms first since it might change the dimensions of the data
-  N_ <- nrow(oneDat)
+  #N_ <- nrow(oneDat)
   #count the plexes with PTMs
   sumPtm <- sum(unlist(lapply(dat, function(x) (sum(x[3, grep("tag", colnames(x))]) > 0))))
 
@@ -148,10 +148,14 @@ compBayes <- function(dat,
     if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
   }
 
+  N_ <- nrow(oneDat)
+
   if(sumPtm == 0 | modelN == 1){
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
+
+    print(length(ptm))
     ptmPep <- rep(0,N_)
   }else{
     #find and remove ptm data with no corresponding protein data
@@ -177,7 +181,7 @@ compBayes <- function(dat,
     ptmDat <- oneDat[-nonPtms, ]
     ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
-    n_ptm <- length(unique(ptmDat$ptm))
+    n_ptm <- length(unique(ptmDat$ptmID))
 
     ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0, nrow(oneDat))
@@ -457,69 +461,9 @@ compBayes <- function(dat,
                         stringsAsFactors = F)
 
 
-    #redo with population level tables
-  # uBio <- levels(factor(oneDat$condID))
-  # condNum <- getCond(uBio, bio = FALSE)
-  # condNames <- getName(uBio)
-  #
-  # refC <- dat[[1]][1, "tag1"]
-  #
-  # nCond <- length(unique(condNum))
-  # uCond <- unique(c(refC, unique(condNum)))
-  # uCond <- uCond[order(uCond)]
-  #
-  # nProts <- length(unique(condNames))
-  #
-  # indices <- lapply(1:nProts, function(x)
-  #   which(condNames == levels(factor(condNames))[x]))
-  #
-  # condList <- lapply(indices, function(x) condNum[x])
-  #
-  # simpRES <- lapply(indices, function(x)
-  #   alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = FALSE)))
-  #
-  #
-  # refPos <- which(uCond == refC)
-  # suCond <- uCond[-refPos]
-  # if(length(suCond) == 1){
-  #   lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
-  #   lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
-  #   lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-  #   lrUL95 <- as.matrix(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  # }else{
-  #   lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
-  #   lrVars <- t(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
-  #   lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-  #   lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  # }
-  # popLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-  #                        stringsAsFactors = F)
-  #
-  # #Now get the proportions
-  # lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrs) <- paste0("Est_avg_Prop", uCond)
-  # lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrVars) <- paste0("Var_Cond", uCond)
-  # lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrLL95) <- paste0("LL95_Cond", uCond)
-  # lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrUL95) <- paste0("UL95_Cond", uCond)
-  #
-  # popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-  #                       stringsAsFactors = F)
-
-
   } #end else (not simple case)
 
-  if(sumPtm > 0){
+  if(sumPtm > 0 & modelN == 2){
     ptmTabs <- getPtms(model, ptmDat, dat[[1]][1, "tag1"])
     ptmLr <- ptmTabs[[1]]
     ptmProp <- ptmTabs[[2]]
@@ -566,8 +510,6 @@ compBayes <- function(dat,
 
   gRES
 } #end of compBayes function
-
-
 
 
 #' Changing the comparisons of interest
