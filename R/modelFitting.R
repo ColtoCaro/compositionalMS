@@ -118,7 +118,6 @@ compBayes <- function(dat,
       model_number <- 1
     }
   for(modelN in 1:model_number){
-  print(paste0('model fit round ', modelN))
 
   #If this is the second time through, set bioReps to conditions
   if(modelN == 2){
@@ -154,8 +153,6 @@ compBayes <- function(dat,
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
-
-    print(length(ptm))
     ptmPep <- rep(0,N_)
   }else{
     #find and remove ptm data with no corresponding protein data
