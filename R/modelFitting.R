@@ -117,7 +117,7 @@ compBayes <- function(dat,
   }else{
       model_number <- 1
     }
-    n
+
   for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
@@ -497,8 +497,7 @@ compBayes <- function(dat,
     }else{
       tempTab <- bioDf
     }
-  Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
-
+  # add genes column without worrying about gene columns being lost
   gRES <- RES
   x <- oneDat[match(tempTab$Protein, oneDat$protein), c('gene', 'protein')]
   for(i in 2:5){
