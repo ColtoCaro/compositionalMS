@@ -117,6 +117,7 @@ compBayes <- function(dat,
   }else{
       model_number <- 1
     }
+    n
   for(modelN in 1:model_number){
 
   #If this is the second time through, set bioReps to conditions
@@ -148,7 +149,6 @@ compBayes <- function(dat,
   }
 
   N_ <- nrow(oneDat)
-
   if(sumPtm == 0 | modelN == 1){
     n_p <- 0
     n_ptm <- 0
@@ -171,7 +171,7 @@ compBayes <- function(dat,
       #temporary reduction for estimating only PTMs
         globOnly <- setdiff(globalProts, ptmProts)
         globIndex <- which(oneDat$bioID %in% globOnly)
-        oneDat <- oneDat[-globIndex, ]
+        if (length(globIndex) > 0){oneDat <- oneDat[-globIndex, ]}
     }
 
     nonPtms <- which(oneDat$ptm == 0)
@@ -498,15 +498,21 @@ compBayes <- function(dat,
       tempTab <- bioDf
     }
   Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
+
   gRES <- RES
+  x <- oneDat[match(tempTab$Protein, oneDat$protein), c('gene', 'protein')]
   for(i in 2:5){
     if(is.data.frame(RES[[i]])){
-      gRES[[i]] <- data.frame(Gene, RES[[i]])
+      y <- gRES[[i]]
+      gRES[[i]] <- merge(x, y, by.x='protein', by.y="Protein", all=T)
+      colnames(gRES[[i]]) <- c('Protein', 'Gene')
     }
   }
 
   gRES
 } #end of compBayes function
+
+
 
 
 #' Changing the comparisons of interest
