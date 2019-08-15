@@ -144,12 +144,12 @@ compBayes <- function(dat,
   #First time through, remove PTMs
   if(modelN ==2){
     oneDat$condID <- oneDat$bioID
-  }else{
-    if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
-  }
+  } #else{
+    #if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
+  #}
 
   N_ <- nrow(oneDat)
-  if(sumPtm == 0 | modelN == 1){
+  if(sumPtm == 0){
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
@@ -178,7 +178,10 @@ compBayes <- function(dat,
     ptmDat <- oneDat[-nonPtms, ]
     ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
-    n_ptm <- length(unique(ptmDat$ptmID))
+
+    n_ptm <- length(unique(ptmDat$ptm))
+    # if you want variance estimate per peptide per PTM change to the line below
+    # n_ptm <- length(unique(ptmDat$ptmID))
 
     ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0, nrow(oneDat))
@@ -396,7 +399,6 @@ compBayes <- function(dat,
                       stringsAsFactors = F)
 
 
-
   #make avgCond log-ratio tables
 
   uBio <- levels(factor(oneDat$condID))
@@ -460,14 +462,14 @@ compBayes <- function(dat,
 
   } #end else (not simple case)
 
-  if(sumPtm > 0 & modelN == 2){
+  if(sumPtm > 0){
     ptmTabs <- getPtms(model, ptmDat, dat[[1]][1, "tag1"])
     ptmLr <- ptmTabs[[1]]
     ptmProp <- ptmTabs[[2]]
   }else{
+    ptmDat <- NULL
     ptmLr <- NULL
     ptmProp <- NULL
-    ptmDat <- NULL
   }
 
 
@@ -481,12 +483,15 @@ compBayes <- function(dat,
     RES[[5]] <- fcBioTab
     RES[[6]] <- NULL  #This used to be for population models
     RES[[7]] <- oneDat$condID
-  }else{
-    RES[[2]] <- avgPTab
-    RES[[5]] <- avgLrTab
     RES[[8]] <- ptmDat
     RES[[9]] <- ptmLr
     RES[[10]] <- ptmProp
+    RES[[11]] <- oneDat #useful for troubleshooting
+  }else{
+    RES[[2]] <- avgPTab
+    RES[[5]] <- avgLrTab
+    RES[[12]]
+
   }
 
   }  #End modelN for-loop that fits 2 simple models
@@ -503,15 +508,13 @@ compBayes <- function(dat,
   for(i in 2:5){
     if(is.data.frame(RES[[i]])){
       y <- gRES[[i]]
-      gRES[[i]] <- merge(x, y, by.x='protein', by.y="Protein", all=T)
+      gRES[[i]] <- merge(x, y, by.x='protein', by.y='Protein', all=T)
       colnames(gRES[[i]]) <- c('Protein', 'Gene')
     }
   }
 
   gRES
 } #end of compBayes function
-
-
 
 
 #' Changing the comparisons of interest
