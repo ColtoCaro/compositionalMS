@@ -490,7 +490,7 @@ compBayes <- function(dat,
   }else{
     RES[[2]] <- avgPTab
     RES[[5]] <- avgLrTab
-    RES[[12]]
+    RES[[12]] <- model
 
   }
 
