@@ -70,6 +70,7 @@ compBayes <- function(dat,
                      nCores = 1,
                      iter = 2000,
                      normalize = TRUE,
+                     normalize_ptm = FALSE
                      pop_sd = 10,
                      simpleMod = FALSE,
                      bridge = TRUE,
@@ -128,9 +129,18 @@ compBayes <- function(dat,
       })
     ptmTemp <- oneDat$ptmID #save this from the first model
   }
-
+  #how to normalize
+  if (normalize) {
+    normalize_plex <- lapply(1:length(dat), function(x) (all(dat[[x]][3,] == 0)))
+    }
+  if (normalize & normalize_ptm) {
+    normalize_plex <- lapply(1:length(dat), function(x) (TRUE))
+    }
+  if ( ! (normalize | normalize_ptm)){
+        normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
+    }
   readyDat <- lapply(1:length(dat), function(x)
-    transformDat(dat[[x]], plexNumber = x, normalize = normalize,
+    transformDat(dat[[x]], plexNumber = x, normalize = normalize_plex[[x]],
                  simpleMod))
   oneDat <- do.call(rbind, readyDat)
 
