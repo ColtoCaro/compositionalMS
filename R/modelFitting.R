@@ -509,7 +509,8 @@ compBayes <- function(dat,
     if(is.data.frame(RES[[i]])){
       y <- gRES[[i]]
       gRES[[i]] <- merge(x, y, by.x='protein', by.y='Protein', all=T)
-      colnames(gRES[[i]]) <- c('Protein', 'Gene')
+      colnames(avgLrTab)[colnames(avgLrTab) == c('gene')] <-  'Gene'
+      colnames(avgLrTab)[colnames(avgLrTab) == c('protein')] <- 'Protein'
     }
   }
 
