@@ -70,7 +70,7 @@ compBayes <- function(dat,
                      nCores = 1,
                      iter = 2000,
                      normalize = TRUE,
-                     normalize_ptm = FALSE
+                     normalize_ptm = FALSE,
                      pop_sd = 10,
                      simpleMod = FALSE,
                      bridge = TRUE,
