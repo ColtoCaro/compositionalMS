@@ -75,8 +75,8 @@ compBayes <- function(dat,
                      simpleMod = FALSE,
                      bridge = TRUE,
                      adapt_delta = .9,
-                     varPool = 1
-                     ){
+                     varPool = 1,
+                     no_bio = FALSE                     ){
 
   #Force the new setup with two simple runs
   simpleMod <- TRUE
@@ -504,6 +504,9 @@ compBayes <- function(dat,
 
   }
 
+if (no_bio){
+break
+}
   }  #End modelN for-loop that fits 2 simple models
 
   #add Gene back in
