@@ -137,13 +137,15 @@ compBayes <- function(dat,
     normalize_plex <- lapply(1:length(dat), function(x) (TRUE))
     }
   if ( ! (normalize | normalize_ptm)){
-        normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
+    normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
     }
   readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], plexNumber = x, normalize = normalize_plex[[x]],
                  simpleMod))
   oneDat <- do.call(rbind, readyDat)
-
+  if ( !  normalize_ptm){
+  oneDat <- oneDat[oneDat$lr != 0,]
+  }
   #set data variables
   #Do ptms first since it might change the dimensions of the data
   #N_ <- nrow(oneDat)
@@ -201,7 +203,8 @@ compBayes <- function(dat,
 
   oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
                          oneDat$ptmID), ]
-
+  # remove log
+  # start setting global variable for stan model
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   condKey <- data.frame(number = 1:n_c,
@@ -265,7 +268,6 @@ compBayes <- function(dat,
     covariate <- oneDat$covariate/quantile(oneDat$covariate, probs = pp)
   }else{covariate <- oneDat$covariate}
 
-  lr <- oneDat$lr
   if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
                         consequence of normalizing values already less than
                         one")}
