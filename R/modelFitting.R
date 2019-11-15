@@ -137,12 +137,13 @@ compBayes <- function(dat,
     normalize_plex <- lapply(1:length(dat), function(x) (TRUE))
     }
   if ( ! (normalize | normalize_ptm)){
-    normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
+        normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
     }
   readyDat <- lapply(1:length(dat), function(x)
     transformDat(dat[[x]], plexNumber = x, normalize = normalize_plex[[x]],
                  simpleMod))
   oneDat <- do.call(rbind, readyDat)
+  ## this shou
   if ( !  normalize_ptm){
   oneDat <- oneDat[oneDat$lr != 0,]
   }
@@ -267,7 +268,7 @@ compBayes <- function(dat,
   if(useCov){
     covariate <- oneDat$covariate/quantile(oneDat$covariate, probs = pp)
   }else{covariate <- oneDat$covariate}
-
+  lr <- oneDat$lr
   if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
                         consequence of normalizing values already less than
                         one")}
