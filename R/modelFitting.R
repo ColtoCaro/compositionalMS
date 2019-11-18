@@ -161,7 +161,8 @@ compBayes <- function(dat,
     #if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
   #}
 
-  N_ <- nrow(oneDat)
+  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
+                         oneDat$ptmID), ]
   if(sumPtm == 0){
     n_p <- 0
     n_ptm <- 0
@@ -187,23 +188,21 @@ compBayes <- function(dat,
         if (length(globIndex) > 0){oneDat <- oneDat[-globIndex, ]}
     }
 
-    nonPtms <- which(oneDat$ptm == 0)
-    ptmDat <- oneDat[-nonPtms, ]
+    Ptms <- ptm != 0
+    ptmDat <- oneDat[Ptms, ]
     ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
-
     n_ptm <- length(unique(ptmDat$ptm))
     # if you want variance estimate per peptide per PTM change to the line below
     # n_ptm <- length(unique(ptmDat$ptmID))
 
-    ptm <- as.integer(oneDat$ptm)
     ptmPep <- rep(0, nrow(oneDat))
-    ptmPep[which(oneDat$ptm > 0)] <- as.integer(factor(ptmDat$ptmID))
+    ptmPep[Ptms]  <- as.integer(factor(ptmDat$ptmID))
+
 
   } # end actions for ptm experiments
 
-  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
-                         oneDat$ptmID), ]
+
   # remove log
   # start setting global variable for stan model
   N_ <- nrow(oneDat)
