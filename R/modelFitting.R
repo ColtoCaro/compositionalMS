@@ -187,13 +187,13 @@ compBayes <- function(dat,
         globIndex <- which(oneDat$bioID %in% globOnly)
         if (length(globIndex) > 0){oneDat <- oneDat[-globIndex, ]}
     }
-
+    ptm <- as.integer(oneDat$ptm)
     Ptms <- ptm != 0
     ptmDat <- oneDat[Ptms, ]
     ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
     n_ptm <- length(unique(ptmDat$ptm))
-    ptm <- as.integer(oneDat$ptm)
+
 
     # if you want variance estimate per peptide per PTM change to the line below
     # n_ptm <- length(unique(ptmDat$ptmID))
