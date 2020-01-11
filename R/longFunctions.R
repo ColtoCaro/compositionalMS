@@ -15,9 +15,13 @@
 #'   by genes or proteins
 #' @param randEffect takes 0 for no random effects. 1 for a random intercept
 #'   and 2 for a random slope and intercepts model
+#' @param sinusoid Boolean variable that supercedes timeDegree forcing a sinusoidal time structure
 #'
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
-                  refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE){
+                  refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE,
+                  sinusoid = FALSE){
+
+  if(sinusoid == TRUE){timeDegree = 2}
 
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
