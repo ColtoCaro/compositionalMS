@@ -115,7 +115,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     #the "timePars variablew will be used in the hpothesis testing code
     #as well
     if(sinusoid == TRUE){
+<<<<<<< HEAD
       timePars <- c("Sin", "Cos")
+=======
+      timePars <- c("I(sin(Time))", "I(cos(Time))")
+>>>>>>> bf56a171db8a9d65edc1fae7ae35cb758b73142f
     }else{
       timePars <- paste0("Time", degVec)
     }
