@@ -21,7 +21,6 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
                   refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE,
                   sinusoid = FALSE){
 
-  if(sinusoid == TRUE){timeDegree = 2}
 
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
@@ -97,27 +96,46 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     baseString <- ""
   )
 
+  #First use of "timeDegree" parameter.  Creates a vector of character numbers
+  #that will be used to define the model formula.
+  #sinusoid == TRUE must overwrite this
   degVec <- as.character(1:timeDegree)
   degVec[1] <- ""
 
   if(randEffect == 0){
+
+    #Create a variable specifying the parameters that involve time
+    #this is where the program incorporates sinusoidal functions
+    #the "timePars variablew will be used in the hpothesis testing code
+    #as well
+    if(sinusoid == TRUE){
+      timePars <- c("I(sin(Time)", "I(cos(Time))")
+    }else{
+      timePars <- paste0("Time", degVec)
+    }
     fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
-                             paste0("Protein:", paste0("Time", degVec), collapse = " + "),
-                             "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
+                             paste0("Protein:", timePars, collapse = " + "),
+                             "+", paste0("Protein:Category:", timePars, collapse = " + ")))
   }
+
+  ######the below code is deprecated.  Stop functions added########
   if(randEffect == 1){
+    stop("Random Effects not supported")
     fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
                              paste0("Protein:", paste0("Time", degVec), collapse = " + "),
                              "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 | ", colnames(tempDat)[randIndex], ")")
   }
   if(randEffect == 2){
+    stop("Random Effects not supported")
     degVec <- degVec[1] #force only linear slopes if random slopes are being fit to each ID
     fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
                              paste0("Protein:", paste0("Time", degVec), collapse = " + "),
                              "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 + Time | ", colnames(tempDat)[randIndex], ")")
   }
+############End deprecated chunk##########
+
 
   #Set reference category
   if(!is.null(refCat)){
@@ -136,6 +154,8 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #nCovars <- 2 * (length(contIndex) + totalLevels - length(catCovarIndex)) #estimate and pVal for each
   #deprecated
 
+  #Create names for results data frame.  Predicited value names do not specify which
+  #model was fit.
   tempNames <- paste0(rep(paste0("category:", fullCats), each = length(fullTimes) + 2),
                             c(paste0(":Time", fullTimes),"Pval-Time", "Pval-Category"))
 
@@ -203,14 +223,17 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
 
     #Test for an overall time effect in the baseline condition
-    timeStr <-  paste0("Protein", uProt[index], paste0(":Time", degVec), " = 0")
+    #timePars was specified above
+
+    timeStr <-  paste0("Protein", uProt[index], paste0(":", timePars), " = 0")
     timeTests[[1]] <-  lht(fullMod, timeStr, singular.ok= T)$`Pr(>F)`[2]
 
     if(length(dropRef) > 0){
 
       for(t_ in 1:length(dropRef)){
         #Test for any difference between refCat and category t_
-        catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]], c("", paste0(":Time", degVec)), " = 0")
+        catStr <-  paste0("Protein", uProt[index], ":Category", fullCats[dropRef[t_]],
+                          c("", paste0(":", timePars)), " = 0")
 
         if(testBaseline == FALSE){
           catStr <- catStr[-1] #allow baseline differences to remain in both models
@@ -219,7 +242,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
         #Test for an overall time effect in condition t_
         timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
-                          "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":Time", degVec)," = 0")
+                          "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":", timePars)," = 0")
         timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
       }#end condition loop
 
@@ -253,6 +276,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     #Now extract and store the predicted values
     newDfs <- list()
 
+    if(sinusoid == TRUE){timeDegree = 1}
     newDfs <- lapply(1:length(obsCats[[index]]), function(x)
         makePredDat(prot = uProt[index], timeVec = times[[x]], category = fullCats[obsCats[[index]][x]],
                     header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs))
