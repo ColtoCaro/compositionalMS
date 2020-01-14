@@ -21,6 +21,12 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
                   refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE,
                   sinusoid = FALSE){
 
+  #If sinusoid == TRUE then create the necessary data columns
+  if(sinusoid){
+    tempDat$Sin <- sin(tempDat$Time)
+    tempDat$Cos <- cos(tempDat$Time)
+  }
+
 
   #Establish relevant grouping and make sure data is ordered
   if(groupByGene){
@@ -109,7 +115,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     #the "timePars variablew will be used in the hpothesis testing code
     #as well
     if(sinusoid == TRUE){
-      timePars <- c("I(sin(Time)", "I(cos(Time))")
+      timePars <- c("Sin", "Cos")
     }else{
       timePars <- paste0("Time", degVec)
     }
@@ -143,6 +149,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     tempDat$Category <- relevel(tempDat$Category, ref = refCat)
   }else{
     tempDat$Category <- factor(tempDat$Category)
+    refCat <- tempDat$Category[1]
   }
 
   uCats <- levels(tempDat$Category)
@@ -241,7 +248,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
         catTests[[t_]] <- try(lht(fullMod, catStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
 
         #Test for an overall time effect in condition t_
-        timeStr <- paste0("Protein", uProt[index], paste0(":Time", degVec), " + ",
+        timeStr <- paste0("Protein", uProt[index], paste0(":", timePars), " + ",
                           "Protein", uProt[index], ":Category", fullCats[dropRef[t_]], paste0(":", timePars)," = 0")
         timeTests[[t_ + 1]] <- try(lht(fullMod, timeStr, singular.ok = T)$`Pr(>F)`[2], silent=TRUE)
       }#end condition loop
@@ -276,10 +283,10 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     #Now extract and store the predicted values
     newDfs <- list()
 
-    if(sinusoid == TRUE){timeDegree = 1}
     newDfs <- lapply(1:length(obsCats[[index]]), function(x)
         makePredDat(prot = uProt[index], timeVec = times[[x]], category = fullCats[obsCats[[index]][x]],
-                    header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs))
+                    header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs,
+                    sinVec = sin(times[[x]]), cosVec = cos(times[[x]])))
 
 
     catPreds <- lapply(newDfs, function(x) suppressWarnings(predict(fullMod, x)))
