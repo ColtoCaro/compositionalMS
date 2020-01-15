@@ -150,7 +150,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     tempDat$Category <- relevel(tempDat$Category, ref = refCat)
   }else{
     tempDat$Category <- factor(tempDat$Category)
-    refCat <- tempDat$Category[1]
+    #refCat <- tempDat$Category[1]
   }
 
   uCats <- levels(tempDat$Category)
@@ -206,7 +206,12 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Prior to hypothesis testing, we need to know what Categories
   #are present for each protein
   obsCats <- by(tempDat, tempDat$Protein, FUN = function(x) which(fullCats %in% unique(x$Category)))
-  refPos <- which(fullCats == refCat)
+  if(is.null(refCat)){
+    refPos <- which(fullCats == tempDat$Category[1])
+  }else{
+    refPos <- which(fullCats == refCat)
+  }
+
 
 
   ###############Now get predictions and p-values for each protein##############
