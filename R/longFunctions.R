@@ -19,12 +19,12 @@
 #'
 testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
                   refCat = NULL, groupByGene = FALSE, randEffect = 0, testBaseline = TRUE,
-                  sinusoid = FALSE){
+                  sinusoid = FALSE, period = 2 * pi){
 
   #If sinusoid == TRUE then create the necessary data columns
   if(sinusoid){
-    tempDat$Sin <- sin(tempDat$Time)
-    tempDat$Cos <- cos(tempDat$Time)
+    tempDat$Sin <- sin((2*pi / period) * tempDat$Time)
+    tempDat$Cos <- cos((2*pi / period) * tempDat$Time)
   }
 
 
@@ -292,7 +292,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     newDfs <- lapply(1:length(obsCats[[index]]), function(x)
         makePredDat(prot = uProt[index], timeVec = times[[x]], category = fullCats[obsCats[[index]][x]],
                     header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs,
-                    sinVec = sin(times[[x]]), cosVec = cos(times[[x]])))
+                    sinVec = sin((2*pi / period) * times[[x]]), cosVec = cos((2*pi / period) * times[[x]])))
 
 
     catPreds <- lapply(newDfs, function(x) suppressWarnings(predict(fullMod, x)))
