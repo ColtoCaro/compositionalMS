@@ -120,9 +120,16 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     }else{
       timePars <- paste0("Time", degVec)
     }
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
-                             paste0("Protein:", timePars, collapse = " + "),
-                             "+", paste0("Protein:Category:", timePars, collapse = " + ")))
+
+    if(length(fullCats) > 1){
+      fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+                               paste0("Protein:", timePars, collapse = " + "),
+                               "+", paste0("Protein:Category:", timePars, collapse = " + ")))
+    }else{
+      fmla <- as.formula(paste("FC ~ 0 + Protein", baseString, "+",
+                               paste0("Protein:", timePars, collapse = " + ")))
+    }
+
   }
 
   ######the below code is deprecated.  Stop functions added########
@@ -291,7 +298,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
     newDfs <- lapply(1:length(obsCats[[index]]), function(x)
         makePredDat(prot = uProt[index], timeVec = times[[x]], category = fullCats[obsCats[[index]][x]],
-                    header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs,
+                    header = colnames(tempDat), timeDegree = timeDegree, catRefs = catRefs, sinusoid,
                     sinVec = sin((2*pi / period) * times[[x]]), cosVec = cos((2*pi / period) * times[[x]])))
 
 

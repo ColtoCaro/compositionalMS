@@ -436,12 +436,12 @@ takeMax <- function(df){
 
 #function to generate a dataframe for model predictions
 makePredDat <- function(prot, timeVec, category, header, timeDegree, catRefs,
-                        sinVec, cosVec){
+                        sinusoid, sinVec, cosVec){
   #header is a vector of column names found in the data
   #timeDegree = 1, 2, or 3, specifying a linear, quadratic or cubic model
   #catRefs is a vector containing the reference levels of each baseline categorical covariate
 
-  if(is.null(sinVec)){
+  if(sinusoid == FALSE){
     if(timeDegree == 1){
       newDf <- data.frame(Protein = prot, Time = timeVec, Category = category)
     }
