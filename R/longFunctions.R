@@ -115,7 +115,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     #the "timePars variablew will be used in the hpothesis testing code
     #as well
     if(sinusoid == TRUE){
-      timePars <- c("Sin", "Cos")
+      timePars <- c(paste0("Time", degVec), "Sin", "Cos")
 
     }else{
       timePars <- paste0("Time", degVec)
@@ -244,6 +244,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
     #Test for an overall time effect in the baseline condition
     #timePars was specified above
+
+    #If we have a sinusoid, test only those parameters
+    if(sinusoid == TRUE){
+      timePars <- c("Sin", "Cos")
+      }
 
     timeStr <-  paste0("Protein", uProt[index], paste0(":", timePars), " = 0")
     timeTests[[1]] <-  lht(fullMod, timeStr, singular.ok= T)$`Pr(>F)`[2]
