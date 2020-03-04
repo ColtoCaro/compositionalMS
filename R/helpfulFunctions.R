@@ -454,8 +454,17 @@ makePredDat <- function(prot, timeVec, category, header, timeDegree, catRefs,
                                                                Time3 = timeVec^3, Category = category)
     }
   }else{
-    newDf <- data.frame(Protein = prot, Sin = sinVec, Cos = cosVec, Category = category)
-}
+    #newDf <- data.frame(Protein = prot, Sin = sinVec, Cos = cosVec, Category = category)
+    if(timeDegree == 1){
+      newDf <- data.frame(Protein = prot, Time = timeVec, Sin = sinVec, Cos = cosVec, Category = category)    
+    }    
+    if(timeDegree == 2){      
+      newDf <- data.frame(Protein = prot, Time = timeVec, Time2 = timeVec^2, Sin = sinVec, Cos = cosVec, Category = category)    
+    }    
+    if(timeDegree == 3){      
+      newDf <- data.frame(Protein = prot, Time = timeVec, Time2 = timeVec^2,  Time3 = timeVec^3, Sin = sinVec, Cos = cosVec, Category = category)    
+    }
+  }
   #now add baseline covariates
   contIndex <- grep("Continuous_Covariate", header)
   catCovarIndex <- grep("Categorical_Covariate", header)
