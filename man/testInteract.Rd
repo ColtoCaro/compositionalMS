@@ -6,7 +6,8 @@
 than one curve through time.}
 \usage{
 testInteract(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
-  refCat = NULL, groupByGene = FALSE, randEffect = 0)
+  refCat = NULL, groupByGene = FALSE, randEffect = 0,
+  testBaseline = TRUE, sinusoid = FALSE, period = 2 * pi)
 }
 \arguments{
 \item{tempDat}{The data to be analyzed}
@@ -20,13 +21,15 @@ testInteract(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TRUE,
 \item{useW}{A boolean that determines whether or not the posterior variance of
 each protein estimate should be used to weight the observations}
 
-\item{refCat}{A string that specifies the reference category}
+\item{refCat}{A string that specifies the reference category.  Must be a string, not a factor!}
 
 \item{groupByGene}{A boolean that specifies whether timepoints are grouped
 by genes or proteins}
 
 \item{randEffect}{takes 0 for no random effects. 1 for a random intercept
 and 2 for a random slope and intercepts model}
+
+\item{sinusoid}{Boolean variable that supercedes timeDegree forcing a sinusoidal time structure}
 }
 \description{
 This function runs the main code for fitting a model that compares more
