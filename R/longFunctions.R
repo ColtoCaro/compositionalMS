@@ -410,7 +410,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 }
 
 
-#' This function is deprecated
+#' This function runs the main code for fitting a model that looks at the
 #' overall (single curve) effect through time.
 #'
 #' @export
@@ -421,60 +421,60 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 #'   each protein estimate should be used to weight the observations
 #'
 # OVERALL EFFECT
-# test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE){
-#
-#   uProt <- unique(tempDat$Protein)
-#   nProt <- length(uProt)
-#   times <- unique(tempDat$Time)
-#
-#   degVec <- as.character(1:timeDegree)
-#   degVec[1] <- ""
-#
-#   fmla <- as.formula(paste("FC ~ Protein * (",
-#                      paste0("Time", degVec, collapse = " + "), ")",
-#                          " - ", paste0("Time", degVec, collapse = " - ")))
-#
-#
-#
-#   if(useW){
-#     fullMod <- lm(fmla, weights = w_, data = tempDat)
-#   }else{
-#     fullMod <- lm(fmla, data = tempDat)
-#   }
-#
-#   # Now do a test for time effects on each protein
-#   pList <- list()
-#
-#   for(index in 1:nProt){
-#     # Implement F test for time effect
-#     testl <- lht(fullMod, paste(paste0("Protein", uProt[index], "_", paste0("Time", degVec), " = 0")))
-#     pVal <- testl$'Pr(>F)'[2]
-#     # Now extract and store the predicted values
-#     if(timeDegree == 1){
-#       newDf <- data.frame(Protein = uProt[index], Time = times)
-#     }
-#     if(timeDegree == 2){
-#       newDf <- data.frame(Protein = uProt[index], Time = times, Time2 = times^2)
-#     }
-#     if(timeDegree == 3){
-#       newDf <- data.frame(Protein = uProt[index], Time = times, Time2 = times^2, Time3 = times^3)
-#     }
-#
-#     mFit <- predict(fullMod, newDf)
-#     protList <- list(as.character(uProt[index]), c(mFit[match(fullTimes, times)], pVal))
-#     names(protList[[2]]) <- c(paste0("Time", fullTimes), "Pval")
-#     pList[[index]] <- protList
-#   } # end protein loop
-#
-#   resNames <- unlist(lapply(pList, function(x) x[[1]]))
-#   resVals <- do.call(rbind, lapply(pList, function(x) x[[2]]))
-#   resDf <- data.frame(Protein = resNames, resVals)
-#
-#   pIndex <- grep("Pval", colnames(resDf))
-#   Qvals <- p.adjust(resDf[ , pIndex], method = "fdr")
-#
-#   resDf$Qval <- Qvals
-#   gRes <- data.frame(Gene = tempDat$Gene[match(resDf$Protein, tempDat$Protein)], resDf)
-#
-#   gRes
-# }
+test_overall_effect <- function(tempDat, timeDegree = 2, fullTimes, useW = TRUE){
+
+  uProt <- unique(tempDat$Protein)
+  nProt <- length(uProt)
+  times <- unique(tempDat$Time)
+
+  degVec <- as.character(1:timeDegree)
+  degVec[1] <- ""
+
+  fmla <- as.formula(paste("FC ~ Protein * (",
+                     paste0("Time", degVec, collapse = " + "), ")",
+                         " - ", paste0("Time", degVec, collapse = " - ")))
+
+
+
+  if(useW){
+    fullMod <- lm(fmla, weights = w_, data = tempDat)
+  }else{
+    fullMod <- lm(fmla, data = tempDat)
+  }
+
+  # Now do a test for time effects on each protein
+  pList <- list()
+
+  for(index in 1:nProt){
+    # Implement F test for time effect
+    testl <- lht(fullMod, paste(paste0("Protein", uProt[index], "_", paste0("Time", degVec), " = 0")))
+    pVal <- testl$'Pr(>F)'[2]
+    # Now extract and store the predicted values
+    if(timeDegree == 1){
+      newDf <- data.frame(Protein = uProt[index], Time = times)
+    }
+    if(timeDegree == 2){
+      newDf <- data.frame(Protein = uProt[index], Time = times, Time2 = times^2)
+    }
+    if(timeDegree == 3){
+      newDf <- data.frame(Protein = uProt[index], Time = times, Time2 = times^2, Time3 = times^3)
+    }
+
+    mFit <- predict(fullMod, newDf)
+    protList <- list(as.character(uProt[index]), c(mFit[match(fullTimes, times)], pVal))
+    names(protList[[2]]) <- c(paste0("Time", fullTimes), "Pval")
+    pList[[index]] <- protList
+  } # end protein loop
+
+  resNames <- unlist(lapply(pList, function(x) x[[1]]))
+  resVals <- do.call(rbind, lapply(pList, function(x) x[[2]]))
+  resDf <- data.frame(Protein = resNames, resVals)
+
+  pIndex <- grep("Pval", colnames(resDf))
+  Qvals <- p.adjust(resDf[ , pIndex], method = "fdr")
+
+  resDf$Qval <- Qvals
+  gRes <- data.frame(Gene = tempDat$Gene[match(resDf$Protein, tempDat$Protein)], resDf)
+
+  gRes
+}
