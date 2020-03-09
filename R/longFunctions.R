@@ -121,7 +121,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
       timePars <- paste0("Time", degVec)
     }
 
-    if(length(fullCats) > 1){
+    if(length(unique(tempDat$Category)) > 1){
       fmla <- as.formula(paste("FC ~ 0 + Category", baseString, "+",
                                paste0(timePars, collapse = " + "),
                                "+", paste0("Category:", timePars, collapse = " + ")))
