@@ -97,7 +97,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   #Create model formula
   #First consider the baseline covariates
   if(catCovar + contCovar > 0){
-    baseString <- paste(paste0(" + Protein:", colnames(tempDat)[c(contIndex, catCovarIndex)]), collapse = "")
+    baseString <- paste(paste0(" + ", colnames(tempDat)[c(contIndex, catCovarIndex)]), collapse = "")
   }else(
     baseString <- ""
   )
@@ -122,11 +122,11 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     }
 
     if(length(unique(tempDat$Category)) > 1){
-      fmla <- as.formula(paste("FC ~ 0 + Category", baseString, "+",
+      fmla <- as.formula(paste("FC ~ Category", baseString, "+",
                                paste0(timePars, collapse = " + "),
                                "+", paste0("Category:", timePars, collapse = " + ")))
     }else{
-      fmla <- as.formula(paste("FC ~ 0  ", baseString, "+",
+      fmla <- as.formula(paste("FC ~ 1 ", baseString, "+",
                                paste0(timePars, collapse = " + ")))
     }
 
@@ -135,7 +135,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   ######the below code is deprecated.  Stop functions added########
   if(randEffect == 1){
     stop("Random Effects not supported")
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+    fmla <- as.formula(paste("FC ~ Protein + Protein:Category", baseString, "+",
                              paste0("Protein:", paste0("Time", degVec), collapse = " + "),
                              "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 | ", colnames(tempDat)[randIndex], ")")
@@ -143,7 +143,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
   if(randEffect == 2){
     stop("Random Effects not supported")
     degVec <- degVec[1] #force only linear slopes if random slopes are being fit to each ID
-    fmla <- as.formula(paste("FC ~ 0 + Protein + Protein:Category", baseString, "+",
+    fmla <- as.formula(paste("FC ~ Protein + Protein:Category", baseString, "+",
                              paste0("Protein:", paste0("Time", degVec), collapse = " + "),
                              "+", paste0("Protein:Category:", paste0("Time", degVec), collapse = " + ")))
     fmla <- paste(fmla, " + (1 + Time | ", colnames(tempDat)[randIndex], ")")
