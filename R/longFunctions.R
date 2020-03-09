@@ -153,6 +153,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
 
   #Set reference category
   if(!is.null(refCat)){
+    if(!refCat %in% levels(factor(tempDat$Category))){stop("Reference category not found in this protein")}
     tempDat$Category <- factor(tempDat$Category)
     tempDat$Category <- relevel(tempDat$Category, ref = refCat)
   }else{
