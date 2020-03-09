@@ -288,7 +288,7 @@ testInteract <- function(tempDat, timeDegree = 2, fullTimes, fullCats, useW = TR
     times <- list()
     protDat <- tempDat[which(tempDat$Protein == uProt[index]), ]
     for(c_ in 1:length(obsCats[[index]])){
-      catDat <- protDat[which(protDat$Category == fullCats[obsCats[[index]][c_]]), ]
+      catDat <- protDat[which(as.character(protDat$Category) == fullCats[obsCats[[index]][c_]]), ]
       #Check for missing values
       if(sum(is.na(catDat$FC)) > 0){
         catDat <- catDat[-which(is.na(catDat$FC)), ] #Remove missing values
