@@ -9,9 +9,8 @@ getPtms <- function(model, ptmDat, refC){
   protNames <- getName(uBio)
   Gene <- ptmDat$gene[match(protNames, ptmDat$protein)]
 
-  sPosition <- regexpr("_*_", uBio)
-  Peptide <- substring(uBio, sPosition + 3)
-
+  # ensures peptide names stay the same regardless of condition number size
+  Peptide <- unlist(lapply(uBio, function(x) paste(strsplit(x, "_")[[1]][3], strsplit(x, "_")[[1]][4], sep="_")))
 
   nCond <- length(unique(condNum))
   uCond <- unique(c(refC, unique(condNum)))
@@ -118,12 +117,10 @@ contrastPtm <- function(res, contrastMat = NULL){
   protNames <- getName(uBio)
   Gene <- ptmDat$gene[match(protNames, ptmDat$protein)]
 
-  sPosition <- regexpr("_*_", uBio)
-  Peptide <- substring(uBio, sPosition + 3)
-
+  Peptide <- unlist(lapply(uBio, function(x) paste(strsplit(x, "_")[[1]][3], strsplit(x, "_")[[1]][4], sep="_")))
 
   nCond <- length(unique(condNum))
-  uCond <- unique(c(refC, unique(condNum)))
+  uCond <- unique(c(refCond, unique(condNum)))
   uCond <- uCond[order(uCond)]
 
   nPeps <- length(unique(Peptide))

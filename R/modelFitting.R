@@ -70,12 +70,13 @@ compBayes <- function(dat,
                      nCores = 1,
                      iter = 2000,
                      normalize = TRUE,
+                     normalize_ptm = FALSE,
                      pop_sd = 10,
                      simpleMod = FALSE,
                      bridge = TRUE,
                      adapt_delta = .9,
-                     varPool = 1
-                     ){
+                     varPool = 1,
+                     no_bio = FALSE                     ){
 
   #Force the new setup with two simple runs
   simpleMod <- TRUE
@@ -128,15 +129,27 @@ compBayes <- function(dat,
       })
     ptmTemp <- oneDat$ptmID #save this from the first model
   }
-
+  #how to normalize
+  if (normalize) {
+    normalize_plex <- lapply(1:length(dat), function(x) (all(dat[[x]][3,] == 0)))
+    }
+  if (normalize & normalize_ptm) {
+    normalize_plex <- lapply(1:length(dat), function(x) (TRUE))
+    }
+  if ( ! (normalize | normalize_ptm)){
+        normalize_plex <- lapply(1:length(dat), function(x) (FALSE))
+    }
   readyDat <- lapply(1:length(dat), function(x)
-    transformDat(dat[[x]], plexNumber = x, normalize = normalize,
+    transformDat(dat[[x]], plexNumber = x, normalize = normalize_plex[[x]],
                  simpleMod))
   oneDat <- do.call(rbind, readyDat)
-
+  ## this shou
+  if ( !  normalize_ptm){
+  oneDat <- oneDat[oneDat$lr != 0,]
+  }
   #set data variables
   #Do ptms first since it might change the dimensions of the data
-  N_ <- nrow(oneDat)
+  #N_ <- nrow(oneDat)
   #count the plexes with PTMs
   sumPtm <- sum(unlist(lapply(dat, function(x) (sum(x[3, grep("tag", colnames(x))]) > 0))))
 
@@ -144,11 +157,13 @@ compBayes <- function(dat,
   #First time through, remove PTMs
   if(modelN ==2){
     oneDat$condID <- oneDat$bioID
-  }else{
-    if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
-  }
+  } #else{
+    #if(sumPtm > 0){oneDat <- oneDat[which(oneDat$ptm == 0), ] }
+  #}
 
-  if(sumPtm == 0 | modelN == 1){
+  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
+                         oneDat$ptmID), ]
+  if(sumPtm == 0){
     n_p <- 0
     n_ptm <- 0
     ptm <- rep(0,N_)
@@ -170,24 +185,28 @@ compBayes <- function(dat,
       #temporary reduction for estimating only PTMs
         globOnly <- setdiff(globalProts, ptmProts)
         globIndex <- which(oneDat$bioID %in% globOnly)
-        oneDat <- oneDat[-globIndex, ]
+        if (length(globIndex) > 0){oneDat <- oneDat[-globIndex, ]}
     }
-
-    nonPtms <- which(oneDat$ptm == 0)
-    ptmDat <- oneDat[-nonPtms, ]
+    ptm <- as.integer(oneDat$ptm)
+    Ptms <- ptm != 0
+    ptmDat <- oneDat[Ptms, ]
     ptmName <- levels(factor(ptmDat$ptmID))
     n_p <- length(ptmName)
     n_ptm <- length(unique(ptmDat$ptm))
 
-    ptm <- as.integer(oneDat$ptm)
+
+    # if you want variance estimate per peptide per PTM change to the line below
+    # n_ptm <- length(unique(ptmDat$ptmID))
+
     ptmPep <- rep(0, nrow(oneDat))
-    ptmPep[which(oneDat$ptm > 0)] <- as.integer(factor(ptmDat$ptmID))
+    ptmPep[Ptms]  <- as.integer(factor(ptmDat$ptmID))
+
 
   } # end actions for ptm experiments
 
-  oneDat <- oneDat[order(oneDat$condID, oneDat$bioID, oneDat$ptm,
-                         oneDat$ptmID), ]
 
+  # remove log
+  # start setting global variable for stan model
   N_ <- nrow(oneDat)
   n_c <- length(unique(oneDat$condID))
   condKey <- data.frame(number = 1:n_c,
@@ -250,7 +269,6 @@ compBayes <- function(dat,
   if(useCov){
     covariate <- oneDat$covariate/quantile(oneDat$covariate, probs = pp)
   }else{covariate <- oneDat$covariate}
-
   lr <- oneDat$lr
   if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
                         consequence of normalizing values already less than
@@ -395,7 +413,6 @@ compBayes <- function(dat,
                       stringsAsFactors = F)
 
 
-
   #make avgCond log-ratio tables
 
   uBio <- levels(factor(oneDat$condID))
@@ -457,66 +474,6 @@ compBayes <- function(dat,
                         stringsAsFactors = F)
 
 
-    #redo with population level tables
-  # uBio <- levels(factor(oneDat$condID))
-  # condNum <- getCond(uBio, bio = FALSE)
-  # condNames <- getName(uBio)
-  #
-  # refC <- dat[[1]][1, "tag1"]
-  #
-  # nCond <- length(unique(condNum))
-  # uCond <- unique(c(refC, unique(condNum)))
-  # uCond <- uCond[order(uCond)]
-  #
-  # nProts <- length(unique(condNames))
-  #
-  # indices <- lapply(1:nProts, function(x)
-  #   which(condNames == levels(factor(condNames))[x]))
-  #
-  # condList <- lapply(indices, function(x) condNum[x])
-  #
-  # simpRES <- lapply(indices, function(x)
-  #   alrInv(makeMat(x, model, bio = FALSE, useCov, avgCond = FALSE)))
-  #
-  #
-  # refPos <- which(uCond == refC)
-  # suCond <- uCond[-refPos]
-  # if(length(suCond) == 1){
-  #   lrs <- as.matrix(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
-  #   lrVars <- as.matrix(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
-  #   lrLL95 <- as.matrix(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-  #   lrUL95 <- as.matrix(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  # }else{
-  #   lrs <- t(mapply(function(x, y) x[[2]]$Estimate[match(suCond, y)], simpRES, condList))
-  #   colnames(lrs) <- paste0("Est_avg_fc", suCond)
-  #   lrVars <- t(mapply(function(x, y) x[[2]]$Variance[match(suCond, y)], simpRES, condList))
-  #   colnames(lrVars) <- paste0("Var_Cond", suCond)
-  #   lrLL95 <- t(mapply(function(x, y) x[[2]]$LL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrLL95) <- paste0("LL95_Cond", suCond)
-  #   lrUL95 <- t(mapply(function(x, y) x[[2]]$UL95[match(suCond, y)], simpRES, condList))
-  #   colnames(lrUL95) <- paste0("UL95_Cond", suCond)
-  # }
-  # popLrTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-  #                        stringsAsFactors = F)
-  #
-  # #Now get the proportions
-  # lrs <- t(mapply(function(x, y) x[[1]]$Estimate[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrs) <- paste0("Est_avg_Prop", uCond)
-  # lrVars <- t(mapply(function(x, y) x[[1]]$Variance[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrVars) <- paste0("Var_Cond", uCond)
-  # lrLL95 <- t(mapply(function(x, y) x[[1]]$LL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrLL95) <- paste0("LL95_Cond", uCond)
-  # lrUL95 <- t(mapply(function(x, y) x[[1]]$UL95[match(uCond, unique(c(refC, y)))], simpRES, condList))
-  # colnames(lrUL95) <- paste0("UL95_Cond", uCond)
-  #
-  # popPTab <- data.frame(Protein = levels(factor(condNames)), lrs, lrVars, lrLL95, lrUL95,
-  #                       stringsAsFactors = F)
-
-
   } #end else (not simple case)
 
   if(sumPtm > 0){
@@ -524,9 +481,9 @@ compBayes <- function(dat,
     ptmLr <- ptmTabs[[1]]
     ptmProp <- ptmTabs[[2]]
   }else{
+    ptmDat <- NULL
     ptmLr <- NULL
     ptmProp <- NULL
-    ptmDat <- NULL
   }
 
 
@@ -540,14 +497,20 @@ compBayes <- function(dat,
     RES[[5]] <- fcBioTab
     RES[[6]] <- NULL  #This used to be for population models
     RES[[7]] <- oneDat$condID
-  }else{
-    RES[[2]] <- avgPTab
-    RES[[5]] <- avgLrTab
     RES[[8]] <- ptmDat
     RES[[9]] <- ptmLr
     RES[[10]] <- ptmProp
+    RES[[11]] <- oneDat #useful for troubleshooting
+  }else{
+    RES[[2]] <- avgPTab
+    RES[[5]] <- avgLrTab
+    RES[[12]] <- model
+
   }
 
+if (no_bio){
+break
+}
   }  #End modelN for-loop that fits 2 simple models
 
   #add Gene back in
@@ -556,18 +519,20 @@ compBayes <- function(dat,
     }else{
       tempTab <- bioDf
     }
-  Gene <- oneDat$gene[match(tempTab$Protein, oneDat$protein)]
+  # add genes column without worrying about gene columns being lost
   gRES <- RES
+  x <- oneDat[match(tempTab$Protein, oneDat$protein), c('gene', 'protein')]
   for(i in 2:5){
     if(is.data.frame(RES[[i]])){
-      gRES[[i]] <- data.frame(Gene, RES[[i]])
+      y <- gRES[[i]]
+      gRES[[i]] <- merge(x, y, by.x='protein', by.y='Protein', all=T)
+      colnames(avgLrTab)[colnames(avgLrTab) == c('gene')] <-  'Gene'
+      colnames(avgLrTab)[colnames(avgLrTab) == c('protein')] <- 'Protein'
     }
   }
 
   gRES
 } #end of compBayes function
-
-
 
 
 #' Changing the comparisons of interest
