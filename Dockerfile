@@ -21,6 +21,7 @@ RUN R -e "install.packages('car', repos='http://cran.rstudio.com/', dependencies
 #RUN R CMD INSTALL compositionalMS --no-staged-install
 RUN R CMD INSTALL compositionalMS
 
+# finish
 RUN echo "compMS installed!"
 
 
