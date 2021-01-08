@@ -25,6 +25,8 @@ data{
   //real pp ; // prediction percentile for the covariate
 
   real lr[N_] ; // log-ratio observations
+  real sn[N_] ; // channel signal-noise observations
+  real rsn[N_] ; // reference signal-noise observations
 
   real<lower=0> pop_sd ; //user input population prior standard deviation
   int<lower=0, upper=1> simpleMod ;  //Indicator to use a simple model
@@ -52,6 +54,9 @@ parameters{
 
   real<lower = 0> sigma_rawb[n_b * bioInd * multVar] ; // experimental error: deprecated
   real<lower = 0> scale[scaleInd] ; //heierarchical variance scale
+
+  real<lower = 0> mu[1] ; // coefficient for channel s/n to modulate variance
+  real<lower = 0> nu[1] ; // coefficient for reference s/n to modulate variance
 
 //  real<lower = 0> tau[bioInd] ; //population level variance
   real<lower = 0> xi[n_ptm] ; // vc's for ptms
@@ -116,6 +121,8 @@ if(useCov > 0){
   //first set parameters that apply to all models
   if(varPool == 1){
     scale ~ normal(0, 5) ;
+    mu ~ normal(0, 5) ;
+    nu ~ normal(0, 5) ;
   }
 
   //beta ~ normal(0, 10) ;  Simple model has been deprecated
@@ -141,7 +148,7 @@ if(useCov > 0){
               }
               for(i in 1:N_){
                 if(ptm[i] == 0){
-                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]]) ;
+                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]] + mu * sn[i] + nu * rsn[i]) ;
                 }
                 if(ptm[i] > 0){
                   lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
