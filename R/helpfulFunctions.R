@@ -90,6 +90,11 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   #}
   normal_index <- setdiff(1:length(value_index), ref_index)
 
+  # use apply(mat, 1, mean)
+  rsnMat <- apply(df[4:(n_), value_index][,ref_index], 1, mean) 
+  rsnMat <- matrix(rsnMat, nrow=length(rsnMat), ncol=length(normal_index), byrow=FALSE) # storing the raw s/n for reference channel
+  snMat <- df[4:(n_), value_index][,normal_index] # storing the raw s/n for other channels
+
   lRes <- logRatio(nMat, ref_index)
   lrMat <- lRes[[1]]
   minTensities <- lRes[[2]]
@@ -97,11 +102,11 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   colnames(lrMat) <- header
 
   newDf1 <- data.frame(Gene = df[4:n_, ]$Gene,
-                      Protein = df[4:n_, ]$Protein,
-                      Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
-                      Covariate = df[4:n_, ]$Covariate,
-                      varCat = df[4:n_, ]$varCat,
-                      lrMat, stringsAsFactors = F)
+                       Protein = df[4:n_, ]$Protein,
+                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
+                       Covariate = df[4:n_, ]$Covariate,
+                       varCat = df[4:n_, ]$varCat,
+                       lrMat, stringsAsFactors = F)
 
   newDf2 <- data.frame(Gene = df[4:n_, ]$Gene,
                        Protein = df[4:n_, ]$Protein,
@@ -110,8 +115,22 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
                        varCat = df[4:n_, ]$varCat,
                        minTensities, stringsAsFactors = F)
 
+  newDf3 <- data.frame(Gene = df[4:n_, ]$Gene,
+                       Protein = df[4:n_, ]$Protein,
+                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
+                       Covariate = df[4:n_, ]$Covariate,
+                       varCat = df[4:n_, ]$varCat,
+                       snMat, stringsAsFactors = F)
+   
+  newDf4 <- data.frame(Gene = df[4:n_, ]$Gene,
+                       Protein = df[4:n_, ]$Protein,
+                       Peptide = df[4:n_, ]$Peptide, bioID = df[4:n_, ]$bioID,
+                       Covariate = df[4:n_, ]$Covariate,
+                       varCat = df[4:n_, ]$varCat,
+                       rsnMat, stringsAsFactors = F)
+   
   melted1 <- reshape2::melt(newDf1, id.vars = c("Gene", "Protein", "Peptide", "bioID",
-                                              "Covariate", "varCat"),
+                                                "Covariate", "varCat"),
                  value.name = "lr", variable.name = "header")
 
 
@@ -119,8 +138,15 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
                                                 "Covariate", "varCat"),
                             value.name = "pairMin", variable.name = "header")
 
+  melted3 <- reshape2::melt(newDf3, id.vars = c("Gene", "Protein", "Peptide", "bioID",
+                                                "Covariate", "varCat"),
+                 value.name = "sn", variable.name = "header")
 
-  melted <- data.frame(melted1, pairMin = melted2$pairMin)
+  melted4 <- reshape2::melt(newDf4, id.vars = c("Gene", "Protein", "Peptide", "bioID",
+                                                "Covariate", "varCat"),
+                 value.name = "rsn", variable.name = "header")
+
+  melted <- data.frame(melted1, pairMin = melted2$pairMin, sn = melted3$sn, rsn = melted4$rsn)
 
   separated <- stringr::str_split_fixed(as.character(melted$header), "qqqq",5)
 
@@ -145,7 +171,10 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
                   covariate = melted$Covariate,
                   varCat = melted$varCat,
                   pairMin = melted$pairMin,
-                  lr = melted$lr, stringsAsFactors = F)
+                  lr = melted$lr, 
+                  sn = melted$sn,
+                  rsn = melted$rsn,
+                  stringsAsFactors = F)
   finalDat <- finalDat[order(finalDat$tag_plex, finalDat$condID,
                              finalDat$bioID, finalDat$ptm, finalDat$ptmID), ]
 

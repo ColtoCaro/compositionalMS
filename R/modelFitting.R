@@ -252,6 +252,8 @@ compBayes <- function(dat,
   }else{covariate <- oneDat$covariate}
 
   lr <- oneDat$lr
+  sn <- oneDat$sn
+  rsn <- oneDat$rsn
   if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
                         consequence of normalizing values already less than
                         one")}
