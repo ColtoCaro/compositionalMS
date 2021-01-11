@@ -148,7 +148,7 @@ if(useCov > 0){
               }
               for(i in 1:N_){
                 if(ptm[i] == 0){
-                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]] + mu * sn[i] + nu * rsn[i]) ;
+                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]] + mu * 1/sn[i] + nu * 1/rsn[i]) ;
                 }
                 if(ptm[i] > 0){
                   lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
