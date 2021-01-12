@@ -55,8 +55,8 @@ parameters{
   real<lower = 0> sigma_rawb[n_b * bioInd * multVar] ; // experimental error: deprecated
   real<lower = 0> scale[scaleInd] ; //heierarchical variance scale
 
-  real<lower = 0> mu ; // coefficient for channel s/n to modulate variance
-  real<lower = 0> nu ; // coefficient for reference s/n to modulate variance
+  real<lower = 0> mu[1] ; // coefficient for channel s/n to modulate variance
+  real<lower = 0> nu[1] ; // coefficient for reference s/n to modulate variance
 
 //  real<lower = 0> tau[bioInd] ; //population level variance
   real<lower = 0> xi[n_ptm] ; // vc's for ptms
@@ -148,7 +148,7 @@ if(useCov > 0){
               }
               for(i in 1:N_){
                 if(ptm[i] == 0){
-                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]] + mu * 1/sn[i] + nu * 1/rsn[i]) ;
+                lr[i] ~ normal(beta[condID[i]] , sigma[condID[i]] + mu[1] * 1/sn[i] + nu[1] * 1/rsn[i]) ;
                 }
                 if(ptm[i] > 0){
                   lr[i] ~ normal(beta[condID[i]]  + alpha[ptmPep[i]],
