@@ -94,10 +94,12 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   sn <- as.matrix(df[4:(n_), value_index])
   # set all s/n values to be greater than 1
   sn[sn < 1] <- 1
-  print(dim(sn))
-  print(ref_index)
   # select the raw s/n for reference channel
-  rsnMat <- t(apply(sn[,ref_index], 1, mean))
+  if(length(ref_index) > 1){
+    rsnMat <- t(apply(sn[,ref_index], 1, mean))
+  }else{
+    rsnMat <- sn[,ref_index]
+  }
   rsnMat <- matrix(rsnMat, nrow=length(rsnMat), ncol=length(normal_index), byrow=FALSE)
   # select the raw s/n for other channels
   snMat <- sn[,normal_index]
