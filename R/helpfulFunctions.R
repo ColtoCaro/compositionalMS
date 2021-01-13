@@ -90,11 +90,15 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   #}
   normal_index <- setdiff(1:length(value_index), ref_index)
 
-  # use apply(mat, 1, mean)
-  rsnMat <- rowMeans(as.matrix(df[4:(n_), value_index][,ref_index]))
-  #rsnMat <- apply(rsnMat, 1, mean)
-  rsnMat <- matrix(rsnMat, nrow=length(rsnMat), ncol=length(normal_index), byrow=FALSE) # storing the raw s/n for reference channel
-  snMat <- df[4:(n_), value_index][,normal_index] # storing the raw s/n for other channels
+  # extract raw s/n
+  sn <- as.matrix(df[4:(n_), value_index])
+  # set all s/n values to be greater than 1
+  sn[sn < 1] <- 1
+  # select the raw s/n for reference channel
+  rsnMat <- rowMeans(sn[,ref_index])
+  rsnMat <- matrix(rsnMat, nrow=length(rsnMat), ncol=length(normal_index), byrow=FALSE)
+  # select the raw s/n for other channels
+  snMat <- sn[,normal_index]
 
   lRes <- logRatio(nMat, ref_index)
   lrMat <- lRes[[1]]
