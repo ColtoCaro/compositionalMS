@@ -36,10 +36,10 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   df[facIndex] <- lapply(df[facIndex], as.character)
 
   #Zero out unused columns
-  bioCol <- df$bioID[1]
-  if(bioCol == 0){
-    df$bioID[] <- 0
-  }
+  #bioCol <- df$bioID[1]
+  #if(bioCol == 0){
+  #  df$bioID[] <- 0
+  #}
 
   covarCol <- df$Covariate[1]
   if(covarCol == 0){
@@ -68,11 +68,13 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   nMat <- df[4:(n_), value_index]
   #normalize the df
   if(normalize == TRUE){
-  normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
-  nMat <- as.matrix(do.call(cbind, normed))
+    #normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
+    normed <- cNorm(as.matrix(df[4:(n_), value_index]), which(df$bioID[4:n_] == 1))
+    nMat <- as.matrix(do.call(cbind, normed))
   }else{
     nMat[nMat == 0] <- 1
   }
+  df$bioID[] <- 0
 
   #new paradigm.  Force the population model
   if(sum(df[2, value_index]) == 0){
