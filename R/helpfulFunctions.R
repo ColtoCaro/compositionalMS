@@ -69,7 +69,7 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   #normalize the df
   if(normalize == TRUE){
     #normed <- by(as.matrix(df[4:(n_), value_index]), df$bioID[4:n_], cNorm)
-    indices = which(df$bioID[4:n_] == 1)
+    indices <- which(df$bioID[4:n_] == 1)
     print(typeof(indices))
     print(indices)
     normed <- cNorm(as.matrix(df[4:(n_), value_index]), which(df$bioID[4:n_] == 1))
