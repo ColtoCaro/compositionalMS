@@ -36,7 +36,7 @@ transformDat <- function(df, plexNumber, normalize, simpleMod){
   df[facIndex] <- lapply(df[facIndex], as.character)
 
   #Zero out unused columns
-  #bioCol <- df$bioID[1]
+  bioCol <- df$bioID[1]
   #if(bioCol == 0){
   #  df$bioID[] <- 0
   #}
