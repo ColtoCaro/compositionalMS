@@ -254,6 +254,7 @@ compBayes <- function(dat,
   lr <- oneDat$lr
   sn <- oneDat$sn
   rsn <- oneDat$rsn
+  print(sum(lr))
   if(sum(lr) == 0){stop("Outcomes are all zero. This might be the
                         consequence of normalizing values already less than
                         one")}
